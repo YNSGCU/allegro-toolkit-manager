@@ -1,0 +1,55 @@
+import { describe, expect, it } from 'vitest';
+import {
+  APP_NAV_ITEMS,
+  PRIMARY_WORKSPACES,
+  getDefaultWorkspaceRoute,
+} from '../src/config/appShell';
+import {
+  PAGE_SURFACES,
+  getPageSurface,
+  getPrimaryWorkspaceSurfaces,
+} from '../src/config/pageSurfaces';
+
+describe('page surfaces', () => {
+  it('keeps hotkeys as the default route', () => {
+    expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
+  });
+
+  it('defines the minimal surface copy for hotkeys', () => {
+    expect(getPageSurface('hotkeys').title).toBe('快捷键工作台');
+    expect(getPageSurface('hotkeys').actions.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('defines all five page surface entries in nav order', () => {
+    expect(Object.keys(PAGE_SURFACES)).toEqual([
+      'hotkeys',
+      'skills',
+      'menu',
+      'overview',
+      'environment',
+    ]);
+  });
+
+  it('keeps every navigation item backed by a surface config', () => {
+    expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual(Object.keys(PAGE_SURFACES));
+  });
+
+  it('binds the core workspace surfaces to PRIMARY_WORKSPACES', () => {
+    expect(getPrimaryWorkspaceSurfaces().map((surface) => surface.key)).toEqual(
+      PRIMARY_WORKSPACES.map((item) => item.key),
+    );
+    expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual([
+      'hotkeys',
+      'skills',
+      'menu',
+    ]);
+  });
+
+  it('marks hotkeys as the default entry in the overview surface actions', () => {
+    const action = getPageSurface('overview').actions.find(
+      (item) => item.id === 'hotkeys',
+    );
+
+    expect(action?.meta).toContain('默认');
+  });
+});

@@ -1,0 +1,265 @@
+{
+  "description": "Allegro PCB Editor 系统/软件默认占用键",
+  "version": "2.0",
+  "note": "这些键被 Allegro 系统、操作系统或常用 Skill 默认占用。分 allegro_default / system_reserved / menu_accelerator 三类。支持按 Allegro 版本分类。",
+  "allegroVersions": ["common", "17.2", "17.4", "22.1", "23.1"],
+  "defaultVersion": "common",
+  "reservedKeys": {
+    "F1": {
+      "chineseName": "帮助",
+      "defaultCommand": "help",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 系统帮助键，按下打开帮助窗口",
+      "allegroVersion": "common"
+    },
+    "F2": {
+      "chineseName": "移动",
+      "defaultCommand": "move",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认移动命令快捷键",
+      "allegroVersion": "common"
+    },
+    "F3": {
+      "chineseName": "复制",
+      "defaultCommand": "copy",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认复制命令快捷键",
+      "allegroVersion": "common"
+    },
+    "F4": {
+      "chineseName": "删除",
+      "defaultCommand": "delete",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认删除命令快捷键",
+      "allegroVersion": "common"
+    },
+    "F5": {
+      "chineseName": "缩放至全部",
+      "defaultCommand": "zoom fit",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认缩放至全部快捷键",
+      "allegroVersion": "common"
+    },
+    "F6": {
+      "chineseName": "高亮选中",
+      "defaultCommand": "highlight",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认高亮快捷键",
+      "allegroVersion": "common"
+    },
+    "F7": {
+      "chineseName": "取消高亮",
+      "defaultCommand": "dehighlight",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认取消高亮快捷键",
+      "allegroVersion": "common"
+    },
+    "F8": {
+      "chineseName": "显示飞线",
+      "defaultCommand": "rats all",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认显示所有飞线",
+      "allegroVersion": "common"
+    },
+    "F9": {
+      "chineseName": "隐藏飞线",
+      "defaultCommand": "unrats all",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认隐藏所有飞线",
+      "allegroVersion": "common"
+    },
+    "F10": {
+      "chineseName": "颜色设置",
+      "defaultCommand": "color",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认打开颜色/层面设置",
+      "allegroVersion": "common"
+    },
+    "F11": {
+      "chineseName": "显示面板",
+      "defaultCommand": "display",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认显示控制面板",
+      "allegroVersion": "common"
+    },
+    "F12": {
+      "chineseName": "录制脚本",
+      "defaultCommand": "script",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认录制/回放脚本",
+      "allegroVersion": "common"
+    },
+    "Ctrl+Z": {
+      "chineseName": "撤销",
+      "defaultCommand": "undo",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认撤销操作",
+      "allegroVersion": "common"
+    },
+    "Ctrl+Y": {
+      "chineseName": "重做",
+      "defaultCommand": "redo",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认重做操作",
+      "allegroVersion": "common"
+    },
+    "Ctrl+S": {
+      "chineseName": "保存",
+      "defaultCommand": "save",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认保存设计",
+      "allegroVersion": "common"
+    },
+    "Ctrl+F": {
+      "chineseName": "查找",
+      "defaultCommand": "find",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 查找命令",
+      "allegroVersion": "common"
+    },
+    "Esc": {
+      "chineseName": "取消/完成",
+      "defaultCommand": "cancel",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 取消当前操作或完成命令",
+      "allegroVersion": "common"
+    },
+    "Delete": {
+      "chineseName": "删除选中",
+      "defaultCommand": "delete",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 删除选中对象",
+      "allegroVersion": "common"
+    },
+    "Home": {
+      "chineseName": "全局视图",
+      "defaultCommand": "zoom world",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 缩放到全局视图",
+      "allegroVersion": "common"
+    },
+    "End": {
+      "chineseName": "刷新重绘",
+      "defaultCommand": "redraw",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 刷新/重绘当前画面",
+      "allegroVersion": "common"
+    },
+    "PageUp": {
+      "chineseName": "放大视图",
+      "defaultCommand": "zoom in",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 放大视图",
+      "allegroVersion": "common"
+    },
+    "PageDown": {
+      "chineseName": "缩小视图",
+      "defaultCommand": "zoom out",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 缩小视图",
+      "allegroVersion": "common"
+    },
+    "Space": {
+      "chineseName": "重复命令",
+      "defaultCommand": "",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 重复上次执行的命令",
+      "allegroVersion": "common"
+    },
+    "Ctrl+C": {
+      "chineseName": "复制",
+      "defaultCommand": "clipboard copy",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：复制选中内容到剪贴板",
+      "allegroVersion": "common"
+    },
+    "Ctrl+V": {
+      "chineseName": "粘贴",
+      "defaultCommand": "clipboard paste",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：从剪贴板粘贴",
+      "allegroVersion": "common"
+    },
+    "Ctrl+X": {
+      "chineseName": "剪切",
+      "defaultCommand": "clipboard cut",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：剪切选中内容到剪贴板",
+      "allegroVersion": "common"
+    },
+    "Ctrl+A": {
+      "chineseName": "全选",
+      "defaultCommand": "select all",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：全选所有对象",
+      "allegroVersion": "common"
+    },
+    "Alt+F4": {
+      "chineseName": "关闭窗口",
+      "defaultCommand": "",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：关闭当前窗口",
+      "allegroVersion": "common"
+    },
+    "Ctrl+Alt+Del": {
+      "chineseName": "安全选项",
+      "defaultCommand": "",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：打开安全选项",
+      "allegroVersion": "common"
+    },
+    "Alt+Tab": {
+      "chineseName": "切换窗口",
+      "defaultCommand": "",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级快捷键：切换活动窗口",
+      "allegroVersion": "common"
+    },
+    "Backspace": {
+      "chineseName": "删除上一步",
+      "defaultCommand": "cancel",
+      "bindingType": "funckey",
+      "category": "allegro_default",
+      "description": "Allegro 默认：取消上一步操作或返回上级命令",
+      "allegroVersion": "common"
+    },
+    "Insert": {
+      "chineseName": "插入/覆盖切换",
+      "defaultCommand": "",
+      "bindingType": "alias",
+      "category": "system_reserved",
+      "description": "系统级功能键：插入/覆盖模式切换",
+      "allegroVersion": "common"
+    }
+  }
+}

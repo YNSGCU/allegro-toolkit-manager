@@ -1,0 +1,87 @@
+﻿# Review package: Task 1 (local no-git)
+
+## Commit range
+none (no git repo)
+
+## Files changed
+- package.json (1084 bytes)
+- tests/setup.ts (275 bytes)
+- vitest.config.ts (333 bytes)
+
+## Diff
+
+### package.json
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-1-before\\package.json" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\package.json"
+index 47ca228..918c715 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-1-before\\package.json"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\package.json"
+@@ -13,21 +13,24 @@
+     "test": "vitest run",
+     "test:watch": "vitest",
+     "preview": "vite preview"
+   },
+   "dependencies": {
+     "react": "^19.1.0",
+     "react-dom": "^19.1.0",
+     "react-router-dom": "^7.5.0"
+   },
+   "devDependencies": {
++    "@testing-library/jest-dom": "^6.6.3",
++    "@testing-library/react": "^16.0.0",
+     "@types/node": "^22.14.0",
+     "@types/react": "^19.1.2",
+     "@types/react-dom": "^19.1.2",
+     "@vitejs/plugin-react": "^4.4.1",
+     "concurrently": "^9.1.2",
+     "electron": "^35.7.5",
++    "jsdom": "^26.1.0",
+     "typescript": "^5.8.3",
+     "vite": "^6.3.2",
+     "vitest": "^3.1.1"
+   }
+ }
+
+### tests/setup.ts
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-1-before\\tests\\setup.ts" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\setup.ts"
+index 80dd144..863295f 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-1-before\\tests\\setup.ts"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\setup.ts"
+@@ -1,12 +1,9 @@
+-/**
+- * ATM - 测试环境配置
+- */
++import '@testing-library/jest-dom/vitest';
+ import { beforeAll } from 'vitest';
+ 
+ beforeAll(() => {
+-  // 设置测试环境变量
+   process.env.HOME = 'C:\\Users\\testuser';
+   process.env.USERPROFILE = 'C:\\Users\\testuser';
+   process.env.HOMEDRIVE = 'C:';
+   process.env.HOMEPATH = '\\Users\\testuser';
+ });
+
+### vitest.config.ts
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\vitest.config.ts"
+index e02abfc..2faf483 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\vitest.config.ts"
+@@ -1 +1,16 @@
+-﻿
++import path from 'node:path';
++import react from '@vitejs/plugin-react';
++import { defineConfig } from 'vitest/config';
++
++export default defineConfig({
++  plugins: [react()],
++  resolve: {
++    alias: {
++      '@': path.resolve(__dirname, 'src'),
++    },
++  },
++  test: {
++    environment: 'jsdom',
++    setupFiles: ['tests/setup.ts'],
++  },
++});
+

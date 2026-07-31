@@ -1,0 +1,1782 @@
+/**
+ * ATM - 快捷键管理页面（V1.5 三层结构 + Profile + 编辑 + 来源识别）
+ *
+ * Layer 1: 键盘占用总览 — 物理键占用/冲突状态（仅 funckey）
+ * Layer 2: 快捷键地图 — 全量快捷键卡片分组展示（含编辑入口+来源）
+ * Layer 3: 详细表格 — 完整字段列表（含操作列/接管/编辑）
+ * Profile: 顶部方案选择器（新建/复制/重命名/删除/导入/导出）
+ */
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import type { ApplyPlan, Conflict, EnvEntry, HotkeyBinding, HotkeyProfile, EnhancedConflict } from '../types/hotkey';
+import { showToast } from '../components/common/Toast';
+import type { EnvironmentInfo } from '../types/environment';
+import HotkeyList from '../components/HotkeyList';
+import ConflictList from '../components/ConflictList';
+import ApplyPlanPreview from '../components/ApplyPlanPreview';
+import KeyboardOccupancy from '../components/KeyboardVisualizer';
+import HotkeyMap, { MapFilter, MapViewMode } from '../components/HotkeyMap';
+import HotkeyEditor from '../components/HotkeyEditor';
+import ProfileBar from '../components/ProfileBar';
+import GlobalStatusBar from '../components/GlobalStatusBar';
+import MoreActionsMenu from '../components/MoreActionsMenu';
+import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
+import EditApplyPlanPreview from '../components/EditApplyPlanPreview';
+import AddHotkeyDialog from '../components/AddHotkeyDialog';
+import ImportPreviewDialog from '../components/ImportPreviewDialog';
+import type { ImportPreviewData } from '../components/ImportPreviewDialog';
+import EnvSourceBar from '../components/EnvSourceBar';
+import EnvSourceDialog from '../components/EnvSourceDialog';
+import type { EnvSourceList, AtmSettings, EnvSource } from '../types/environment';
+import ChangeHistoryDialog from '../components/ChangeHistoryDialog';
+import ExportCheatsheetDialog from '../components/ExportCheatsheetDialog';
+import EnhancedConflictList from '../components/EnhancedConflictList';
+import RawLineView from '../components/RawLineView';
+import EnvImportDialog from '../components/EnvImportDialog';
+import HotkeyDeleteConfirmDialog from '../components/HotkeyDeleteConfirmDialog';
+import type { EnvImportPreview, ImportResult } from '../types/importEnv';
+import { normalizeKey } from '../utils/keyNormalizer';
+import type { ActiveLayer } from '../utils/hotkeyItem';
+import { filterHotkeysByKeyboardLayer } from '../utils/hotkeyItem';
+
+// window.atm 类型定义见 src/types/window.d.ts
+
+/** 折叠按钮 */
+const CollapseToggle: React.FC<{ collapsed: boolean; onClick: () => void; label: string }> = ({
+  collapsed, onClick, label,
+}) => (
+  <div className="collapse-toggle" onClick={onClick}>
+    <span className={`collapse-toggle-icon ${collapsed ? 'collapsed' : ''}`}>▼</span>
+    {label}
+  </div>
+);
+
+// ── 在模块作用域声明 HB 别名 ──
+type HB = HotkeyBinding;
+
+const HotkeyPage: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
+  const [entries, setEntries] = useState<EnvEntry[]>([]);
+  const [bindings, setBindings] = useState<HB[]>([]);
+  const [conflicts, setConflicts] = useState<Conflict[]>([]);
+  const [plan, setPlan] = useState<ApplyPlan | null>(null);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // 三层结构状态
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedBindingId, setSelectedBindingId] = useState<string | null>(null);
+  const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
+  const [mapFilter, setMapFilter] = useState<MapFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 折叠状态
+  const [collapseKeyboard, setCollapseKeyboard] = useState(false);
+  const [collapseMap, setCollapseMap] = useState(false);
+
+  // ── Profile 状态 ──
+  const [profiles, setProfiles] = useState<HotkeyProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string>('');
+  const [appliedProfileId, setAppliedProfileId] = useState<string>('');
+
+  // ── 保留键状态（V1.6） ──
+  const [reservedBindings, setReservedBindings] = useState<HB[]>([]);
+  const [reservedKeysWarning, setReservedKeysWarning] = useState<string | null>(null);
+
+  // ── 全局视图模式（V2） ──
+  const [viewMode, setViewMode] = useState<MapViewMode>('my');
+
+  // ── 图层系统（V3.0）：normal / uppercase / ctrl / alt / special ──
+  const [activeLayer, setActiveLayer] = useState<ActiveLayer>('normal');
+  /** 切换层：如果当前已在该层则回到 normal，否则切到目标层 */
+  const handleLayerChange = useCallback((layer: ActiveLayer) => {
+    setActiveLayer((prev) => prev === layer ? 'normal' : layer);
+  }, []);
+
+  // ── 编辑状态 ──
+  const [editingBinding, setEditingBinding] = useState<HB | null>(null);
+  const [showSourceOverride, setShowSourceOverride] = useState<HB | null>(null);
+  const [overrideInput, setOverrideInput] = useState('');
+  const [editPlan, setEditPlan] = useState<any>(null);
+  const [applyingPlan, setApplyingPlan] = useState(false);
+  const [applyResult, setApplyResult] = useState<string | null>(null);
+
+  // ── 状态栏（V2.1） ──
+  const [lastLoadTime, setLastLoadTime] = useState<Date | null>(null);
+
+  // ── 新增绑定对话框（V2.2） ──
+  const [showAddDialog, setShowAddDialog] = useState<string | null>(null);
+
+  // ── V5.3 删除确认对话框 ──
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<HB | null>(null);
+
+  // ── 导入预览 ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importPreviewData, setImportPreviewData] = useState<ImportPreviewData | null>(null);
+
+  // ── V3.0 多 env 来源 ──
+  const [envSources, setEnvSources] = useState<EnvSourceList | null>(null);
+  const [settings, setSettings] = useState<AtmSettings | null>(null);
+  const [showEnvDialog, setShowEnvDialog] = useState(false);
+
+  // ═══ V4.0 — 变更历史 ═══
+  const [showChangeHistory, setShowChangeHistory] = useState(false);
+
+  // ═══ V4.0 — 导出速查表 ═══
+  const [showExportDialog, setShowExportDialog] = useState(false);
+
+  // ═══ V4.0 — 收藏 ═══
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // ═══ V4.0 — 增强冲突检测 ═══
+  const [enhancedConflicts, setEnhancedConflicts] = useState<EnhancedConflict[]>([]);
+  const [conflictIgnoreList, setConflictIgnoreList] = useState<string[]>([]);
+
+  // ═══ V4.0 — 原始行查看 ═══
+  const [rawLineView, setRawLineView] = useState<{ filePath: string; lineNumber: number; isReference?: boolean } | null>(null);
+
+  // ═══ V4.0 — Skill 加载状态 ═══
+  const [skillLoadStatuses, setSkillLoadStatuses] = useState<Record<string, any>>({});
+
+  // ═══ V4.0 — 撤销状态 ═══
+  const [undoStatus, setUndoStatus] = useState<{ canUndo: boolean; message: string }>({ canUndo: false, message: '' });
+
+  // ═══ V4.0 — env 文件导入 ═══
+  const [envImportPreview, setEnvImportPreview] = useState<EnvImportPreview | null>(null);
+  const [showEnvImportDialog, setShowEnvImportDialog] = useState(false);
+  const [envImportFile, setEnvImportFile] = useState<string | null>(null);
+
+  useEffect(() => { loadAll(); }, []);
+
+  const loadAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. 加载环境
+      const envResult = await window.atm.locateEnvironment();
+      if (!envResult.success || !envResult.data) {
+        setError('环境检测失败: ' + (envResult.error || '未知错误'));
+        setLoading(false);
+        return;
+      }
+      setEnvInfo(envResult.data);
+
+      // V3.0: 扫描多 env 来源
+      try {
+        const scanResult = await window.atm.scanAllEnvironments();
+        if (scanResult.success && scanResult.data) {
+          setEnvSources(scanResult.data.sources);
+          setSettings(scanResult.data.settings);
+        }
+      } catch (scanErr) {
+        console.warn('多 env 扫描失败（不影响基础功能）:', scanErr);
+      }
+
+      // 2. 加载默认/保留键参考库（来自 public/data/default_reserved_keys.json）
+      try {
+        const response = await fetch('/data/default_reserved_keys.json');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const reservedData: any[] = await response.json();
+        if (!Array.isArray(reservedData) || reservedData.length === 0) {
+          setReservedKeysWarning('默认/保留键参考库加载失败，请检查 public/data/default_reserved_keys.json 是否存在。');
+          setReservedBindings([]);
+        } else {
+          // 转为 HotkeyBinding[] 用于展示
+          const bindings: HB[] = reservedData.map((entry: any) => {
+            const isAllegro = entry.bindingSource === 'allegro_default';
+            return {
+              id: entry.id || `reserved_${entry.rawKey}`,
+              key: entry.rawKey,
+              command: entry.command || '',
+              type: 'funckey',
+              bindingSource: entry.bindingSource || 'allegro_default',
+              status: 'reserved' as const,
+              chineseName: entry.zhName || '',
+              commandSource: isAllegro ? 'allegro_builtin' as const : 'unknown' as const,
+              confidence: 'high' as const,
+              primaryKey: entry.physicalKey,
+              modifiers: entry.modifiers || [],
+              displayKey: entry.displayKey || entry.rawKey,
+              editable: false,
+              warnWhenOverride: true,
+              defaultOccupier: {
+                command: entry.command || '(无默认命令)',
+                description: entry.zhName || '',
+                source: entry.bindingSource || 'allegro_default',
+              },
+            } as HB;
+          });
+          setReservedBindings(bindings);
+          setReservedKeysWarning(null);
+        }
+      } catch (err) {
+        console.error('保留键参考库加载失败:', err);
+        setReservedKeysWarning('默认/保留键参考库加载失败，请检查 public/data/default_reserved_keys.json 是否存在。');
+        setReservedBindings([]);
+      }
+
+      // 3. 加载 Profiles
+      const profileResult = await window.atm.listProfiles();
+      if (profileResult.success && profileResult.data) {
+        setProfiles(profileResult.data);
+        // 默认选中第一个方案
+        if (!activeProfileId && profileResult.data.length > 0) {
+          setActiveProfileId(profileResult.data[0].id);
+        }
+      }
+
+      // 加载已应用方案 ID
+      const appliedRes = await window.atm.getAppliedHotkeyProfile();
+      if (appliedRes.success && appliedRes.data?.profileId) {
+        setAppliedProfileId(appliedRes.data.profileId);
+      }
+
+      // 3. 加载 env 快捷键
+      let freshlyMappedBindings: HB[] = [];
+      if (envResult.data.envExists && envResult.data.envFilePath) {
+        const parseResult = await window.atm.parseEnvFile(envResult.data.envFilePath);
+        if (parseResult.success && parseResult.data) {
+          setEntries(parseResult.data.entries);
+          setParseWarnings(parseResult.data.warnings || []);
+
+          const validateResult = await window.atm.validateHotkeys(envResult.data.envFilePath);
+          if (validateResult.success && validateResult.data) {
+            // 将 bindingSource 从旧字段映射
+            freshlyMappedBindings = (validateResult.data.bindings || []).map((b: HB) => ({
+              ...b,
+              bindingSource: (b as any).bindingSource || (b.source === 'atm_managed' ? 'atm_managed_block' : 'user_env_original'),
+            }));
+            setBindings(freshlyMappedBindings);
+            setConflicts(validateResult.data.conflicts || []);
+          }
+        }
+      } else {
+        setParseWarnings(['env 文件不存在，请先创建或选择 pcbenv 目录']);
+      }
+
+      // V3.0: 加载参考 env 的快捷键（只读）
+      if (envSources) {
+        const refSources = envSources.sources.filter((s) => s.isReference && s.exists);
+        const refBindingsFromAll: HB[] = [];
+
+        for (const refSrc of refSources) {
+          try {
+            const refParse = await window.atm.parseEnvFile(refSrc.path);
+            if (refParse.success && refParse.data) {
+              const refValidate = await window.atm.validateHotkeys(refSrc.path);
+              if (refValidate.success && refValidate.data) {
+                const bindingSourceForRef =
+                  refSrc.role === 'install_default_env' ? 'install_default_env' as const
+                  : refSrc.role === 'site_env' ? 'site_env' as const
+                  : refSrc.role === 'company_env' ? 'company_env' as const
+                  : 'reference_env' as const;
+
+                for (const b of (refValidate.data.bindings || [])) {
+                  refBindingsFromAll.push({
+                    ...b,
+                    id: `ref_${refSrc.id}_${b.id}`,
+                    bindingSource: bindingSourceForRef,
+                    envSourceId: refSrc.id,
+                    envRole: refSrc.role,
+                    editable: false,
+                    status: 'reserved' as const,
+                    notes: [...(b.notes || []), `来自参考 env: ${refSrc.path}`],
+                  });
+                }
+              }
+            }
+          } catch (refErr) {
+            console.warn(`解析参考 env 失败: ${refSrc.path}`, refErr);
+          }
+        }
+
+        // 合并参考 env 绑定到主绑定列表
+        if (refBindingsFromAll.length > 0) {
+          setBindings((prev) => [...prev, ...refBindingsFromAll]);
+
+          // 跨 env 覆盖检测
+          const crossEnvConflicts: import('../types/hotkey').Conflict[] = [];
+          const userKeyMap = new Map<string, HB>();
+
+          for (const b of freshlyMappedBindings) {
+            const lowerKey = b.key.toLowerCase();
+            if (!userKeyMap.has(lowerKey)) {
+              userKeyMap.set(lowerKey, b);
+            }
+          }
+
+          // 检测用户 env vs 参考 env 的覆盖关系
+          const seenOverridePairs = new Set<string>();
+          for (const rb of refBindingsFromAll) {
+            const lowerKey = rb.key.toLowerCase();
+            const userBinding = userKeyMap.get(lowerKey);
+            if (userBinding && userBinding.command !== rb.command) {
+              // 同键不同命令 → 用户覆盖参考
+              const pairKey = `${lowerKey}_${rb.envSourceId}`;
+              if (!seenOverridePairs.has(pairKey)) {
+                seenOverridePairs.add(pairKey);
+                crossEnvConflicts.push({
+                  type: 'cross_env_override',
+                  severity: 'info',
+                  message: `用户 env 覆盖${rb.envRole === 'install_default_env' ? '安装默认' : '参考'}配置：${lowerKey}`,
+                  bindings: [userBinding, rb],
+                });
+              }
+            }
+          }
+
+          if (crossEnvConflicts.length > 0) {
+            setConflicts((prev) => [...prev, ...crossEnvConflicts]);
+          }
+        }
+      }
+
+      // V4.0: 加载收藏
+      try {
+        if (envResult.data.pcbenvPath) {
+          const favResult = await window.atm.loadFavorites(envResult.data.pcbenvPath);
+          if (favResult.success && favResult.data) {
+            setFavoriteIds(favResult.data.favoriteBindingIds || []);
+          }
+        }
+      } catch (favErr) {
+        console.warn('加载收藏失败:', favErr);
+      }
+
+      // V4.0: 检查撤销状态
+      try {
+        if (envResult.data.pcbenvPath) {
+          const lastResult = await window.atm.getLastChange(envResult.data.pcbenvPath);
+          if (lastResult.success && lastResult.data) {
+            setUndoStatus({
+              canUndo: lastResult.data.canUndo,
+              message: lastResult.data.record ? `上次操作: ${lastResult.data.record.summary}` : '',
+            });
+          }
+        }
+      } catch (undoErr) {
+        console.warn('检查撤销状态失败:', undoErr);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+      setLastLoadTime(new Date());
+    }
+  };
+
+  // ── Profile 操作 ──
+  const handleSelectProfile = useCallback((profileId: string) => {
+    setActiveProfileId(profileId);
+    // 刷新绑定以显示 Profile 信息
+    setBindings((prev) => prev.map((b) => ({
+      ...b,
+      profileId: b.profileId || profileId,
+      profileName: profiles.find((p) => p.id === profileId)?.name || b.profileName,
+    })));
+  }, [profiles]);
+
+  const handleCreateProfile = useCallback(async (name: string, description?: string) => {
+    const result = await window.atm.createProfile(name, description);
+    if (result.success && result.data) {
+      setProfiles((prev) => [...prev, result.data!]);
+      setActiveProfileId(result.data.id);
+    }
+  }, []);
+
+  const handleCopyProfile = useCallback(async (profileId: string, newName?: string) => {
+    const result = await window.atm.copyProfile(profileId, newName);
+    if (result.success && result.data) {
+      setProfiles((prev) => [...prev, result.data!]);
+    }
+  }, []);
+
+  const handleRenameProfile = useCallback(async (profileId: string, newName: string) => {
+    const result = await window.atm.renameProfile(profileId, newName);
+    if (result.success) {
+      setProfiles((prev) => prev.map((p) => p.id === profileId ? { ...p, name: newName } : p));
+    }
+  }, []);
+
+  const handleDeleteProfile = useCallback(async (profileId: string) => {
+    const activeName = profiles.find(p => p.id === profileId)?.name || profileId;
+    try {
+      const result = await window.atm.deleteProfile(profileId);
+      if (result.success) {
+        setProfiles((prev) => {
+          const updated = prev.filter((p) => p.id !== profileId);
+          if (activeProfileId === profileId && updated.length > 0) {
+            // 切换到第一个可用方案
+            setActiveProfileId(updated[0].id);
+          }
+          return updated;
+        });
+        // 如果删除的是已应用方案，清除 appliedProfileId
+        if (appliedProfileId === profileId) {
+          setAppliedProfileId('');
+        }
+        showToast('success', `已删除快捷键方案：${activeName}`);
+      } else {
+        showToast('error', result.error || `删除快捷键方案失败：${activeName}`);
+      }
+    } catch (err) {
+      showToast('error', `删除失败：${(err as Error).message}`);
+    }
+  }, [activeProfileId, profiles, appliedProfileId]);
+
+  const handleExportProfile = useCallback(async (profileId: string) => {
+    const result = await window.atm.exportProfile(profileId);
+    if (result.success && result.data) {
+      // 创建下载链接
+      const blob = new Blob([result.data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const profileName = profiles.find((p) => p.id === profileId)?.name || 'profile';
+      a.download = `${profileName}.atm-profile.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }, [profiles]);
+
+  /** 应用当前快捷键方案到 env（生成 Apply Plan） */
+  const handleApplyProfile = useCallback(async () => {
+    const profile = profiles.find(p => p.id === activeProfileId);
+    if (!profile) {
+      showToast('warning', '请先选择一个快捷键方案。');
+      return;
+    }
+    try {
+      // 生成 Apply Plan
+      const planRes = await window.atm.createApplyPlan('');
+      if (planRes.success && planRes.data) {
+        // 保存已应用方案 ID
+        await window.atm.setAppliedHotkeyProfile(activeProfileId);
+        setAppliedProfileId(activeProfileId);
+        showToast('success', `Apply Plan 已生成。请确认执行后写入 env，方案"${profile.name}"将生效。`);
+        // 触发 Apply Plan 显示
+        setPendingPlan(planRes.data);
+      } else {
+        showToast('error', planRes.error || '生成 Apply Plan 失败');
+      }
+    } catch (err) {
+      showToast('error', `应用方案失败：${(err as Error).message}`);
+    }
+  }, [profiles, activeProfileId]);
+
+  /** 用于 Apply Plan 弹窗的状态 */
+  const [showApplyPlan, setShowApplyPlan] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<any>(null);
+
+  // ── 编辑操作 ──
+  const handleEditBinding = useCallback((binding: HB) => {
+    setEditingBinding(binding);
+  }, []);
+
+  const handleEditorSave = useCallback(async (editData: any) => {
+    try {
+      // 生成 Apply Plan（不直接写文件）
+      const binding = bindings.find((b) => b.id === editData.bindingId);
+      if (!binding || !envInfo?.envFilePath) {
+        setError('无法生成 Apply Plan：缺少绑定或 env 路径');
+        return;
+      }
+      const result = await window.atm.generateEditPlan(
+        editData,
+        binding,
+        envInfo.envFilePath,
+      );
+      if (result.success && result.data) {
+        setEditPlan(result.data);
+        setEditingBinding(null); // 关闭编辑器，显示 Plan 预览
+      } else {
+        setError('生成 Apply Plan 失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      setError('生成 Apply Plan 失败: ' + String(err));
+    }
+  }, [bindings, envInfo]);
+
+  // ── 接管到当前方案 ──
+  const handleAdoptBinding = useCallback(async (binding: HB) => {
+    if (!activeProfileId) {
+      setError('请先选择或创建方案');
+      return;
+    }
+    try {
+      const activeProfile = profiles.find((p) => p.id === activeProfileId);
+      if (!activeProfile) return;
+
+      const newBinding = {
+        id: binding.id,
+        key: binding.key,
+        command: binding.command,
+        type: binding.type,
+        enabled: true,
+        note: `从 env 接管: ${binding.command}`,
+      };
+      await window.atm.saveProfileBindings(activeProfileId, [...activeProfile.bindings, newBinding]);
+      setBindings((prev) => prev.map((b) =>
+        b.id === binding.id ? { ...b, isAdopted: true, bindingSource: 'active_profile', profileId: activeProfileId, profileName: activeProfile.name } : b
+      ));
+    } catch (err) {
+      setError('接管失败: ' + String(err));
+    }
+  }, [activeProfileId, profiles]);
+
+  // ── 命令来源修正 ──
+  const handleOverrideSource = useCallback(async (binding: HB) => {
+    setShowSourceOverride(binding);
+    setOverrideInput(binding.commandSource || 'unknown');
+  }, []);
+
+  const handleSaveOverride = useCallback(async () => {
+    if (!showSourceOverride || !overrideInput) return;
+    try {
+      await window.atm.saveCommandOverride(showSourceOverride.command, overrideInput);
+      setShowSourceOverride(null);
+      await loadAll();
+    } catch (err) {
+      setError('保存修正失败: ' + String(err));
+    }
+  }, [showSourceOverride, overrideInput]);
+
+  // ── 删除快捷键（V5.3 先弹出确认弹窗，再生成注释删除的 Apply Plan） ──
+  const handleDeleteBinding = useCallback(async (binding: HB) => {
+    // 检查是否为只读引用源（公司/site/系统保留/安装默认等）
+    if (binding.bindingSource === 'company_env' || binding.bindingSource === 'site_env' ||
+        binding.bindingSource === 'system_reserved' || binding.bindingSource === 'install_default_env') {
+      setError('该快捷键来自只读参考源，不能直接删除。');
+      return;
+    }
+    // 弹出确认对话框
+    setDeleteConfirmTarget(binding);
+  }, []);
+
+  /** 确认删除：生成 Apply Plan */
+  const handleDeleteConfirm = useCallback(async (binding: HB) => {
+    if (!envInfo?.envFilePath) {
+      setError('无法生成删除 Plan：env 文件路径未知');
+      setDeleteConfirmTarget(null);
+      return;
+    }
+    setDeleteConfirmTarget(null);
+    try {
+      const result = await window.atm.generateEditPlan(
+        { bindingId: binding.id, command: '' },
+        binding,
+        envInfo.envFilePath,
+      );
+      if (result.success && result.data) {
+        setEditPlan(result.data);
+        setApplyResult('✅ 删除计划已生成，请确认执行。');
+      } else {
+        setError('生成删除 Plan 失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      setError('生成删除 Plan 失败: ' + String(err));
+    }
+  }, [envInfo]);
+
+  // ── 新增快捷键（V2.2 生成添加的 Apply Plan） ──
+  const handleAddBindingConfirm = useCallback(async (draft: { key: string; command: string; type: 'funckey' | 'alias' }) => {
+    if (!envInfo?.envFilePath) {
+      setError('无法生成添加 Plan：env 文件路径未知');
+      return;
+    }
+    try {
+      const result = await window.atm.generateAddPlan(
+        draft.key,
+        draft.command,
+        draft.type,
+        envInfo.envFilePath,
+      );
+      if (result.success && result.data) {
+        setEditPlan(result.data);
+        setShowAddDialog(null);
+      } else {
+        setError('生成添加 Plan 失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      setError('生成添加 Plan 失败: ' + String(err));
+    }
+  }, [envInfo]);
+
+  // ── 导入快捷键方案（文件选择 + 校验 + 预览） ──
+
+  /** 校验导入的 JSON 是否符合 ATM profile 格式 */
+  const validateImportProfile = useCallback((parsed: any): { valid: boolean; error?: string } => {
+    if (!parsed || typeof parsed !== 'object') {
+      return { valid: false, error: '导入失败：文件不是有效的 ATM 快捷键方案' };
+    }
+    if (parsed.type !== 'atm_hotkey_profile') {
+      return { valid: false, error: '导入失败：文件不是有效的 ATM 快捷键方案' };
+    }
+    if (!parsed.profile) {
+      return { valid: false, error: '导入失败：文件不是有效的 ATM 快捷键方案' };
+    }
+    if (!Array.isArray(parsed.profile.hotkeys)) {
+      return { valid: false, error: '导入失败：文件不是有效的 ATM 快捷键方案' };
+    }
+    if (parsed.profile.hotkeys.length === 0) {
+      return { valid: false, error: '导入失败：快捷键方案中没有快捷键' };
+    }
+    for (let i = 0; i < parsed.profile.hotkeys.length; i++) {
+      const hk = parsed.profile.hotkeys[i];
+      if (!hk.type || !hk.rawKey || !hk.command) {
+        return { valid: false, error: `导入失败：第 ${i + 1} 条快捷键缺少必要字段（type/rawKey/command）` };
+      }
+    }
+    return { valid: true };
+  }, []);
+
+  /** 构建导入预览数据 */
+  const buildImportPreview = useCallback((parsed: any): ImportPreviewData => {
+    const profile = parsed.profile;
+    const hotkeys: any[] = profile.hotkeys || [];
+
+    const funckeyCount = hotkeys.filter((h: any) => h.type === 'funckey').length;
+    const aliasCount = hotkeys.filter((h: any) => h.type === 'alias').length;
+
+    // 同名方案
+    const sameNameProfiles = profiles
+      .filter((p) => p.name === profile.name)
+      .map((p) => p.name);
+
+    // 与当前 env 冲突
+    const envKeySet = new Set(bindings.map((b) => b.key.toLowerCase()));
+    const envConflicts = hotkeys.filter((h: any) => envKeySet.has(h.rawKey.toLowerCase()));
+
+    // 覆盖保留键
+    const reservedKeySet = new Set(reservedBindings.map((b) => b.key.toLowerCase()));
+    const reservedConflicts = hotkeys.filter((h: any) => reservedKeySet.has(h.rawKey.toLowerCase()));
+
+    // 转换绑定
+    const convertedBindings = hotkeys.map((h: any, i: number) => ({
+      key: h.rawKey,
+      command: h.command,
+      type: h.type as 'funckey' | 'alias',
+      chineseName: h.zhName,
+      enabled: h.enabled !== false,
+    }));
+
+    return {
+      profileName: profile.name || '未命名方案',
+      profileDescription: profile.description || '',
+      profileId: profile.id || '',
+      totalHotkeys: hotkeys.length,
+      funckeyCount,
+      aliasCount,
+      sameNameProfiles,
+      envConflictCount: envConflicts.length,
+      reservedOverrideCount: reservedConflicts.length,
+      bindings: convertedBindings,
+      rawJson: JSON.stringify(parsed),
+    };
+  }, [profiles, bindings, reservedBindings]);
+
+  /** 点击导入按钮 → 打开文件选择框 */
+  const handleImportClick = useCallback(() => {
+    console.log('Import profile button clicked');
+    fileInputRef.current?.click();
+  }, []);
+
+  /** 选择文件后 → 读取 → 校验 → 预览 */
+  const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return; // 取消选择不报错
+    console.log('Selected import file:', file.name);
+
+    // 检查扩展名
+    if (!file.name.endsWith('.json') && !file.name.endsWith('.zip')) {
+      setError('导入失败：仅支持 .json 或 .zip 格式');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      console.log('Imported profile parsed:', parsed);
+
+      // 校验
+      const validation = validateImportProfile(parsed);
+      if (!validation.valid) {
+        setError(validation.error || '导入失败：文件不是有效的 ATM 快捷键方案');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // 构建预览数据
+      const previewData = buildImportPreview(parsed);
+      setImportPreviewData(previewData);
+    } catch (err) {
+      console.error('Import parse error:', err);
+      setError('导入失败：文件不是有效的 ATM 快捷键方案');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }, [validateImportProfile, buildImportPreview]);
+
+  /** 导入为新方案 */
+  const handleImportAsNew = useCallback(async (data: ImportPreviewData) => {
+    try {
+      // 处理 ID 重复
+      let id = data.profileId;
+      let name = data.profileName;
+
+      const existingIdProfile = profiles.find((p) => p.id === id);
+      if (existingIdProfile) {
+        let suffix = 1;
+        while (profiles.find((p) => p.id === `${id}_copy_${suffix}`)) suffix++;
+        id = `${id}_copy_${suffix}`;
+      }
+
+      // 处理名称重复
+      const existingNameProfile = profiles.find((p) => p.name === name);
+      if (existingNameProfile) {
+        name = name + ' 副本';
+      }
+
+      // 创建新方案
+      const createResult = await window.atm.createProfile(name, data.profileDescription);
+      if (!createResult.success || !createResult.data) {
+        setError('创建方案失败: ' + (createResult.error || ''));
+        return;
+      }
+
+      // 保存绑定
+      const saveResult = await window.atm.saveProfileBindings(
+        createResult.data.id,
+        data.bindings.map((b) => ({
+          ...b,
+          id: `imported_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        })),
+      );
+      if (!saveResult.success) {
+        setError('保存快捷键失败: ' + (saveResult.error || ''));
+        return;
+      }
+
+      setImportPreviewData(null);
+      setProfiles((prev) => [...prev, saveResult.data!]);
+      setActiveProfileId(saveResult.data!.id);
+      alert(`已导入方案：${name}`);
+    } catch (err) {
+      setError('导入方案时发生异常: ' + String(err));
+    }
+  }, [profiles]);
+
+  /** 导入并预览应用 */
+  const handleImportAndPreview = useCallback(async (data: ImportPreviewData) => {
+    try {
+      // 1. 先导入为新方案（同上）
+      let id = data.profileId;
+      let name = data.profileName;
+
+      const existingIdProfile = profiles.find((p) => p.id === id);
+      if (existingIdProfile) {
+        let suffix = 1;
+        while (profiles.find((p) => p.id === `${id}_copy_${suffix}`)) suffix++;
+        id = `${id}_copy_${suffix}`;
+      }
+
+      const existingNameProfile = profiles.find((p) => p.name === name);
+      if (existingNameProfile) {
+        name = name + ' 副本';
+      }
+
+      const createResult = await window.atm.createProfile(name, data.profileDescription);
+      if (!createResult.success || !createResult.data) {
+        setError('创建方案失败: ' + (createResult.error || ''));
+        return;
+      }
+
+      const saveResult = await window.atm.saveProfileBindings(
+        createResult.data.id,
+        data.bindings.map((b) => ({
+          ...b,
+          id: `imported_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        })),
+      );
+      if (!saveResult.success) {
+        setError('保存快捷键失败: ' + (saveResult.error || ''));
+        return;
+      }
+
+      setImportPreviewData(null);
+      setProfiles((prev) => [...prev, saveResult.data!]);
+      setActiveProfileId(saveResult.data!.id);
+
+      // 2. 生成 Apply Plan 预览
+      if (envInfo?.envFilePath) {
+        setLoading(true);
+        try {
+          const planResult = await window.atm.createApplyPlan(envInfo.envFilePath);
+          if (planResult.success && planResult.data) {
+            setPlan(planResult.data);
+          } else {
+            setError('生成 Apply Plan 失败: ' + (planResult.error || ''));
+          }
+        } catch (err) {
+          setError('生成 Apply Plan 失败: ' + String(err));
+        } finally {
+          setLoading(false);
+        }
+      }
+    } catch (err) {
+      setError('导入并预览方案时发生异常: ' + String(err));
+    }
+  }, [profiles, envInfo]);
+
+  // ── 执行编辑 Apply Plan ──
+  const handleExecuteEditPlan = useCallback(async () => {
+    if (!editPlan || !envInfo?.envFilePath) return;
+    setApplyingPlan(true);
+    try {
+      const result = await window.atm.executeEditPlan(
+        JSON.stringify(editPlan),
+        envInfo.envFilePath,
+      );
+      if (result.success) {
+        alert('编辑 Apply Plan 执行成功！');
+        setEditPlan(null);
+        await loadAll();
+      } else {
+        setError('执行失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      setError('执行失败: ' + String(err));
+    } finally {
+      setApplyingPlan(false);
+    }
+  }, [editPlan, envInfo]);
+
+  // ── 其他操作 ──
+  const handleCreatePlan = async () => {
+    if (!envInfo?.envFilePath) { setError('env 文件路径未知'); return; }
+    try {
+      setLoading(true);
+      const result = await window.atm.createApplyPlan(envInfo.envFilePath);
+      if (result.success && result.data) { setPlan(result.data); } else { setError('生成 Apply Plan 失败: ' + (result.error || '')); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
+  };
+
+  const handleApplyPlan = async () => {
+    if (!plan) return;
+    try {
+      setLoading(true);
+      const result = await window.atm.applyPlan(JSON.stringify(plan));
+      if (result.success) {
+        alert(`Apply Plan 执行成功！\n执行步骤: ${result.appliedSteps}/${result.totalSteps}\n` + (result.rollbackPath ? `回滚路径: ${result.rollbackPath}` : ''));
+        setPlan(null);
+        await loadAll();
+      } else { setError('执行失败: ' + (result.error || '')); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
+  };
+
+  // ── V3.0 多 env 管理 ──
+
+  /** 刷新 env 来源 */
+  const refreshEnvSources = useCallback(async () => {
+    try {
+      const result = await window.atm.scanAllEnvironments();
+      if (result.success && result.data) {
+        setEnvSources(result.data.sources);
+        setSettings(result.data.settings);
+      }
+    } catch (err) {
+      console.warn('刷新 env 来源失败:', err);
+    }
+  }, []);
+
+  /** 设置活动 env */
+  const handleSetActiveEnv = useCallback(async (envId: string) => {
+    if (!envSources || !envInfo?.pcbenvPath) return;
+    const src = envSources.sources.find((s) => s.id === envId);
+    if (!src) return;
+
+    const result = await window.atm.setActiveEnv(envInfo.pcbenvPath, src.path);
+    if (result.success) {
+      // 刷新并重新加载
+      await refreshEnvSources();
+      // 更新 envInfo 中的 envFilePath
+      setEnvInfo((prev) => prev ? { ...prev, envFilePath: src.path, envWritable: src.writable } : prev);
+      // 重新加载快捷键
+      if (src.path) {
+        try {
+          const parseResult = await window.atm.parseEnvFile(src.path);
+          if (parseResult.success && parseResult.data) {
+            setEntries(parseResult.data.entries);
+            const validateResult = await window.atm.validateHotkeys(src.path);
+            if (validateResult.success && validateResult.data) {
+              setBindings(validateResult.data.bindings.map((b: HB) => ({
+                ...b,
+                bindingSource: b.bindingSource || 'user_env_original',
+              })));
+              setConflicts(validateResult.data.conflicts || []);
+            }
+          }
+        } catch (err) {
+          console.error('重新加载快捷键失败:', err);
+        }
+      }
+    }
+  }, [envSources, envInfo, refreshEnvSources]);
+
+  /** 添加参考 env */
+  const handleAddReferenceEnv = useCallback(async () => {
+    if (!envInfo?.pcbenvPath) return;
+    const result = await window.atm.addReferenceEnv(envInfo.pcbenvPath);
+    if (result.success && result.data) {
+      setSettings(result.data);
+      await refreshEnvSources();
+    }
+  }, [envInfo, refreshEnvSources]);
+
+  /** 移除参考 env */
+  const handleRemoveReferenceEnv = useCallback(async (envId: string) => {
+    if (!envSources || !envInfo?.pcbenvPath) return;
+    const src = envSources.sources.find((s) => s.id === envId);
+    if (!src) return;
+
+    const result = await window.atm.removeReferenceEnv(envInfo.pcbenvPath, src.path);
+    if (result.success && result.data) {
+      setSettings(result.data);
+      await refreshEnvSources();
+    }
+  }, [envSources, envInfo, refreshEnvSources]);
+
+  // ═══════════════════════════════════════════════════════════
+  // V4.0 操作处理器
+  // ═══════════════════════════════════════════════════════════
+
+  /** 切换收藏 */
+  const handleToggleFavorite = useCallback(async (bindingId: string) => {
+    if (!envInfo?.pcbenvPath) return;
+    try {
+      const result = await window.atm.toggleFavorite(envInfo.pcbenvPath, bindingId);
+      if (result.success && result.data) {
+        setFavoriteIds(result.data.favorites.favoriteBindingIds);
+      }
+    } catch (err) {
+      console.warn('切换收藏失败:', err);
+    }
+  }, [envInfo]);
+
+  /** 导出文件保存 */
+  const handleExportSave = useCallback(async (content: string, filename: string) => {
+    try {
+      const ext = filename.endsWith('.md') ? 'markdown' : 'html';
+      const result = await window.atm.saveExportedFile(content, filename, [
+        { name: 'Markdown', extensions: ['md'] },
+        { name: 'HTML', extensions: ['html', 'htm'] },
+      ]);
+      if (result.success && result.data) {
+        alert(`导出成功: ${result.data}`);
+      } else if (result.info !== '取消保存') {
+        alert('导出失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      alert('导出异常: ' + String(err));
+    }
+  }, []);
+
+  /** env 文件导入：打开文件对话框 → 读取 → 预览 */
+  const handleEnvImportClick = useCallback(async () => {
+    try {
+      const dialogResult = await window.atm.openEnvFileDialog();
+      if (!dialogResult.success || !dialogResult.data) {
+        if (dialogResult.info !== '取消选择') {
+          setError('选择文件失败: ' + (dialogResult.error || ''));
+        }
+        return;
+      }
+
+      const filePath = dialogResult.data;
+      setEnvImportFile(filePath);
+
+      // 读取并解析文件
+      const parseResult = await window.atm.parseImportEnvFile(filePath);
+      if (!parseResult.success || !parseResult.data) {
+        setError('解析 env 文件失败: ' + (parseResult.error || ''));
+        setEnvImportFile(null);
+        return;
+      }
+
+      const preview = parseResult.data;
+
+      // 计算冲突（需要当前绑定和保留键）
+      const conflictParams = {
+        entries: preview.entries,
+        currentBindings: bindings,
+        reservedBindings: reservedBindings,
+      };
+      const conflictResult = await window.atm.computeImportConflicts(conflictParams);
+      if (conflictResult.success && conflictResult.data) {
+        preview.conflicts = conflictResult.data;
+      }
+
+      setEnvImportPreview(preview);
+      setShowEnvImportDialog(true);
+    } catch (err) {
+      setError('导入过程异常: ' + String(err));
+    }
+  }, [bindings, reservedBindings]);
+
+  /** env 导入完成回调 */
+  const handleEnvImported = useCallback(async (result: ImportResult) => {
+    setShowEnvImportDialog(false);
+    setEnvImportPreview(null);
+    setEnvImportFile(null);
+
+    // 刷新全部数据
+    await loadAll();
+
+    if (result.success) {
+      // 根据模式显示提示
+      const modeMessages: Record<string, string> = {
+        new_profile: '已创建新的快捷键方案',
+        merge_profile: '快捷键方案已合并',
+        as_reference: '已添加参考 env',
+        merge_user_env: '快捷键已写入用户 env',
+      };
+      alert(`✅ 导入成功！${modeMessages[result.mode] || ''}\n新增: ${result.stats.added} 项\n跳过: ${result.stats.skipped} 项`);
+    }
+  }, []);
+
+  /** 查看原始行 */
+  const handleViewRawLine = useCallback((filePath: string, lineNumber: number) => {
+    setRawLineView({ filePath, lineNumber, isReference: !filePath.includes(envInfo?.envFilePath || '') });
+  }, [envInfo]);
+
+  /** 忽略冲突 */
+  const handleIgnoreConflict = useCallback((conflictId: string) => {
+    setConflictIgnoreList((prev) => {
+      if (prev.includes(conflictId)) return prev;
+      const updated = [...prev, conflictId];
+      // 保存忽略列表到 localStorage
+      try {
+        localStorage.setItem('atm_conflict_ignore', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  // V4.0: 从 localStorage 恢复冲突忽略列表
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('atm_conflict_ignore');
+      if (saved) {
+        setConflictIgnoreList(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
+  // ── 键名归一化（添加 primaryKey / modifiers / displayKey） ──
+  const enrichedBindings = useMemo(
+    () => bindings.map((b) => {
+      const nk = normalizeKey(b.key, b.type);
+      return { ...b, primaryKey: nk.primaryKey, modifiers: nk.modifiers, displayKey: nk.displayKey };
+    }),
+    [bindings]
+  );
+  const enrichedReserved = useMemo(
+    () => reservedBindings.map((b) => {
+      const nk = normalizeKey(b.key, b.type);
+      return { ...b, primaryKey: nk.primaryKey, modifiers: nk.modifiers, displayKey: nk.displayKey };
+    }),
+    [reservedBindings]
+  );
+
+  // V3.0 多视图模式：选中命令 → 高亮对应绑定（放在 enrichedBindings 之后定义）
+  const handleSelectCommand = useCallback((command: string | null) => {
+    setSelectedCommand(command);
+    if (command) {
+      const match = enrichedBindings.find((b) => b.command === command);
+      if (match) {
+        setSelectedBindingId(match.id);
+      }
+    } else {
+      setSelectedBindingId(null);
+    }
+  }, [enrichedBindings]);
+
+  // ── 全局视图模式筛选 ──
+
+  /** 根据全局视图模式过滤快捷键列表 */
+  function getVisibleHotkeysByViewMode(
+    allBindings: HB[],
+    allReserved: HB[],
+    mode: MapViewMode,
+  ): HB[] {
+    switch (mode) {
+      case 'my':
+        // 只显示用户真实快捷键（排除软件默认和系统保留）
+        return allBindings.filter((b) =>
+          b.bindingSource !== 'allegro_default' && b.bindingSource !== 'system_reserved'
+        );
+      case 'reserved':
+        // 只显示保留键
+        return allReserved;
+      case 'overlay': {
+        // 同时显示用户快捷键和未被覆盖的保留键
+        const userBindings = allBindings.filter((b) =>
+          b.bindingSource !== 'allegro_default' && b.bindingSource !== 'system_reserved'
+        );
+        // 构建保留键按 key 的查找表
+        const reservedByKey = new Map<string, HB>();
+        for (const rb of allReserved) {
+          const lower = rb.key.toLowerCase();
+          if (!reservedByKey.has(lower)) {
+            reservedByKey.set(lower, rb);
+          }
+        }
+        const userKeys = new Set<string>();
+        const result: HB[] = [];
+        // 用户绑定：如果与保留键冲突，注入 override 标记
+        for (const ub of userBindings) {
+          const lowerKey = ub.key.toLowerCase();
+          userKeys.add(lowerKey);
+          const reserved = reservedByKey.get(lowerKey);
+          if (reserved) {
+            result.push({
+              ...ub,
+              warnWhenOverride: true,
+              defaultOccupier: {
+                command: reserved.command || '',
+                description: reserved.chineseName || reserved.command || '',
+                source: reserved.bindingSource,
+              },
+            });
+          } else {
+            result.push(ub);
+          }
+        }
+        // 未被覆盖的保留键
+        for (const rb of allReserved) {
+          if (!userKeys.has(rb.key.toLowerCase())) {
+            result.push(rb);
+          }
+        }
+        return result;
+      }
+      default:
+        return allBindings;
+    }
+  }
+
+  // 根据视图模式得到当前可见的快捷键列表（用于统计/键盘/表格）
+  const viewModeBindings = useMemo(
+    () => getVisibleHotkeysByViewMode(enrichedBindings, enrichedReserved, viewMode),
+    [enrichedBindings, enrichedReserved, viewMode]
+  );
+
+  // V4.0：收藏筛选
+  const visibleBindings = useMemo(
+    () => showFavoritesOnly
+      ? viewModeBindings.filter((b) => favoriteIds.includes(b.id))
+      : viewModeBindings,
+    [viewModeBindings, showFavoritesOnly, favoriteIds]
+  );
+
+  // 根据图层过滤可见快捷键（V2.2：使用 filterHotkeysByKeyboardLayer）
+  const layerFilteredBindings = useMemo(
+    () => filterHotkeysByKeyboardLayer(visibleBindings, activeLayer),
+    [visibleBindings, activeLayer]
+  );
+
+  // 用于 HotkeyMap 的用户绑定（经过视图模式+图层筛选+收藏筛选）
+  const layerUserBindings = useMemo(
+    () => filterHotkeysByKeyboardLayer(
+      enrichedBindings.filter((b) => {
+        if (viewMode === 'reserved') return false;
+        if (viewMode === 'my' && (b.bindingSource === 'allegro_default' || b.bindingSource === 'system_reserved')) return false;
+        // 收藏筛选
+        if (showFavoritesOnly && !favoriteIds.includes(b.id)) return false;
+        return true;
+      }),
+      activeLayer,
+    ),
+    [enrichedBindings, viewMode, activeLayer, showFavoritesOnly, favoriteIds]
+  );
+
+  // 用于 HotkeyMap 的保留键（经过图层筛选+收藏筛选）
+  const layerReservedBindings = useMemo(
+    () => filterHotkeysByKeyboardLayer(
+      enrichedReserved.filter((b) => {
+        if (viewMode === 'my') return false;
+        // 收藏筛选
+        if (showFavoritesOnly && !favoriteIds.includes(b.id)) return false;
+        return true;
+      }),
+      activeLayer,
+    ),
+    [enrichedReserved, viewMode, activeLayer, showFavoritesOnly, favoriteIds]
+  );
+
+  // 根据 layerFilteredBindings 过滤冲突（只保留与当前层可见绑定相关的冲突）
+  const visibleBindingIds = useMemo(
+    () => new Set(layerFilteredBindings.map((b) => b.id)),
+    [layerFilteredBindings]
+  );
+  const filteredConflicts = useMemo(
+    () => conflicts.filter((c) =>
+      c.bindings.some((cb) => visibleBindingIds.has(cb.id))
+    ),
+    [conflicts, visibleBindingIds]
+  );
+
+  // 表格筛选
+  const tableBindings = useMemo(() => {
+    let result = layerFilteredBindings;
+    if (selectedKey) {
+      const selLower = selectedKey.toLowerCase();
+      result = result.filter((b) => {
+        if (b.type === 'funckey') {
+          const baseKey = b.key.replace(/^[~CS]*(?:\+)?/i, '').toLowerCase();
+          return baseKey === selLower;
+        }
+        return false;
+      });
+    }
+    return result;
+  }, [layerFilteredBindings, selectedKey]);
+
+  // 覆盖风险数量（全部叠加视图中用户键与保留键冲突的个数）
+  const overlayConflictCount = useMemo(() => {
+    if (viewMode !== 'overlay') return 0;
+    return visibleBindings.filter((b) => b.warnWhenOverride && b.defaultOccupier).length;
+  }, [visibleBindings, viewMode]);
+
+  const stats = {
+    total: layerFilteredBindings.length,
+    funckeyCount: layerFilteredBindings.filter((b) => b.type === 'funckey').length,
+    aliasCount: layerFilteredBindings.filter((b) => b.type === 'alias').length,
+    errorCount: filteredConflicts.filter((c) => c.severity === 'error').length,
+    warningCount: filteredConflicts.filter((c) => c.severity === 'warning').length,
+    overlayConflictCount,
+  };
+  const activeProfileName =
+    profiles.find((profile) => profile.id === activeProfileId)?.name || '未选择';
+
+  if (loading && !envInfo) {
+    return <div className="loading">正在加载快捷键信息...</div>;
+  }
+
+  return (
+    <div className="workspace-page workspace-page-hotkeys">
+      <CoreWorkspaceHero
+        eyebrow="Core Workspace"
+        title="快捷键工作台"
+        description="把键位总览、冲突诊断、方案切换和 Apply Plan 预览压到同一屏里，优先处理高频键位。"
+        metrics={[
+          { label: '当前方案', value: activeProfileName, tone: 'accent' },
+          { label: '快捷键总量', value: String(stats.total) },
+          {
+            label: '冲突与警告',
+            value: String(stats.errorCount + stats.warningCount),
+            tone: stats.errorCount > 0 ? 'warning' : 'default',
+          },
+          { label: '应用状态', value: plan ? '待应用' : '已就绪' },
+        ]}
+      />
+
+      {/* ═══ Profile 方案栏 ═══ */}
+      <ProfileBar
+        title="快捷键方案"
+        profiles={profiles}
+        activeProfileId={activeProfileId}
+        appliedProfileId={appliedProfileId}
+        onCreate={(name) => handleCreateProfile(name)}
+        onCopy={(profileId) => handleCopyProfile(profileId)}
+        onRename={(profileId, newName) => handleRenameProfile(profileId, newName)}
+        onDelete={(profileId) => handleDeleteProfile(profileId)}
+        onSwitch={(profileId) => handleSelectProfile(profileId)}
+        onApply={() => handleApplyProfile()}
+        onImport={() => handleImportClick()}
+        onExport={(profileId) => handleExportProfile(profileId)}
+      />
+
+      {/* 全局状态总览 */}
+      {envInfo && (
+        <GlobalStatusBar
+          items={[
+            {
+              label: '环境文件',
+              value: envInfo.envExists
+                ? (envInfo.envReadable ? '可读' : '不可读')
+                : '不存在',
+              status: (envInfo.envExists
+                ? (envInfo.envReadable ? 'ok' : 'error')
+                : 'warning') as 'ok' | 'warning' | 'error',
+              tooltip: envInfo.envFilePath || undefined,
+            },
+            {
+              label: '写入',
+              value: envInfo.envWritable ? '可写' : '只读',
+              status: (envInfo.envWritable ? 'ok' : 'error') as 'ok' | 'error',
+            },
+            {
+              label: '快捷键',
+              value: `${bindings.length} 条`,
+              status: 'muted' as const,
+            },
+            {
+              label: '冲突',
+              value: `${stats.errorCount + stats.warningCount} 个`,
+              status: (stats.errorCount > 0 ? 'error' : stats.warningCount > 0 ? 'warning' : 'ok') as 'ok' | 'warning' | 'error',
+              tooltip: `错误: ${stats.errorCount}, 警告: ${stats.warningCount}`,
+            },
+            {
+              label: '方案',
+              value: `${profiles.length} 个`,
+              status: 'muted' as const,
+            },
+            {
+              label: '应用状态',
+              value: applyResult?.includes('已应用') ? '已应用' : (plan ? '有待处理' : '就绪'),
+              status: (applyResult?.includes('已应用') ? 'ok' : plan ? 'warning' : 'muted') as 'ok' | 'warning' | 'muted',
+            },
+          ]}
+          envPath={envInfo?.envFilePath || undefined}
+          needsRestart={plan?.requiresRestart}
+        />
+      )}
+
+      {/* V3.0 多 env 来源状态栏 */}
+      {envSources && (
+        <EnvSourceBar
+          envSources={envSources}
+          onOpenManagement={() => setShowEnvDialog(true)}
+        />
+      )}
+
+      {error && (
+        <div className="message message-error">
+          {error}
+          <button className="btn btn-sm" style={{ marginLeft: 12 }} onClick={loadAll}>重试</button>
+        </div>
+      )}
+
+      {applyResult && (
+        <div className={`message ${applyResult.startsWith('✅') || applyResult.startsWith('ℹ️') ? 'message-info' : 'message-error'}`} style={{ marginBottom: 12 }}>
+          {applyResult}
+        </div>
+      )}
+
+      {parseWarnings.length > 0 && parseWarnings.map((w, i) => (
+        <div key={i} className="message message-warning">{w}</div>
+      ))}
+
+      {/* ── 统计卡片 ── */}
+      <div className="grid-3" style={{ marginBottom: 16 }}>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div className="stat-value" style={{ color: 'var(--accent-blue)' }}>{stats.total}</div>
+          <div className="stat-label">
+            快捷键总数
+            {viewMode === 'my' && ' (我的快捷键)'}
+            {viewMode === 'reserved' && ' (默认/保留键)'}
+            {viewMode === 'overlay' && ' (全部叠加)'}
+            &nbsp;(F: {stats.funckeyCount} / A: {stats.aliasCount})
+          </div>
+        </div>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div className="stat-value" style={{ color: 'var(--accent-red)' }}>{stats.errorCount}</div>
+          <div className="stat-label">冲突错误</div>
+        </div>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div className="stat-value" style={{ color: viewMode === 'overlay' && stats.overlayConflictCount > 0 ? 'var(--accent-yellow)' : 'var(--text-secondary)' }}>
+            {viewMode === 'overlay' ? stats.overlayConflictCount : stats.warningCount}
+          </div>
+          <div className="stat-label">
+            {viewMode === 'overlay' ? '覆盖风险' : '警告'}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 保留键来源提示（仅当 viewMode 涉及保留键时显示） ── */}
+      {reservedKeysWarning && (
+        <div className="message message-warning" style={{ marginBottom: 12 }}>
+          默认/保留键来自默认快捷键参考库（data/default_reserved_keys.json），不是 env 文件。
+          <br />
+          当前未加载: {reservedKeysWarning}
+        </div>
+      )}
+      {(viewMode === 'reserved' || viewMode === 'overlay') && !reservedKeysWarning && (
+        <div className="message message-info" style={{ marginBottom: 12, fontSize: 12 }}>
+          默认/保留键来自默认快捷键参考库，不是 env 文件。
+          {viewMode === 'reserved' && ' 仅参考，不可编辑。'}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════ */}
+      {/* LAYER 1: 键盘占用总览 */}
+      {/* ════════════════════════════════════════════ */}
+      <CollapseToggle
+        collapsed={collapseKeyboard}
+        onClick={() => setCollapseKeyboard(!collapseKeyboard)}
+        label={collapseKeyboard ? '展开键盘占用总览' : '收起键盘占用总览'}
+      />
+      {!collapseKeyboard && (
+        <KeyboardOccupancy
+          bindings={layerFilteredBindings.filter((b) => !b.id.endsWith('_overridden'))}
+          conflicts={filteredConflicts}
+          selectedKey={selectedKey}
+          onSelectKey={setSelectedKey}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          activeLayer={activeLayer}
+          onLayerChange={handleLayerChange}
+          // V2.2 物理键管理面板数据
+          allPhysicalKeyBindings={visibleBindings}
+          onEditBinding={handleEditBinding}
+          onDeleteBinding={handleDeleteBinding}
+          onAdoptBinding={handleAdoptBinding}
+          onOverrideSource={handleOverrideSource}
+          onAddBinding={(k) => setShowAddDialog(k)}
+        />
+      )}
+
+      {/* ════════════════════════════════════════════ */}
+      {/* LAYER 2: 快捷键地图 */}
+      {/* ════════════════════════════════════════════ */}
+      <CollapseToggle
+        collapsed={collapseMap}
+        onClick={() => setCollapseMap(!collapseMap)}
+        label={collapseMap ? '展开快捷键地图' : '收起快捷键地图'}
+      />
+      {!collapseMap && (
+        <HotkeyMap
+          bindings={layerUserBindings}
+          reservedBindings={layerReservedBindings}
+          conflicts={filteredConflicts}
+          selectedBindingId={selectedBindingId}
+          onSelectBinding={setSelectedBindingId}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filter={mapFilter}
+          onFilterChange={setMapFilter}
+          onEdit={handleEditBinding}
+          viewMode={viewMode}
+          selectedCommand={selectedCommand}
+          onSelectCommand={handleSelectCommand}
+          onDelete={handleDeleteBinding}
+          onAdopt={handleAdoptBinding}
+          onOverrideSource={handleOverrideSource}
+        />
+      )}
+
+      {/* ════════════════════════════════════════════ */}
+      {/* LAYER 3: 详细表格 + 操作 */}
+      {/* ════════════════════════════════════════════ */}
+
+      {/* V5.6 统一操作按钮 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button className="btn btn-primary" onClick={handleCreatePlan} disabled={!envInfo?.envExists}>
+          生成 Apply Plan
+        </button>
+        {plan && (
+          <button className="btn btn-primary" onClick={handleApplyPlan} disabled={loading}
+            style={{
+              background: 'var(--accent-green)',
+              borderColor: 'var(--accent-green)',
+            }}>
+            执行 Apply Plan
+          </button>
+        )}
+
+        <MoreActionsMenu
+          actions={[
+            {
+              label: '变更历史',
+              icon: '📋',
+              onClick: () => setShowChangeHistory(true),
+              disabled: !envInfo?.pcbenvPath,
+            },
+            {
+              label: '导出速查表',
+              icon: '📤',
+              onClick: () => setShowExportDialog(true),
+              disabled: bindings.length === 0,
+            },
+            {
+              label: '导入 env',
+              icon: '📥',
+              onClick: handleEnvImportClick,
+            },
+            {
+              label: showFavoritesOnly ? '显示全部' : '仅收藏',
+              onClick: () => setShowFavoritesOnly(!showFavoritesOnly),
+            },
+          ]}
+        />
+
+        <button className="btn btn-sm" onClick={loadAll} style={{ marginLeft: 'auto' }}>
+          刷新
+        </button>
+      </div>
+
+      {/* 详细表格 */}
+      <div className="card" style={{ overflow: 'auto' }}>
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>📋 快捷键列表</span>
+          <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {selectedKey && (
+              <span style={{ fontSize: 12, color: 'var(--accent-blue)' }}>
+                物理键筛选: <strong>{selectedKey}</strong>
+                <button className="btn btn-sm" style={{ marginLeft: 6 }} onClick={() => setSelectedKey(null)}>✕</button>
+              </span>
+            )}
+            {selectedBindingId && (
+              <span style={{ fontSize: 12, color: 'var(--accent-blue)' }}>
+                已选中 1 条
+                <button className="btn btn-sm" style={{ marginLeft: 6 }} onClick={() => setSelectedBindingId(null)}>✕</button>
+              </span>
+            )}
+          </span>
+        </div>
+        <HotkeyList
+          bindings={tableBindings}
+          highlightId={selectedBindingId || undefined}
+          onEdit={handleEditBinding}
+          onAdopt={handleAdoptBinding}
+          onOverrideSource={handleOverrideSource}
+        />
+        {selectedKey && tableBindings.length === 0 && (
+          <div className="empty-state" style={{ padding: 16 }}>该物理键没有 funckey 绑定</div>
+        )}
+      </div>
+
+      {/* 冲突检测（V4.0 增强冲突） */}
+      {(filteredConflicts.length > 0 || enhancedConflicts.length > 0) && (
+        <div style={{ marginTop: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--text-secondary)' }}>
+            冲突检测 ({filteredConflicts.length})
+          </h3>
+          <EnhancedConflictList
+            conflicts={filteredConflicts}
+            enhancedConflicts={enhancedConflicts}
+            ignoredConflictIds={conflictIgnoreList}
+            onIgnoreConflict={handleIgnoreConflict}
+            onEditBinding={(bindingId: string) => {
+              const b = bindings.find(x => x.id === bindingId);
+              if (b) handleEditBinding(b);
+            }}
+            onViewRawLine={handleViewRawLine}
+            onOverrideSource={(command: string) => {
+              const b = bindings.find(x => x.command === command);
+              if (b) handleOverrideSource(b);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Apply Plan 详情 */}
+      {plan && (
+        <div style={{ marginTop: 16 }}>
+          <ApplyPlanPreview
+            plan={plan}
+            onConfirm={handleApplyPlan}
+            onCancel={() => setPlan(null)}
+            isApplying={loading}
+          />
+        </div>
+      )}
+
+      {/* 编辑 Apply Plan 预览 */}
+      {editPlan && (
+        <div style={{ marginTop: 16 }}>
+          <EditApplyPlanPreview
+            plan={editPlan}
+            onConfirm={handleExecuteEditPlan}
+            onCancel={() => setEditPlan(null)}
+            isApplying={applyingPlan}
+          />
+        </div>
+      )}
+
+      {/* env 文件不存在 */}
+      {!envInfo?.envExists && !loading && (
+        <div className="message message-info">
+          env 文件不存在。这是正常的——首次使用可能需要创建。请先在"环境检测"页面选择 pcbenv 目录。
+        </div>
+      )}
+
+      {/* ═══ 编辑对话框（V4.0 修改影响预览 + 推荐键位） ═══ */}
+      {editingBinding && (
+        <HotkeyEditor
+          binding={editingBinding}
+          onClose={() => setEditingBinding(null)}
+          onSave={handleEditorSave}
+          currentEnvBindings={bindings}
+          currentProfileBindings={profiles.find((p) => p.id === activeProfileId)?.bindings as any}
+          profileId={activeProfileId}
+          allReservedBindings={reservedBindings}
+          envFilePath={envInfo?.envFilePath ?? undefined}
+        />
+      )}
+
+      {/* ═══ 命令来源修正对话框 ═══ */}
+      {showSourceOverride && (
+        <div className="modal-overlay" onClick={() => setShowSourceOverride(null)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, fontSize: 15 }}>修正命令来源</h3>
+              <button className="btn btn-sm" onClick={() => setShowSourceOverride(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: '12px 0' }}>
+              <p style={{ fontSize: 13, marginBottom: 8 }}>
+                命令: <code>{showSourceOverride.command}</code>
+              </p>
+              <select
+                value={overrideInput}
+                onChange={(e) => setOverrideInput(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px' }}
+              >
+                <option value="allegro_builtin">Allegro 内置</option>
+                <option value="user_skill">本地用户 Skill</option>
+                <option value="company_skill">公司只读 Skill</option>
+                <option value="atm_managed_skill">ATM 托管 Skill</option>
+                <option value="ambiguous">歧义（多种来源）</option>
+                <option value="unknown">未知</option>
+              </select>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+              <button className="btn" onClick={() => setShowSourceOverride(null)}>取消</button>
+              <button className="btn btn-primary" onClick={handleSaveOverride}>保存修正</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 新增绑定对话框（V2.2） ═══ */}
+      {showAddDialog && (
+        <AddHotkeyDialog
+          physicalKey={showAddDialog}
+          onClose={() => setShowAddDialog(null)}
+          onConfirm={handleAddBindingConfirm}
+        />
+      )}
+
+      {/* ═══ 隐藏文件输入框（导入方案用） ═══ */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.zip"
+        style={{ display: 'none' }}
+        onChange={handleFileSelected}
+      />
+
+      {/* ═══ 导入预览弹窗 ═══ */}
+      {importPreviewData && (
+        <ImportPreviewDialog
+          data={importPreviewData}
+          onClose={() => setImportPreviewData(null)}
+          onImportAsNew={handleImportAsNew}
+          onImportAndPreview={handleImportAndPreview}
+        />
+      )}
+
+      {/* ═══ Env 来源管理弹窗（V3.0） ═══ */}
+      {showEnvDialog && envSources && (
+        <EnvSourceDialog
+          envSources={envSources}
+          onClose={() => setShowEnvDialog(false)}
+          onSetActive={handleSetActiveEnv}
+          onAddReference={handleAddReferenceEnv}
+          onRemoveReference={handleRemoveReferenceEnv}
+          onRefresh={() => { refreshEnvSources(); setShowEnvDialog(false); }}
+        />
+      )}
+
+      {/* ════════════════════════════════════════════ */}
+      {/* V4.0 弹窗 */}
+      {/* ════════════════════════════════════════════ */}
+
+      {/* 变更历史弹窗 */}
+      {showChangeHistory && envInfo?.pcbenvPath && (
+        <ChangeHistoryDialog
+          pcbenvPath={envInfo.pcbenvPath}
+          onClose={() => {
+            setShowChangeHistory(false);
+            loadAll(); // 刷新（撤销后需要更新数据）
+          }}
+          onRefresh={loadAll}
+        />
+      )}
+
+      {/* 导出速查表弹窗 */}
+      {showExportDialog && (
+        <ExportCheatsheetDialog
+          bindings={bindings}
+          favorites={favoriteIds}
+          activeProfileId={activeProfileId}
+          profileName={profiles.find(p => p.id === activeProfileId)?.name}
+          onClose={() => setShowExportDialog(false)}
+          onExport={handleExportSave}
+        />
+      )}
+
+      {/* V4.0 env 导入对话框 */}
+      {showEnvImportDialog && envImportPreview && envInfo?.pcbenvPath && (
+        <EnvImportDialog
+          preview={envImportPreview}
+          currentBindings={bindings}
+          currentProfile={profiles.find(p => p.id === activeProfileId) || null}
+          reservedBindings={reservedBindings}
+          pcbenvPath={envInfo.pcbenvPath}
+          userEnvFilePath={envInfo?.envFilePath ?? undefined}
+          envSources={envSources}
+          profiles={profiles}
+          activeProfileId={activeProfileId}
+          onClose={() => {
+            setShowEnvImportDialog(false);
+            setEnvImportPreview(null);
+            setEnvImportFile(null);
+          }}
+          onImported={handleEnvImported}
+        />
+      )}
+
+      {/* V5.3 删除确认弹窗 */}
+      {deleteConfirmTarget && (
+        <HotkeyDeleteConfirmDialog
+          binding={deleteConfirmTarget}
+          onCancel={() => setDeleteConfirmTarget(null)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
+
+      {/* 原始行查看 */}
+      {rawLineView && (
+        <div className="modal-overlay" onClick={() => setRawLineView(null)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 650 }}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, fontSize: 15 }}>📄 原始行查看</h3>
+              <button className="btn btn-sm" onClick={() => setRawLineView(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: '8px 0' }}>
+              <RawLineView
+                filePath={rawLineView.filePath}
+                lineNumber={rawLineView.lineNumber}
+                isReference={rawLineView.isReference}
+                onClose={() => setRawLineView(null)}
+                onEdit={!rawLineView.isReference ? () => {
+                  const b = bindings.find(x => x.lineNumber === rawLineView.lineNumber);
+                  if (b) handleEditBinding(b);
+                  setRawLineView(null);
+                } : undefined}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default HotkeyPage;

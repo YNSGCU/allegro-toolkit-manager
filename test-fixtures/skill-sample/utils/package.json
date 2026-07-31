@@ -1,0 +1,6 @@
+{
+  "name": "my-utils",
+  "version": "1.0.0",
+  "description": "Sample utils with dependencies",
+  "requires": ["shortcut", "core-lib"]
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 本地工具应用，不设严格 CSP -->
+    <title>ATM - Allegro Toolkit Manager</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="load-status" style="display:none;">loading</div>
+    <script>
+      // 捕获所有未处理的错误，显示在页面上方便调试
+      console.log('[ATM] index.html loaded, protocol:', window.location.protocol);
+      window.onerror = function(msg, url, line, col, err) {
+        console.error('[ATM Fatal]', msg, 'at', url, line, ':', col, err);
+        var el = document.getElementById('load-status');
+        if (el) { el.style.display = 'block'; el.textContent = 'ERROR: ' + msg; el.style.color = 'red'; }
+        return false;
+      };
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

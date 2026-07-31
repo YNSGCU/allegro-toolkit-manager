@@ -1,0 +1,66 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import HotkeySubnav from '../components/hotkeys/HotkeySubnav';
+
+type PlaceholderProps = {
+  title: string;
+  summary: string;
+};
+
+function Placeholder({ title, summary }: PlaceholderProps) {
+  return (
+    <section className="hotkey-workspace-placeholder" aria-label={title}>
+      <div className="card">
+        <div className="card-header">快捷键工作区</div>
+        <h3>{title}</h3>
+        <p>{summary}</p>
+      </div>
+    </section>
+  );
+}
+
+export default function HotkeyWorkspacePage() {
+  return (
+    <div className="hotkey-workspace-page">
+      <HotkeySubnav />
+      <Routes>
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route
+          path="overview"
+          element={
+            <Placeholder
+              title="快捷键总览"
+              summary="这里将承接当前方案、键盘占用和快捷键工作台概览。"
+            />
+          }
+        />
+        <Route
+          path="editor"
+          element={
+            <Placeholder
+              title="键位编辑"
+              summary="这里将承接查找、修改、新增和删除快捷键的编辑工作区。"
+            />
+          }
+        />
+        <Route
+          path="conflicts"
+          element={
+            <Placeholder
+              title="冲突处理"
+              summary="这里将承接冲突检测、覆盖风险和集中处置的二级工作区。"
+            />
+          }
+        />
+        <Route
+          path="import-export"
+          element={
+            <Placeholder
+              title="导入导出"
+              summary="这里将承接 env 导入、方案导入导出与速查表能力。"
+            />
+          }
+        />
+      </Routes>
+    </div>
+  );
+}

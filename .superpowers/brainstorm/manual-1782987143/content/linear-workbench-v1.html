@@ -1,0 +1,425 @@
+<style>
+  .atm-demo {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+    min-height: 78vh;
+  }
+
+  .atm-side {
+    border: 1px solid #e6ddd0;
+    border-radius: 32px;
+    background: linear-gradient(180deg, #fffdfa 0%, #f7f2ea 100%);
+    padding: 28px 22px;
+    box-shadow: 0 20px 40px rgba(43, 33, 20, 0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .atm-mark {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: #0f8f84;
+    margin-bottom: 18px;
+  }
+
+  .atm-logo {
+    font-size: 56px;
+    line-height: 1;
+    font-weight: 800;
+    color: #161616;
+    margin-bottom: 16px;
+  }
+
+  .atm-side p {
+    color: #6a625a;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .atm-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .atm-nav-item {
+    padding: 16px 18px;
+    border-radius: 22px;
+    border: 1px solid #ece3d7;
+    background: rgba(255,255,255,0.72);
+  }
+
+  .atm-nav-item.active {
+    border-color: #bfe4df;
+    background: linear-gradient(180deg, #ebfbf8 0%, #f9fffd 100%);
+    box-shadow: 0 10px 24px rgba(15, 143, 132, 0.08);
+  }
+
+  .atm-nav-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1d1d1d;
+  }
+
+  .atm-nav-sub {
+    font-size: 13px;
+    color: #81796f;
+  }
+
+  .atm-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .atm-hero {
+    border-radius: 34px;
+    border: 1px solid #eadfce;
+    background:
+      radial-gradient(circle at top right, rgba(15, 143, 132, 0.1), transparent 28%),
+      linear-gradient(180deg, #fffdfa 0%, #f8f4ed 100%);
+    padding: 28px 30px;
+    box-shadow: 0 20px 42px rgba(43, 33, 20, 0.06);
+  }
+
+  .atm-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) 280px;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .atm-title {
+    font-size: 46px;
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+    margin: 8px 0 12px;
+    color: #171717;
+  }
+
+  .atm-desc {
+    color: #655d56;
+    font-size: 15px;
+    line-height: 1.8;
+    max-width: 760px;
+  }
+
+  .atm-side-meter {
+    border-radius: 24px;
+    padding: 18px 20px;
+    background: rgba(255,255,255,0.76);
+    border: 1px solid #e7dfd3;
+    margin-bottom: 12px;
+  }
+
+  .atm-side-meter strong {
+    display: block;
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 8px;
+    color: #1c1c1c;
+  }
+
+  .atm-side-meter span {
+    font-size: 13px;
+    color: #746c63;
+  }
+
+  .atm-ribbon {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 18px 22px;
+    border-radius: 24px;
+    border: 1px solid #eadfce;
+    background: rgba(255,255,255,0.88);
+  }
+
+  .atm-chipline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .atm-chip {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #e7dfd4;
+    background: #faf6f0;
+    color: #776f67;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .atm-chip.good {
+    background: #eaf9f6;
+    border-color: #bfe4df;
+    color: #0f8f84;
+  }
+
+  .atm-primary {
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: #0f8f84;
+    color: white;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .atm-workband {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 18px;
+    min-height: 440px;
+  }
+
+  .atm-canvas {
+    border-radius: 30px;
+    border: 1px solid #eadfce;
+    background: linear-gradient(180deg, #fffefc 0%, #fbf8f3 100%);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .atm-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    border-bottom: 1px solid #efe6da;
+    padding-bottom: 16px;
+  }
+
+  .atm-toolbar-left {
+    font-size: 14px;
+    color: #5f5851;
+  }
+
+  .atm-toolbar-left strong {
+    display: block;
+    font-size: 22px;
+    color: #171717;
+    margin-bottom: 4px;
+  }
+
+  .atm-segment {
+    display: inline-flex;
+    gap: 6px;
+    background: #f5efe7;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .atm-segment span {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #7d746b;
+  }
+
+  .atm-segment .on {
+    background: white;
+    color: #151515;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .atm-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .atm-lane {
+    border-radius: 22px;
+    background: white;
+    border: 1px solid #eee5d9;
+    padding: 16px 18px;
+  }
+
+  .atm-lane strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #181818;
+  }
+
+  .atm-lane p {
+    margin: 0;
+    color: #716960;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  .atm-rail {
+    border-radius: 28px;
+    border: 1px solid #eadfce;
+    background: rgba(255,255,255,0.9);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .atm-rail-block {
+    border-radius: 18px;
+    padding: 16px;
+    background: #fcf8f2;
+    border: 1px solid #eee3d6;
+  }
+
+  .atm-rail-block strong {
+    display: block;
+    font-size: 13px;
+    color: #1f1f1f;
+    margin-bottom: 8px;
+  }
+
+  .atm-rail-block p {
+    margin: 0;
+    font-size: 13px;
+    color: #736a61;
+    line-height: 1.7;
+  }
+</style>
+
+<h2>方向样稿：长带式工作台</h2>
+<p class="subtitle">这版不是“小方格拼贴”，而是把信息改成少数几个大段落，状态尽量并进带状结构里。</p>
+
+<div class="mockup">
+  <div class="mockup-header">ATM / 快捷键页 / 非方格方向</div>
+  <div class="mockup-body">
+    <div class="atm-demo">
+      <aside class="atm-side">
+        <div>
+          <div class="atm-mark">ALLEGRO WORKSPACE</div>
+          <div class="atm-logo">ATM</div>
+          <p>左侧只负责稳定导航与定位，不再承担大量状态展示，让主区真正像一个工作台。</p>
+
+          <div class="atm-nav">
+            <div class="atm-nav-item active">
+              <div class="atm-nav-title">快捷键</div>
+              <div class="atm-nav-sub">主入口，只保留一句作用描述</div>
+            </div>
+            <div class="atm-nav-item">
+              <div class="atm-nav-title">Skill</div>
+              <div class="atm-nav-sub">能力编排与引用检查</div>
+            </div>
+            <div class="atm-nav-item">
+              <div class="atm-nav-title">菜单</div>
+              <div class="atm-nav-sub">菜单树与生成覆盖层</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="atm-rail-block">
+          <strong>当前原则</strong>
+          <p>写入都先走 Apply Plan，但这条说明放在边角，不再切出一个独立信息方格区。</p>
+        </div>
+      </aside>
+
+      <section class="atm-main">
+        <div class="atm-hero">
+          <div class="atm-hero-grid">
+            <div>
+              <div class="atm-mark">CORE WORKSPACE</div>
+              <div class="atm-title">快捷键工作台</div>
+              <div class="atm-desc">
+                这里不再把“方案、统计、状态、说明”全拆成独立卡片，而是先给一个完整的大引导区，
+                让用户先知道自己正在操作什么，再进入下面的连续工作带。
+              </div>
+            </div>
+
+            <div>
+              <div class="atm-side-meter">
+                <strong>自用</strong>
+                <span>当前方案</span>
+              </div>
+              <div class="atm-side-meter">
+                <strong>36</strong>
+                <span>当前快捷键量</span>
+              </div>
+              <div class="atm-side-meter">
+                <strong>已就绪</strong>
+                <span>应用状态</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="atm-ribbon">
+          <div class="atm-chipline">
+            <span class="atm-chip good">环境可读</span>
+            <span class="atm-chip good">写入可写</span>
+            <span class="atm-chip">快捷键 36 条</span>
+            <span class="atm-chip good">冲突 0</span>
+            <span class="atm-chip">方案 2 个</span>
+          </div>
+
+          <div class="atm-chipline">
+            <span class="atm-chip">当前方案：自用</span>
+            <span class="atm-chip">env：用户层</span>
+          </div>
+
+          <div class="atm-primary">应用此方案</div>
+        </div>
+
+        <div class="atm-workband">
+          <div class="atm-canvas">
+            <div class="atm-toolbar">
+              <div class="atm-toolbar-left">
+                <strong>主编辑区</strong>
+                当前页重点只有一个：处理快捷键，不再让统计块和提示块抢主视线。
+              </div>
+
+              <div class="atm-segment">
+                <span class="on">键盘总览</span>
+                <span>地图</span>
+                <span>明细</span>
+                <span>冲突</span>
+              </div>
+            </div>
+
+            <div class="atm-flow">
+              <div class="atm-lane">
+                <strong>第一带：键盘占用总览</strong>
+                <p>作为整页主角，做成一整块连续画布，而不是再被切成若干并排小统计卡。</p>
+              </div>
+
+              <div class="atm-lane">
+                <strong>第二带：命令与方案编辑</strong>
+                <p>把方案切换、增删、导入导出收进同一条操作带，让人感觉是在处理一个流，而不是翻一堆功能盒子。</p>
+              </div>
+
+              <div class="atm-lane">
+                <strong>第三带：列表 / 冲突 / Apply Plan 预览</strong>
+                <p>底部再进入更细的操作层级，这样主次会更强，页面不再到处都是同等级的框。</p>
+              </div>
+            </div>
+          </div>
+
+          <aside class="atm-rail">
+            <div class="atm-rail-block">
+              <strong>侧边辅助</strong>
+              <p>只保留需要随时看一眼的信息，比如 env 来源、草稿状态、风险提示。</p>
+            </div>
+            <div class="atm-rail-block">
+              <strong>冲突提示</strong>
+              <p>当有错误时，侧边栏变成提示轨道，而不是额外再长出几块统计卡。</p>
+            </div>
+            <div class="atm-rail-block">
+              <strong>你现在看到的差异</strong>
+              <p>核心不是换颜色，而是减少“并排小盒子”，改成“大区块 + 工具带 + 主画布 + 辅助轨”。</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

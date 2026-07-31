@@ -1,0 +1,383 @@
+<style>
+  .compare {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    margin-top: 20px;
+  }
+
+  .sys-card {
+    border: 1px solid #ebe3d8;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #fffdfa 0%, #f8f4ee 100%);
+    padding: 18px;
+    box-shadow: 0 20px 42px rgba(43, 33, 20, 0.06);
+    cursor: pointer;
+  }
+
+  .sys-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .sys-head h3 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: -0.03em;
+  }
+
+  .sys-tag {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #f2ede6;
+    color: #756d64;
+    font-weight: 700;
+  }
+
+  .sys-tag.reco {
+    background: #eaf9f6;
+    color: #0f8f84;
+  }
+
+  .sys-desc {
+    color: #6c645b;
+    font-size: 14px;
+    line-height: 1.75;
+    margin-bottom: 14px;
+    min-height: 72px;
+  }
+
+  .mock {
+    height: 360px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgba(235, 226, 215, 0.95);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .s1,
+  .s2,
+  .s3 {
+    width: 100%;
+    height: 100%;
+  }
+
+  .s1 {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+
+  .s1-side {
+    background: #fcfaf6;
+    border-right: 1px solid #eee5da;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .s1-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: #f2eee8;
+  }
+
+  .s1-main {
+    padding: 24px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .s1-title {
+    width: 52%;
+    height: 22px;
+    background: #171717;
+    border-radius: 8px;
+  }
+
+  .s1-sub {
+    width: 72%;
+    height: 12px;
+    background: #e8e1d7;
+    border-radius: 6px;
+  }
+
+  .s1-input {
+    height: 78px;
+    border-radius: 24px;
+    background: #fffdfa;
+    box-shadow: inset 0 0 0 1px rgba(236, 227, 216, 0.95);
+  }
+
+  .s1-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .s1-grid div {
+    height: 86px;
+    border-radius: 20px;
+    background: #fdfbf8;
+    box-shadow: inset 0 0 0 1px rgba(239, 231, 221, 0.92);
+  }
+
+  .s2 {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    padding: 22px 22px 18px;
+    gap: 16px;
+    background: linear-gradient(180deg, #fffdfa 0%, #f8f5ef 100%);
+  }
+
+  .s2-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: end;
+  }
+
+  .s2-title {
+    width: 46%;
+    height: 24px;
+    background: #171717;
+    border-radius: 8px;
+  }
+
+  .s2-meta {
+    width: 72px;
+    height: 44px;
+    border-radius: 16px;
+    background: #effaf8;
+    box-shadow: inset 0 0 0 1px rgba(189, 228, 223, 0.95);
+  }
+
+  .s2-band {
+    height: 52px;
+    border-top: 1px solid #ece2d4;
+    border-bottom: 1px solid #ece2d4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .s2-chip {
+    width: 62px;
+    height: 24px;
+    border-radius: 999px;
+    background: #f4eee7;
+  }
+
+  .s2-canvas {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 16px;
+  }
+
+  .s2-work {
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgba(236, 227, 216, 0.95);
+    position: relative;
+  }
+
+  .s2-work::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 18px;
+    height: 34px;
+    border-bottom: 1px solid #efe6dc;
+  }
+
+  .s2-work::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 72px;
+    bottom: 18px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fcfaf7 0%, #fff 100%);
+  }
+
+  .s2-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .s2-rail div {
+    flex: 1;
+    border-bottom: 1px solid #ece2d5;
+  }
+
+  .s3 {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .s3-side {
+    border-right: 1px solid #eee4d9;
+    padding: 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .s3-side div {
+    width: 100%;
+    height: 18px;
+    background: #f1ece6;
+    border-radius: 8px;
+  }
+
+  .s3-main {
+    padding: 18px 20px;
+    position: relative;
+  }
+
+  .s3-sheet {
+    position: absolute;
+    inset: 18px 18px 18px 18px;
+    background: linear-gradient(180deg, #fffdfa 0%, #fff 100%);
+    box-shadow: inset 0 0 0 1px rgba(236, 227, 216, 0.95);
+    border-radius: 22px;
+  }
+
+  .s3-float {
+    position: absolute;
+    right: 26px;
+    top: 28px;
+    width: 110px;
+    height: 64px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 14px 34px rgba(30, 22, 15, 0.08);
+  }
+
+  .pros {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #72695f;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .pick {
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f8f84;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+</style>
+
+<h2>整套产品的极简路线</h2>
+<p class="subtitle">你已经选了“整套产品统一极简语言” + “效率优先”。下面是 3 套整体布局方案，我推荐 <strong>B</strong>。</p>
+
+<div class="compare options">
+  <div class="sys-card option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="sys-head">
+      <h3>A 入口首页化</h3>
+      <span class="sys-tag">更轻</span>
+    </div>
+    <div class="sys-desc">每页都做成像聊天工具首页那样的入口感，空白很多，心智简单，但管理型页面会有点虚。</div>
+    <div class="mock">
+      <div class="s1">
+        <div class="s1-side">
+          <div class="s1-dot"></div>
+          <div class="s1-dot"></div>
+          <div class="s1-dot"></div>
+        </div>
+        <div class="s1-main">
+          <div class="s1-title"></div>
+          <div class="s1-sub"></div>
+          <div class="s1-input"></div>
+          <div class="s1-grid">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros">
+      <div>适合：品牌感、展示感、第一眼很轻。</div>
+      <div>问题：快捷键 / Skill / 菜单这些工具页容易显得空。</div>
+    </div>
+    <div class="pick">如果你更想像 AI 首页，选 A</div>
+  </div>
+
+  <div class="sys-card option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="sys-head">
+      <h3>B 工具带 + 画布</h3>
+      <span class="sys-tag reco">推荐</span>
+    </div>
+    <div class="sys-desc">整个产品统一成“轻导航、轻标题、一条工具带、一块主画布”。简洁，但不牺牲配置效率。</div>
+    <div class="mock">
+      <div class="s2">
+        <div class="s2-head">
+          <div class="s2-title"></div>
+          <div class="s2-meta"></div>
+        </div>
+        <div class="s2-band">
+          <div class="s2-chip"></div>
+          <div class="s2-chip"></div>
+          <div class="s2-chip"></div>
+          <div class="s2-chip"></div>
+        </div>
+        <div class="s2-canvas">
+          <div class="s2-work"></div>
+          <div class="s2-rail">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros">
+      <div>适合：快捷键、Skill、菜单三页统一一套语言。</div>
+      <div>优点：不像后台拼卡片，也不会失去工具属性。</div>
+    </div>
+    <div class="pick">如果你要“简洁，但还能高效做事”，选 B</div>
+  </div>
+
+  <div class="sys-card option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="sys-head">
+      <h3>C 工作纸 + 浮层</h3>
+      <span class="sys-tag">更先锋</span>
+    </div>
+    <div class="sys-desc">右侧像一整张展开的工作纸，次级信息做悬浮贴片。视觉很简洁，但开发与一致性控制更难。</div>
+    <div class="mock">
+      <div class="s3">
+        <div class="s3-side">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="s3-main">
+          <div class="s3-sheet"></div>
+          <div class="s3-float"></div>
+        </div>
+      </div>
+    </div>
+    <div class="pros">
+      <div>适合：你想要更强设计感，不怕激进。</div>
+      <div>问题：三大配置页都这样做，交互约束会更高。</div>
+    </div>
+    <div class="pick">如果你想更像设计工具而不是配置工具，选 C</div>
+  </div>
+</div>

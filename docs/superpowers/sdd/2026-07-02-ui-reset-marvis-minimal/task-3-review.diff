@@ -1,0 +1,431 @@
+﻿# Review package: Task 3 (local no-git)
+
+## Commit range
+none (no git repo)
+
+## Files changed
+- src/components/Layout.tsx (1557 bytes)
+- src/App.css (100376 bytes)
+- tests/minimalSurface.test.tsx (1364 bytes)
+
+## Diff
+
+### src/components/Layout.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-3-before\\src\\components\\Layout.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\components\\Layout.tsx"
+index 1e5647b..d3a45c9 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-3-before\\src\\components\\Layout.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\components\\Layout.tsx"
+@@ -1,73 +1,53 @@
+ import React from 'react';
+ import { NavLink } from 'react-router-dom';
+ import { APP_NAV_ITEMS } from '../config/appShell';
+ 
+ interface LayoutProps {
+   children: React.ReactNode;
+ }
+ 
+-const NavGlyph: React.FC<{ label: string }> = ({ label }) => (
+-  <span className="nav-icon-badge" aria-hidden="true">
+-    {label}
+-  </span>
+-);
+-
+ const Layout: React.FC<LayoutProps> = ({ children }) => {
+   const primaryItems = APP_NAV_ITEMS.filter((item) => item.group === 'primary');
+   const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
+ 
+   const renderNavGroup = (
+     title: string,
+     items: typeof APP_NAV_ITEMS,
+   ) => (
+-    <div className="sidebar-section">
+-      <div className="sidebar-section-label">{title}</div>
+-      <nav className="sidebar-nav">
++    <section className="marvis-nav-group" aria-label={title}>
++      <div className="marvis-nav-group-label">{title}</div>
++      <nav className="marvis-nav">
+         {items.map((item) => (
+           <NavLink
+             key={item.path}
+             to={item.path}
+             end={item.path === '/overview'}
+-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
++            className={({ isActive }) =>
++              `marvis-nav-item${isActive ? ' active' : ''}`
++            }
+           >
+-            <NavGlyph label={item.shortLabel} />
+-            <span className="nav-copy">
+-              <span className="nav-label">{item.label}</span>
+-              <span className="nav-summary">{item.summary}</span>
+-            </span>
++            <span className="marvis-nav-item-label">{item.label}</span>
+           </NavLink>
+         ))}
+       </nav>
+-    </div>
++    </section>
+   );
+ 
+   return (
+-    <div className="app-layout">
+-      <aside className="sidebar">
+-        <div className="sidebar-header">
+-          <div className="brand-kicker">Allegro Workspace</div>
+-          <h1>ATM</h1>
+-          <p>把快捷键、Skill 与菜单收进同一个工作台。</p>
++    <div className="marvis-shell">
++      <aside className="marvis-sidebar">
++        <div className="marvis-brand-block">
++          <div className="marvis-brand">ATM</div>
++          <div className="marvis-brand-subtitle">Allegro DevOps Tool</div>
+         </div>
+ 
+-        <div className="sidebar-body">
+-          {renderNavGroup('核心工作区', primaryItems)}
+-          {renderNavGroup('辅助页面', utilityItems)}
+-        </div>
+-
+-        <div className="sidebar-footer">
+-          <div className="sidebar-note">
+-            <div className="sidebar-note-title">当前原则</div>
+-            <div className="sidebar-note-text">
+-              所有写入都经由 Apply Plan，先预览，再落盘。
+-            </div>
+-          </div>
+-        </div>
++        {renderNavGroup('核心模块', primaryItems)}
++        {renderNavGroup('辅助模块', utilityItems)}
+       </aside>
+ 
+-      <main className="main-content">{children}</main>
++      <main className="marvis-main">{children}</main>
+     </div>
+   );
+ };
+ 
+ export default Layout;
+
+### src/App.css
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-3-before\\src\\App.css" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\App.css"
+index 3e71743..98f16a9 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-3-before\\src\\App.css"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\App.css"
+@@ -4982,10 +4982,278 @@ textarea.atm-input:focus {
+   }
+ 
+   .workspace-hero-title {
+     font-size: 28px;
+   }
+ 
+   .workspace-hero-metrics {
+     grid-template-columns: 1fr;
+   }
+ }
++
++/* ===== V6.1 Minimal White Shell Reset ===== */
++:root {
++  --bg-primary: #ffffff;
++  --bg-secondary: #faf8f5;
++  --bg-surface: #ffffff;
++  --bg-hover: #f4f1ec;
++  --bg-input: #f8f5f0;
++  --text-primary: #161616;
++  --text-secondary: #69635b;
++  --text-muted: #9b948b;
++  --accent-blue: #0f8f84;
++  --border-color: #ebe5dd;
++  --radius: 16px;
++  --radius-sm: 10px;
++  --shadow: 0 10px 30px rgba(32, 26, 18, 0.04);
++}
++
++body {
++  background: #ffffff;
++  color: var(--text-primary);
++  overflow: auto;
++}
++
++#root {
++  min-height: 100vh;
++  height: auto;
++  display: block;
++}
++
++.marvis-shell {
++  min-height: 100vh;
++  display: grid;
++  grid-template-columns: 228px minmax(0, 1fr);
++  gap: 0;
++  background: var(--bg-primary);
++}
++
++.marvis-sidebar {
++  display: flex;
++  flex-direction: column;
++  gap: 28px;
++  padding: 28px 20px 24px 24px;
++  border-right: 1px solid var(--border-color);
++  background: #fff;
++}
++
++.marvis-brand-block {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++  padding: 2px 8px 0 6px;
++}
++
++.marvis-brand {
++  font-size: 18px;
++  line-height: 1;
++  font-weight: 700;
++  letter-spacing: -0.03em;
++}
++
++.marvis-brand-subtitle {
++  font-size: 12px;
++  color: var(--text-muted);
++}
++
++.marvis-nav-group {
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++}
++
++.marvis-nav-group-label {
++  padding: 0 8px;
++  font-size: 11px;
++  font-weight: 700;
++  letter-spacing: 0.08em;
++  color: var(--text-muted);
++}
++
++.marvis-nav {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++}
++
++.marvis-nav-item {
++  min-height: 38px;
++  display: flex;
++  align-items: center;
++  padding: 0 10px;
++  border-radius: 10px;
++  text-decoration: none;
++  color: var(--text-secondary);
++  transition: background 0.16s ease, color 0.16s ease;
++}
++
++.marvis-nav-item:hover {
++  background: var(--bg-hover);
++  color: var(--text-primary);
++}
++
++.marvis-nav-item.active {
++  background: var(--bg-hover);
++  color: var(--text-primary);
++  font-weight: 700;
++}
++
++.marvis-nav-item-label {
++  font-size: 14px;
++}
++
++.marvis-main {
++  min-width: 0;
++  padding: 28px 32px 40px;
++  background: #fff;
++}
++
++.workspace-page {
++  display: flex;
++  flex-direction: column;
++  gap: 14px;
++}
++
++.workspace-hero,
++.profile-bar,
++.global-status-bar,
++.card,
++.loading,
++.empty-state,
++.impact-summary,
++.skill-usage-summary,
++.config-file-row,
++.more-actions-dropdown,
++.modal-content {
++  background: var(--bg-surface);
++  border: 1px solid var(--border-color);
++  box-shadow: none;
++}
++
++.workspace-hero {
++  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
++  gap: 18px;
++  padding: 20px 22px;
++  border-radius: 18px;
++}
++
++.workspace-hero-eyebrow,
++.card-header,
++.sidebar-section-label {
++  color: var(--text-muted);
++}
++
++.workspace-hero-title {
++  font-size: 30px;
++}
++
++.workspace-hero-description,
++.global-status-bar-path,
++.profile-bar-id {
++  color: var(--text-secondary);
++}
++
++.workspace-hero-metric,
++.status-pill,
++.profile-bar-status,
++.profile-bar-select,
++.profile-bar-input,
++.more-actions-btn,
++.btn,
++.message,
++.impact-option-card,
++.config-file-row,
++.skill-card,
++.modal-header,
++.modal-footer {
++  border-radius: 12px;
++}
++
++.workspace-hero-metric,
++.profile-bar,
++.global-status-bar,
++.card,
++.impact-summary {
++  border-color: var(--border-color);
++}
++
++.workspace-hero-metric,
++.profile-bar-select,
++.profile-bar-input,
++.global-status-bar-path,
++.status-pill,
++.more-actions-btn,
++.btn,
++.impact-summary,
++.config-file-row,
++.skill-card-usage-status {
++  background: var(--bg-secondary);
++}
++
++.profile-bar,
++.global-status-bar,
++.card {
++  padding: 18px 20px;
++}
++
++.card {
++  border-radius: 18px;
++}
++
++.btn,
++.more-actions-btn,
++.profile-bar-select,
++.profile-bar-input {
++  min-height: 36px;
++}
++
++.btn-primary,
++.profile-bar-apply {
++  background: var(--accent-blue);
++  border-color: var(--accent-blue);
++}
++
++.btn-primary:hover,
++.profile-bar-apply:hover {
++  background: #0d7f75;
++  border-color: #0d7f75;
++}
++
++.global-status-bar {
++  justify-content: space-between;
++}
++
++.global-status-bar-path {
++  border-radius: 999px;
++  background: var(--bg-secondary);
++}
++
++.more-actions-dropdown {
++  border-radius: 14px;
++}
++
++@media (max-width: 1080px) {
++  .marvis-main {
++    padding: 22px 24px 32px;
++  }
++}
++
++@media (max-width: 900px) {
++  .marvis-shell {
++    grid-template-columns: 1fr;
++  }
++
++  .marvis-sidebar {
++    gap: 18px;
++    padding: 20px 16px 14px;
++    border-right: none;
++    border-bottom: 1px solid var(--border-color);
++  }
++
++  .marvis-main {
++    padding: 18px 16px 28px;
++  }
++
++  .workspace-hero {
++    grid-template-columns: 1fr;
++  }
++}
+
+### tests/minimalSurface.test.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\minimalSurface.test.tsx"
+index e02abfc..360396a 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\minimalSurface.test.tsx"
+@@ -1 +1,30 @@
+-﻿
++import { describe, expect, it } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import { MemoryRouter } from 'react-router-dom';
++import Layout from '../src/components/Layout';
++import { APP_NAV_ITEMS } from '../src/config/appShell';
++
++describe('layout shell', () => {
++  it('renders the lightweight marvis shell with grouped navigation labels', () => {
++    const { container } = render(
++      <MemoryRouter initialEntries={['/hotkeys']}>
++        <Layout>
++          <div>page</div>
++        </Layout>
++      </MemoryRouter>,
++    );
++
++    expect(container.querySelector('.marvis-shell')).toBeInTheDocument();
++    expect(container.querySelector('.marvis-sidebar')).toBeInTheDocument();
++    expect(container.querySelector('.marvis-main')).toBeInTheDocument();
++
++    expect(screen.getByText(APP_NAV_ITEMS[0].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[1].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[2].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[3].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[4].label)).toBeInTheDocument();
++    expect(screen.getByText('核心模块')).toBeInTheDocument();
++    expect(screen.getByText('辅助模块')).toBeInTheDocument();
++    expect(screen.queryByText('Allegro Workspace')).not.toBeInTheDocument();
++  });
++});
+

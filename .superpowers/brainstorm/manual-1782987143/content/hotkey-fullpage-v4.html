@@ -1,0 +1,378 @@
+<style>
+  .atm-screen {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    gap: 34px;
+    min-height: 82vh;
+    background: linear-gradient(180deg, #fcfbf8 0%, #f7f3ec 100%);
+    border-radius: 34px;
+    padding: 20px;
+  }
+
+  .atm-sidebar {
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(235, 227, 217, 0.92);
+    border-radius: 26px;
+    padding: 22px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 18px 40px rgba(43, 33, 20, 0.04);
+  }
+
+  .atm-brand {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #191919;
+    margin-bottom: 22px;
+  }
+
+  .atm-search {
+    height: 36px;
+    border-radius: 12px;
+    background: #fbf8f3;
+    box-shadow: inset 0 0 0 1px rgba(236, 228, 218, 0.95);
+    margin-bottom: 18px;
+  }
+
+  .atm-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .atm-nav-item {
+    border-radius: 14px;
+    padding: 10px 12px;
+    color: #6f675d;
+    font-size: 14px;
+  }
+
+  .atm-nav-item.active {
+    background: #f2f6f4;
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .atm-group-title {
+    font-size: 12px;
+    color: #a0978d;
+    margin: 8px 0 8px 12px;
+  }
+
+  .atm-footer-note {
+    margin-top: auto;
+    padding: 14px 12px 4px;
+    color: #92897e;
+    font-size: 12px;
+    line-height: 1.8;
+    border-top: 1px solid rgba(237, 229, 219, 0.95);
+  }
+
+  .atm-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 52px 40px 34px 10px;
+  }
+
+  .atm-intro {
+    width: min(980px, 100%);
+    margin-bottom: 22px;
+  }
+
+  .atm-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .atm-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #151515 0%, #262626 72%, #ec5337 72%, #ec5337 100%);
+    position: relative;
+  }
+
+  .atm-avatar::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 16px;
+    width: 28px;
+    height: 28px;
+    background: white;
+    border-radius: 50% 50% 45% 45%;
+    opacity: 0.92;
+  }
+
+  .atm-title-block h1 {
+    margin: 0;
+    font-size: 44px;
+    line-height: 1.04;
+    letter-spacing: -0.05em;
+    color: #171717;
+  }
+
+  .atm-title-block p {
+    margin: 6px 0 0;
+    color: #7b736a;
+    font-size: 15px;
+  }
+
+  .atm-bar {
+    width: min(980px, 100%);
+    min-height: 126px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow:
+      inset 0 0 0 1px rgba(236, 228, 218, 0.95),
+      0 20px 42px rgba(43, 33, 20, 0.04);
+    padding: 22px 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    align-items: end;
+  }
+
+  .atm-bar-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .atm-bar-title {
+    font-size: 26px;
+    line-height: 1.15;
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .atm-bar-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    color: #857d73;
+    font-size: 13px;
+  }
+
+  .atm-ghost-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .atm-pill {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #faf6f0;
+    box-shadow: inset 0 0 0 1px rgba(236, 228, 218, 0.95);
+    color: #5f5950;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .atm-pill.good {
+    background: #ebfaf6;
+    color: #0f8f84;
+    box-shadow: inset 0 0 0 1px rgba(191, 228, 223, 0.95);
+  }
+
+  .atm-primary {
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: #0f8f84;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .atm-tabs {
+    width: min(980px, 100%);
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 18px 0 8px;
+    color: #8b8378;
+    font-size: 14px;
+  }
+
+  .atm-tabs .on {
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .atm-canvas {
+    width: min(980px, 100%);
+    height: 370px;
+    border-radius: 30px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249, 246, 240, 0.96)),
+      radial-gradient(circle at top left, rgba(15, 143, 132, 0.06), transparent 28%);
+    box-shadow:
+      inset 0 0 0 1px rgba(236, 228, 218, 0.95),
+      0 18px 38px rgba(43, 33, 20, 0.04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .atm-canvas::before {
+    content: "";
+    position: absolute;
+    left: 26px;
+    right: 26px;
+    top: 22px;
+    height: 42px;
+    border-bottom: 1px solid rgba(237, 229, 219, 0.92);
+  }
+
+  .atm-canvas::after {
+    content: "";
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    top: 92px;
+    bottom: 28px;
+    border-radius: 18px;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.72) 0,
+        rgba(255,255,255,0.72) 34px,
+        rgba(238, 230, 220, 0.58) 35px
+      );
+  }
+
+  .atm-canvas-line {
+    position: absolute;
+    left: 40px;
+    right: 120px;
+    top: 112px;
+    height: 36px;
+    background: rgba(15, 143, 132, 0.08);
+    border-left: 3px solid #0f8f84;
+    border-radius: 9px;
+    z-index: 2;
+  }
+
+  .atm-meta {
+    width: min(980px, 100%);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    padding-top: 20px;
+  }
+
+  .atm-meta-item {
+    text-align: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(236, 228, 218, 0.95);
+  }
+
+  .atm-meta-item strong {
+    display: block;
+    font-size: 34px;
+    line-height: 1;
+    color: #171717;
+    margin-bottom: 8px;
+  }
+
+  .atm-meta-item span {
+    font-size: 13px;
+    color: #7d756b;
+  }
+</style>
+
+<h2>快捷键页完整样稿</h2>
+<p class="subtitle">这次只看一个完整页面，不看分析，不看方案对比。目标是接近你给的那种干净、克制、留白充足的桌面入口感。</p>
+
+<div class="mockup">
+  <div class="mockup-header">ATM / Hotkeys / Full Page</div>
+  <div class="mockup-body">
+    <div class="atm-screen">
+      <aside class="atm-sidebar">
+        <div class="atm-brand">ATM</div>
+        <div class="atm-search"></div>
+
+        <div class="atm-nav">
+          <div class="atm-nav-item active">快捷键</div>
+          <div class="atm-nav-item">Skill</div>
+          <div class="atm-nav-item">菜单</div>
+        </div>
+
+        <div class="atm-group-title">辅助页面</div>
+
+        <div class="atm-nav">
+          <div class="atm-nav-item">概览</div>
+          <div class="atm-nav-item">环境</div>
+        </div>
+
+        <div class="atm-footer-note">
+          所有写入都走 Apply Plan。<br>
+          页面保持轻，操作保持稳。
+        </div>
+      </aside>
+
+      <section class="atm-main">
+        <div class="atm-intro">
+          <div class="atm-avatar-row">
+            <div class="atm-avatar"></div>
+            <div class="atm-title-block">
+              <h1>快捷键工作台</h1>
+              <p>当前方案、自定义键位、冲突状态都在这里，但它先像一个入口，而不是一面后台墙。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="atm-bar">
+          <div class="atm-bar-copy">
+            <div class="atm-bar-title">自用方案已就绪，继续编辑或直接应用</div>
+            <div class="atm-bar-sub">
+              <span>当前方案：自用</span>
+              <span>快捷键：36 条</span>
+              <span>冲突：0</span>
+              <span>env：用户层</span>
+            </div>
+          </div>
+
+          <div class="atm-ghost-actions">
+            <div class="atm-pill good">环境可读</div>
+            <div class="atm-pill">导入</div>
+            <div class="atm-pill">导出</div>
+            <div class="atm-primary">应用此方案</div>
+          </div>
+        </div>
+
+        <div class="atm-tabs">
+          <span class="on">键盘总览</span>
+          <span>快捷键地图</span>
+          <span>冲突</span>
+          <span>方案</span>
+        </div>
+
+        <div class="atm-canvas">
+          <div class="atm-canvas-line"></div>
+        </div>
+
+        <div class="atm-meta">
+          <div class="atm-meta-item">
+            <strong>36</strong>
+            <span>我的快捷键</span>
+          </div>
+          <div class="atm-meta-item">
+            <strong>0</strong>
+            <span>冲突错误</span>
+          </div>
+          <div class="atm-meta-item">
+            <strong>0</strong>
+            <span>警告</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

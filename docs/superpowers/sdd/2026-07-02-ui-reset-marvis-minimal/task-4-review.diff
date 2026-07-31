@@ -1,0 +1,445 @@
+﻿# Review package: Task 4 (local no-git)
+
+## Commit range
+none (no git repo)
+
+## Files changed
+- src/components/MinimalSurface.tsx (1467 bytes)
+- src/pages/HotkeyPage.tsx (70501 bytes)
+- src/App.css (102360 bytes)
+- tests/minimalSurface.test.tsx (2276 bytes)
+
+## Diff
+
+### src/components/MinimalSurface.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\components\\MinimalSurface.tsx"
+index e02abfc..e9af35f 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\components\\MinimalSurface.tsx"
+@@ -1 +1,57 @@
+-﻿
++import React from 'react';
++
++interface MinimalSurfaceCard {
++  id: string;
++  title: string;
++  meta: string;
++}
++
++interface MinimalSurfaceProps {
++  title: string;
++  subtitle: string;
++  prompt: string;
++  summaryLine: string[];
++  cards: MinimalSurfaceCard[];
++}
++
++const MinimalSurface: React.FC<MinimalSurfaceProps> = ({
++  title,
++  subtitle,
++  prompt,
++  summaryLine,
++  cards,
++}) => {
++  return (
++    <section className="minimal-surface" aria-label={title}>
++      <div className="minimal-surface-copy">
++        <p className="minimal-surface-kicker">Prompt-first workspace</p>
++        <h1 className="minimal-surface-title">{title}</h1>
++        <p className="minimal-surface-subtitle">{subtitle}</p>
++      </div>
++
++      <div className="minimal-surface-prompt">
++        <p className="minimal-surface-prompt-label">Next move</p>
++        <p className="minimal-surface-prompt-copy">{prompt}</p>
++      </div>
++
++      <div className="minimal-surface-summary" aria-label="summary">
++        {summaryLine.map((item) => (
++          <span key={item} className="minimal-surface-summary-item">
++            {item}
++          </span>
++        ))}
++      </div>
++
++      <div className="minimal-surface-cards" aria-label="quick entries">
++        {cards.map((card) => (
++          <article key={card.id} className="minimal-surface-card">
++            <h2>{card.title}</h2>
++            <p>{card.meta}</p>
++          </article>
++        ))}
++      </div>
++    </section>
++  );
++};
++
++export default MinimalSurface;
+
+### src/pages/HotkeyPage.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-4-before\\src\\pages\\HotkeyPage.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\HotkeyPage.tsx"
+index 8ff18a3..a4999c4 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-4-before\\src\\pages\\HotkeyPage.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\HotkeyPage.tsx"
+@@ -12,38 +12,39 @@ import { showToast } from '../components/common/Toast';
+ import type { EnvironmentInfo } from '../types/environment';
+ import HotkeyList from '../components/HotkeyList';
+ import ConflictList from '../components/ConflictList';
+ import ApplyPlanPreview from '../components/ApplyPlanPreview';
+ import KeyboardOccupancy from '../components/KeyboardVisualizer';
+ import HotkeyMap, { MapFilter, MapViewMode } from '../components/HotkeyMap';
+ import HotkeyEditor from '../components/HotkeyEditor';
+ import ProfileBar from '../components/ProfileBar';
+ import GlobalStatusBar from '../components/GlobalStatusBar';
+ import MoreActionsMenu from '../components/MoreActionsMenu';
+-import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
++import MinimalSurface from '../components/MinimalSurface';
+ import EditApplyPlanPreview from '../components/EditApplyPlanPreview';
+ import AddHotkeyDialog from '../components/AddHotkeyDialog';
+ import ImportPreviewDialog from '../components/ImportPreviewDialog';
+ import type { ImportPreviewData } from '../components/ImportPreviewDialog';
+ import EnvSourceBar from '../components/EnvSourceBar';
+ import EnvSourceDialog from '../components/EnvSourceDialog';
+ import type { EnvSourceList, AtmSettings, EnvSource } from '../types/environment';
+ import ChangeHistoryDialog from '../components/ChangeHistoryDialog';
+ import ExportCheatsheetDialog from '../components/ExportCheatsheetDialog';
+ import EnhancedConflictList from '../components/EnhancedConflictList';
+ import RawLineView from '../components/RawLineView';
+ import EnvImportDialog from '../components/EnvImportDialog';
+ import HotkeyDeleteConfirmDialog from '../components/HotkeyDeleteConfirmDialog';
+ import type { EnvImportPreview, ImportResult } from '../types/importEnv';
+ import { normalizeKey } from '../utils/keyNormalizer';
+ import type { ActiveLayer } from '../utils/hotkeyItem';
+ import { filterHotkeysByKeyboardLayer } from '../utils/hotkeyItem';
++import { getPageSurface } from '../config/pageSurfaces';
+ 
+ // window.atm 类型定义见 src/types/window.d.ts
+ 
+ /** 折叠按钮 */
+ const CollapseToggle: React.FC<{ collapsed: boolean; onClick: () => void; label: string }> = ({
+   collapsed, onClick, label,
+ }) => (
+   <div className="collapse-toggle" onClick={onClick}>
+     <span className={`collapse-toggle-icon ${collapsed ? 'collapsed' : ''}`}>▼</span>
+     {label}
+@@ -1255,41 +1256,47 @@ const HotkeyPage: React.FC = () => {
+   const stats = {
+     total: layerFilteredBindings.length,
+     funckeyCount: layerFilteredBindings.filter((b) => b.type === 'funckey').length,
+     aliasCount: layerFilteredBindings.filter((b) => b.type === 'alias').length,
+     errorCount: filteredConflicts.filter((c) => c.severity === 'error').length,
+     warningCount: filteredConflicts.filter((c) => c.severity === 'warning').length,
+     overlayConflictCount,
+   };
+   const activeProfileName =
+     profiles.find((profile) => profile.id === activeProfileId)?.name || '未选择';
++  const hotkeySurface = getPageSurface('hotkeys');
++  const summaryLine = [
++    `${stats.total} 条快捷键`,
++    `${stats.errorCount + stats.warningCount} 个问题`,
++    envInfo?.envFilePath ? '用户层 env' : 'env 待配置',
++  ];
++  const promptMessage = [
++    `当前方案：${activeProfileName}`,
++    plan ? '有待应用变更，可以先检查 Apply Plan。' : '可以继续编辑、排查冲突或直接应用。',
++  ].join(' ');
+ 
+   if (loading && !envInfo) {
+     return <div className="loading">正在加载快捷键信息...</div>;
+   }
+ 
+   return (
+     <div className="workspace-page workspace-page-hotkeys">
+-      <CoreWorkspaceHero
+-        eyebrow="Core Workspace"
+-        title="快捷键工作台"
+-        description="把键位总览、冲突诊断、方案切换和 Apply Plan 预览压到同一屏里，优先处理高频键位。"
+-        metrics={[
+-          { label: '当前方案', value: activeProfileName, tone: 'accent' },
+-          { label: '快捷键总量', value: String(stats.total) },
+-          {
+-            label: '冲突与警告',
+-            value: String(stats.errorCount + stats.warningCount),
+-            tone: stats.errorCount > 0 ? 'warning' : 'default',
+-          },
+-          { label: '应用状态', value: plan ? '待应用' : '已就绪' },
+-        ]}
++      <MinimalSurface
++        title={hotkeySurface.title}
++        subtitle={hotkeySurface.subtitle}
++        prompt={promptMessage}
++        summaryLine={summaryLine}
++        cards={hotkeySurface.actions.map((action) => ({
++          id: action.id,
++          title: action.label,
++          meta: action.meta,
++        }))}
+       />
+ 
+       {/* ═══ Profile 方案栏 ═══ */}
+       <ProfileBar
+         title="快捷键方案"
+         profiles={profiles}
+         activeProfileId={activeProfileId}
+         appliedProfileId={appliedProfileId}
+         onCreate={(name) => handleCreateProfile(name)}
+         onCopy={(profileId) => handleCopyProfile(profileId)}
+@@ -1366,21 +1373,21 @@ const HotkeyPage: React.FC = () => {
+         <div className={`message ${applyResult.startsWith('✅') || applyResult.startsWith('ℹ️') ? 'message-info' : 'message-error'}`} style={{ marginBottom: 12 }}>
+           {applyResult}
+         </div>
+       )}
+ 
+       {parseWarnings.length > 0 && parseWarnings.map((w, i) => (
+         <div key={i} className="message message-warning">{w}</div>
+       ))}
+ 
+       {/* ── 统计卡片 ── */}
+-      <div className="grid-3" style={{ marginBottom: 16 }}>
++      {false && <div className="grid-3" style={{ marginBottom: 16 }}>
+         <div className="card" style={{ textAlign: 'center' }}>
+           <div className="stat-value" style={{ color: 'var(--accent-blue)' }}>{stats.total}</div>
+           <div className="stat-label">
+             快捷键总数
+             {viewMode === 'my' && ' (我的快捷键)'}
+             {viewMode === 'reserved' && ' (默认/保留键)'}
+             {viewMode === 'overlay' && ' (全部叠加)'}
+             &nbsp;(F: {stats.funckeyCount} / A: {stats.aliasCount})
+           </div>
+         </div>
+@@ -1389,21 +1396,21 @@ const HotkeyPage: React.FC = () => {
+           <div className="stat-label">冲突错误</div>
+         </div>
+         <div className="card" style={{ textAlign: 'center' }}>
+           <div className="stat-value" style={{ color: viewMode === 'overlay' && stats.overlayConflictCount > 0 ? 'var(--accent-yellow)' : 'var(--text-secondary)' }}>
+             {viewMode === 'overlay' ? stats.overlayConflictCount : stats.warningCount}
+           </div>
+           <div className="stat-label">
+             {viewMode === 'overlay' ? '覆盖风险' : '警告'}
+           </div>
+         </div>
+-      </div>
++      </div>}
+ 
+       {/* ── 保留键来源提示（仅当 viewMode 涉及保留键时显示） ── */}
+       {reservedKeysWarning && (
+         <div className="message message-warning" style={{ marginBottom: 12 }}>
+           默认/保留键来自默认快捷键参考库（data/default_reserved_keys.json），不是 env 文件。
+           <br />
+           当前未加载: {reservedKeysWarning}
+         </div>
+       )}
+       {(viewMode === 'reserved' || viewMode === 'overlay') && !reservedKeysWarning && (
+
+### src/App.css
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-4-before\\src\\App.css" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\App.css"
+index 98f16a9..e18c524 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-4-before\\src\\App.css"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\App.css"
+@@ -5106,20 +5106,121 @@ body {
+   padding: 28px 32px 40px;
+   background: #fff;
+ }
+ 
+ .workspace-page {
+   display: flex;
+   flex-direction: column;
+   gap: 14px;
+ }
+ 
++.minimal-surface {
++  display: flex;
++  flex-direction: column;
++  gap: 18px;
++  padding: 6px 0 10px;
++  border-bottom: 1px solid var(--border-color);
++}
++
++.minimal-surface-copy {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++
++.minimal-surface-kicker {
++  font-size: 11px;
++  font-weight: 700;
++  letter-spacing: 0.12em;
++  text-transform: uppercase;
++  color: var(--text-muted);
++}
++
++.minimal-surface-title {
++  font-size: 36px;
++  line-height: 1.02;
++  letter-spacing: -0.05em;
++  font-weight: 700;
++}
++
++.minimal-surface-subtitle {
++  max-width: 760px;
++  font-size: 14px;
++  color: var(--text-secondary);
++}
++
++.minimal-surface-prompt {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++  padding-top: 14px;
++  border-top: 1px solid var(--border-color);
++}
++
++.minimal-surface-prompt-label {
++  font-size: 11px;
++  font-weight: 700;
++  letter-spacing: 0.12em;
++  text-transform: uppercase;
++  color: var(--text-muted);
++}
++
++.minimal-surface-prompt-copy {
++  max-width: 900px;
++  font-size: 24px;
++  line-height: 1.25;
++  letter-spacing: -0.03em;
++}
++
++.minimal-surface-summary {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 10px;
++}
++
++.minimal-surface-summary-item {
++  display: inline-flex;
++  align-items: center;
++  min-height: 30px;
++  padding: 0 12px;
++  border-radius: 999px;
++  border: 1px solid var(--border-color);
++  background: var(--bg-secondary);
++  color: var(--text-secondary);
++  font-size: 12px;
++}
++
++.minimal-surface-cards {
++  display: grid;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
++  gap: 12px;
++}
++
++.minimal-surface-card {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++  min-height: 92px;
++  padding: 14px 0 10px;
++  border-top: 1px solid var(--border-color);
++}
++
++.minimal-surface-card h2 {
++  font-size: 15px;
++  font-weight: 600;
++}
++
++.minimal-surface-card p {
++  font-size: 12px;
++  color: var(--text-secondary);
++}
++
+ .workspace-hero,
+ .profile-bar,
+ .global-status-bar,
+ .card,
+ .loading,
+ .empty-state,
+ .impact-summary,
+ .skill-usage-summary,
+ .config-file-row,
+ .more-actions-dropdown,
+@@ -5249,11 +5350,23 @@ body {
+     border-bottom: 1px solid var(--border-color);
+   }
+ 
+   .marvis-main {
+     padding: 18px 16px 28px;
+   }
+ 
+   .workspace-hero {
+     grid-template-columns: 1fr;
+   }
++
++  .minimal-surface-title {
++    font-size: 30px;
++  }
++
++  .minimal-surface-prompt-copy {
++    font-size: 20px;
++  }
++
++  .minimal-surface-cards {
++    grid-template-columns: 1fr;
++  }
+ }
+
+### tests/minimalSurface.test.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\minimalSurface.test.tsx"
+index e02abfc..7a773e8 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\empty.tmp"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\minimalSurface.test.tsx"
+@@ -1 +1,52 @@
+-﻿
++import { describe, expect, it } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import { MemoryRouter } from 'react-router-dom';
++import Layout from '../src/components/Layout';
++import MinimalSurface from '../src/components/MinimalSurface';
++import { APP_NAV_ITEMS } from '../src/config/appShell';
++
++describe('layout shell', () => {
++  it('renders the lightweight marvis shell with grouped navigation labels', () => {
++    const { container } = render(
++      <MemoryRouter initialEntries={['/hotkeys']}>
++        <Layout>
++          <div>page</div>
++        </Layout>
++      </MemoryRouter>,
++    );
++
++    expect(container.querySelector('.marvis-shell')).toBeInTheDocument();
++    expect(container.querySelector('.marvis-sidebar')).toBeInTheDocument();
++    expect(container.querySelector('.marvis-main')).toBeInTheDocument();
++
++    expect(screen.getByText(APP_NAV_ITEMS[0].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[1].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[2].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[3].label)).toBeInTheDocument();
++    expect(screen.getByText(APP_NAV_ITEMS[4].label)).toBeInTheDocument();
++    expect(screen.getByText('核心模块')).toBeInTheDocument();
++    expect(screen.getByText('辅助模块')).toBeInTheDocument();
++    expect(screen.queryByText('Allegro Workspace')).not.toBeInTheDocument();
++  });
++});
++
++describe('minimal surface', () => {
++  it('renders a single prompt panel and quick entry cards', () => {
++    render(
++      <MinimalSurface
++        title="快捷键工作台"
++        subtitle="当前方案、冲突情况和键位编辑都收在这里。"
++        prompt="当前方案：自由，继续编辑或直接应用。"
++        summaryLine={['36 条快捷键', '0 冲突', '用户层 env']}
++        cards={[
++          { id: 'overview', title: '快速进入键盘总览', meta: '默认入口' },
++          { id: 'conflicts', title: '处理冲突与保留键', meta: '0 个待处理' },
++        ]}
++      />,
++    );
++
++    expect(screen.getByText('快捷键工作台')).toBeInTheDocument();
++    expect(screen.getByText('快速进入键盘总览')).toBeInTheDocument();
++    expect(screen.getByText('36 条快捷键')).toBeInTheDocument();
++  });
++});
+

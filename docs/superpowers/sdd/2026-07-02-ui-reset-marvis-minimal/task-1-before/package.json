@@ -1,0 +1,33 @@
+{
+  "name": "allegro-toolkit-manager",
+  "version": "0.1.0",
+  "description": "Allegro Personal Config Manager - 个人 Allegro 工作环境配置管理工具",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "node scripts/dev-electron.mjs",
+    "dev:vite": "vite",
+    "dev:electron": "node scripts/dev-electron.mjs",
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:renderer": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "electron": "^35.7.5",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.2",
+    "vitest": "^3.1.1"
+  }
+}

@@ -1,0 +1,504 @@
+<style>
+  .page {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 30px;
+    min-height: 78vh;
+  }
+
+  .side {
+    padding: 18px 10px 18px 2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .mark {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: #0f8f84;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  .logo {
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    font-weight: 800;
+    color: #171717;
+    margin-bottom: 14px;
+  }
+
+  .side p {
+    margin: 0;
+    color: #726a61;
+    line-height: 1.75;
+  }
+
+  .nav {
+    margin-top: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .nav-item {
+    padding-left: 10px;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item.active {
+    border-left-color: #0f8f84;
+  }
+
+  .nav-title {
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #191919;
+    margin-bottom: 3px;
+  }
+
+  .nav-sub {
+    font-size: 13px;
+    color: #857c72;
+  }
+
+  .side-note {
+    font-size: 12px;
+    color: #8b8378;
+    line-height: 1.8;
+    max-width: 190px;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .hero {
+    padding: 8px 0 0;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .hero-title {
+    font-size: 48px;
+    line-height: 1.04;
+    letter-spacing: -0.05em;
+    color: #171717;
+    margin: 6px 0 14px;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #655d55;
+    max-width: 760px;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .hero-meta strong {
+    font-size: 46px;
+    line-height: 1;
+    color: #111;
+  }
+
+  .hero-meta span {
+    font-size: 13px;
+    color: #6b645c;
+  }
+
+  .toolband {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 14px 0;
+    border-top: 1px solid #ece2d4;
+    border-bottom: 1px solid #ece2d4;
+  }
+
+  .toolband-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .toolband-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .label {
+    font-size: 12px;
+    color: #8b8278;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .scheme {
+    font-size: 26px;
+    font-weight: 700;
+    color: #171717;
+    margin-right: 10px;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: #7a726a;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f7f2eb;
+  }
+
+  .tag.good {
+    color: #0f8f84;
+    background: #eaf9f6;
+  }
+
+  .tiny-action {
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #f6f0e8;
+    color: #4d4741;
+  }
+
+  .primary {
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: #0f8f84;
+    color: white;
+    font-weight: 700;
+  }
+
+  .canvas {
+    min-height: 520px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.84), rgba(251,247,241,0.9)),
+      radial-gradient(circle at top left, rgba(15, 143, 132, 0.08), transparent 30%);
+    border-radius: 30px;
+    box-shadow: inset 0 0 0 1px rgba(235, 225, 213, 0.95);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  .canvas-top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding: 24px 26px 16px;
+  }
+
+  .canvas-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #171717;
+  }
+
+  .canvas-state {
+    font-size: 14px;
+    color: #716960;
+  }
+
+  .canvas-tabs {
+    display: inline-flex;
+    gap: 16px;
+    justify-content: flex-end;
+    font-size: 13px;
+    color: #7b736b;
+  }
+
+  .canvas-tabs .on {
+    color: #161616;
+    font-weight: 700;
+  }
+
+  .canvas-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 22px;
+    padding: 0 26px 26px;
+  }
+
+  .workspace {
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74));
+    border-radius: 24px;
+    min-height: 400px;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(238, 228, 216, 0.9);
+    overflow: hidden;
+  }
+
+  .workspace::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(233, 223, 211, 0.9);
+  }
+
+  .workspace-strip {
+    position: absolute;
+    left: 26px;
+    right: 26px;
+    top: 24px;
+    height: 54px;
+    border-bottom: 1px solid rgba(236, 226, 213, 0.95);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #6d655c;
+    font-size: 13px;
+  }
+
+  .workspace-strip strong {
+    color: #171717;
+    font-size: 18px;
+  }
+
+  .workspace-map {
+    position: absolute;
+    left: 26px;
+    right: 26px;
+    top: 106px;
+    bottom: 26px;
+    background:
+      linear-gradient(180deg, rgba(252,249,244,0.84), rgba(255,255,255,0.76)),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 37px,
+        rgba(238, 228, 216, 0.55) 38px
+      );
+    border-radius: 18px;
+  }
+
+  .workspace-map::after {
+    content: "";
+    position: absolute;
+    left: 34px;
+    top: 34px;
+    width: 58%;
+    height: 44px;
+    background: rgba(15, 143, 132, 0.08);
+    border-left: 3px solid #0f8f84;
+    border-radius: 8px;
+  }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 4px;
+  }
+
+  .rail-line {
+    padding: 4px 0 14px;
+    border-bottom: 1px solid #ebe1d4;
+  }
+
+  .rail-line:last-child {
+    border-bottom: none;
+  }
+
+  .rail-line strong {
+    display: block;
+    color: #1d1d1d;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .rail-line p {
+    margin: 0;
+    color: #756d65;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    padding-top: 2px;
+  }
+
+  .summary-item {
+    padding-top: 14px;
+    border-top: 1px solid #ece1d2;
+  }
+
+  .summary-item strong {
+    display: block;
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 8px;
+    color: #171717;
+  }
+
+  .summary-item span {
+    font-size: 13px;
+    color: #756d64;
+  }
+</style>
+
+<h2>方向样稿：工具带式</h2>
+<p class="subtitle">这次的目标不是“更大的框”，而是把页面收成一条工作带和一块主画布，让信息尽量回到行内与边上。</p>
+
+<div class="mockup">
+  <div class="mockup-header">ATM / 快捷键页 / B 工具带式</div>
+  <div class="mockup-body">
+    <div class="page">
+      <aside class="side">
+        <div>
+          <div class="mark">ALLEGRO WORKSPACE</div>
+          <div class="logo">ATM</div>
+          <p>左侧仍然是导航，但不再做卡片堆。它更像索引，而不是内容区。</p>
+
+          <div class="nav">
+            <div class="nav-item active">
+              <div class="nav-title">快捷键</div>
+              <div class="nav-sub">主工作区</div>
+            </div>
+            <div class="nav-item">
+              <div class="nav-title">Skill</div>
+              <div class="nav-sub">能力编排</div>
+            </div>
+            <div class="nav-item">
+              <div class="nav-title">菜单</div>
+              <div class="nav-sub">覆盖层生成</div>
+            </div>
+            <div class="nav-item">
+              <div class="nav-title">概览 / 环境</div>
+              <div class="nav-sub">辅助入口</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-note">
+          当前原则不再放进独立信息盒，而是压成底部说明文字，减少“到处有框”的感觉。
+        </div>
+      </aside>
+
+      <section class="main">
+        <div class="hero">
+          <div class="hero-grid">
+            <div>
+              <div class="mark">CORE WORKSPACE</div>
+              <div class="hero-title">快捷键工作台</div>
+              <div class="hero-desc">
+                先用一个完整标题区把事情说明白，右上只保留一个醒目的主数字。
+                其他状态不再拆成并排统计块，而是往下收进一条连续工具带里。
+              </div>
+            </div>
+
+            <div class="hero-meta">
+              <strong>36</strong>
+              <span>当前快捷键量</span>
+              <span>方案：自用</span>
+              <span>状态：已就绪</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolband">
+          <div class="toolband-left">
+            <span class="label">当前方案</span>
+            <span class="scheme">自用</span>
+            <span class="tag good">环境可读</span>
+            <span class="tag good">写入可写</span>
+            <span class="tag">冲突 0</span>
+            <span class="tag">方案 2 个</span>
+            <span class="tag">env: 用户层</span>
+          </div>
+
+          <div class="toolband-right">
+            <span class="tiny-action">新建</span>
+            <span class="tiny-action">复制</span>
+            <span class="tiny-action">重命名</span>
+            <span class="tiny-action">导入</span>
+            <span class="tiny-action">导出</span>
+            <span class="primary">应用此方案</span>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-top">
+            <div class="canvas-title">主画布</div>
+            <div class="canvas-state">这里应该是键盘占用总览或快捷键地图，它是一整块工作面，不是再切统计卡。</div>
+            <div class="canvas-tabs">
+              <span class="on">键盘总览</span>
+              <span>地图</span>
+              <span>明细</span>
+              <span>冲突</span>
+            </div>
+          </div>
+
+          <div class="canvas-body">
+            <div class="workspace">
+              <div class="workspace-strip">
+                <strong>当前图层：普通层</strong>
+                <span>收藏快捷键</span>
+                <span>默认保留键</span>
+                <span>全部叠加</span>
+              </div>
+              <div class="workspace-map"></div>
+            </div>
+
+            <aside class="rail">
+              <div class="rail-line">
+                <strong>辅助信息</strong>
+                <p>只保留 env 来源、引用风险、草稿状态这类需要随时扫一眼的信息。</p>
+              </div>
+              <div class="rail-line">
+                <strong>冲突提醒</strong>
+                <p>有冲突时在这里竖着提示，不再单独长出横向统计区。</p>
+              </div>
+              <div class="rail-line">
+                <strong>这版的关键</strong>
+                <p>页面是“标题区 → 工具带 → 主画布”，而不是“大框里再套很多小框”。</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="summary-item">
+            <strong>36</strong>
+            <span>我的快捷键</span>
+          </div>
+          <div class="summary-item">
+            <strong>0</strong>
+            <span>冲突错误</span>
+          </div>
+          <div class="summary-item">
+            <strong>0</strong>
+            <span>警告</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

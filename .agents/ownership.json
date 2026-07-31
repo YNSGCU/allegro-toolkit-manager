@@ -1,0 +1,31 @@
+{
+  "defaultOwner": "shared",
+  "areas": [
+    {
+      "path": "core/",
+      "owner": "shared",
+      "notes": "Pure TypeScript business logic and filesystem workflows."
+    },
+    {
+      "path": "electron/",
+      "owner": "shared",
+      "notes": "Electron main, preload, and IPC entry points."
+    },
+    {
+      "path": "src/",
+      "owner": "shared",
+      "notes": "Renderer UI, hooks, and shared front-end utilities."
+    },
+    {
+      "path": "docs/",
+      "owner": "shared",
+      "notes": "Manuals and Structure OS documentation."
+    }
+  ],
+  "sharedFiles": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".structure-os/HANDOFF.md",
+    ".structure-os/PITFALLS.md"
+  ]
+}

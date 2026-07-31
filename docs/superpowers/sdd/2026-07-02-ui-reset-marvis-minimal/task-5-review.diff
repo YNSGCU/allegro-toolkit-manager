@@ -1,0 +1,525 @@
+﻿# Review package: Task 5 (local no-git, updated)
+
+## Commit range
+none (no git repo)
+
+## Files changed
+- src/pages/SkillPage.tsx (72998 bytes)
+- src/pages/MenuPage.tsx (57969 bytes)
+- src/pages/DashboardPage.tsx (6824 bytes)
+- src/pages/EnvironmentPage.tsx (7358 bytes)
+- tests/pageSurfaces.test.ts (5420 bytes)
+
+## Diff
+
+### src/pages/SkillPage.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\SkillPage.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\SkillPage.tsx"
+index eb3a73a..8f1ba25 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\SkillPage.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\SkillPage.tsx"
+@@ -23,21 +23,22 @@ import type { HotkeyBinding, ValidationResult } from '../types/hotkey';
+ import SkillCard from '../components/SkillCard';
+ import SkillDetailSidebar from '../components/SkillDetailSidebar';
+ import CommandRegistryTable from '../components/CommandRegistryTable';
+ import EnhancedRefCheck from '../components/EnhancedRefCheck';
+ import CompanySkillManager from '../components/CompanySkillManager';
+ import SkillMetaDialog from '../components/SkillMetaDialog';
+ import SkillDeleteImpactDialog from '../components/SkillDeleteImpactDialog';
+ import ProfileBar from '../components/ProfileBar';
+ import GlobalStatusBar from '../components/GlobalStatusBar';
+ import MoreActionsMenu from '../components/MoreActionsMenu';
+-import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
++import MinimalSurface from '../components/MinimalSurface';
++import { getPageSurface } from '../config/pageSurfaces';
+ 
+ type TabType = 'list' | 'registry' | 'refs';
+ 
+ /** Apply Plan action 类型 → 中文映射 */
+ import { getStepLabel } from '../utils/stepLabels';
+ function getStepTypeLabel(type: string): string {
+   const info = getStepLabel(type);
+   return `${info.icon} ${info.label}`;
+ }
+ 
+@@ -1149,42 +1150,46 @@ const SkillPage: React.FC = () => {
+     referenceCount: '排序: 引用数',
+     loadStatus: '排序: 加载状态',
+     sourceType: '排序: 来源',
+     issueCount: '排序: 问题数',
+   };
+ 
+   // 小屏 + 有选中 → 用弹窗展示详情
+   // 宽屏 + 有选中 → 左右分栏
+   const showSplitLayout = hasSelectedSkill && !isNarrow;
+   const showDetailModal = hasSelectedSkill && isNarrow;
++  const skillSurface = getPageSurface('skills');
++  const skillSummaryLine = [
++    `${allSkills.length} ? Skill`,
++    refStats.errors > 0
++      ? `${refStats.errors} ???`
++      : refStats.warnings > 0
++        ? `${refStats.warnings} ???`
++        : '????',
++    userSkills.length > 0
++      ? `?? Skill ${userSkills.length}`
++      : `?? Skill ${companySkills.length}`,
++  ];
+ 
+   /** 顶栏 — 各 Tab 共用 */
+   const renderPageHeader = () => (
+     <>
+-      <CoreWorkspaceHero
+-        eyebrow="Capability Workspace"
+-        title="Skill 编排台"
+-        description="把 Skill 扫描、启停、引用检查和命令注册收拢成一个能力工作区，先看可用性，再看组织方式。"
+-        metrics={[
+-          { label: 'Skill 总量', value: String(allSkills.length), tone: 'accent' },
+-          { label: '用户 Skill', value: String(userSkills.length) },
+-          { label: '公司 Skill', value: String(companySkills.length) },
+-          {
+-            label: '引用状态',
+-            value:
+-              refStats.errors > 0
+-                ? `${refStats.errors} 个错误`
+-                : refStats.warnings > 0
+-                  ? `${refStats.warnings} 个警告`
+-                  : '已通过',
+-          },
+-        ]}
++      <MinimalSurface
++        title={skillSurface.title}
++        subtitle={skillSurface.subtitle}
++        prompt={skillSurface.prompt}
++        summaryLine={skillSummaryLine}
++        cards={skillSurface.actions.map((action) => ({
++          id: action.id,
++          title: action.label,
++          meta: action.meta,
++        }))}
+       />
+ 
+       {/* Skill 方案栏 */}
+       {skillProfileStore && (
+         <ProfileBar
+           title="Skill 方案"
+           profiles={skillProfileStore.profiles || []}
+           activeProfileId={skillProfileStore.activeProfileId}
+           onCreate={async (name) => {
+             const res = await window.atm.skillProfileCreate(name);
+
+### src/pages/MenuPage.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\MenuPage.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\MenuPage.tsx"
+index b01a591..36aa75a 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\MenuPage.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\MenuPage.tsx"
+@@ -8,27 +8,28 @@
+  */
+ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import type { MenuItemConfig, MenuProfile, MenuProfileStore, MenuIssue, MenuTreeValidationIssue } from '../types/menu';
+ import { generateMenuId, validateMenuTree } from '../types/menu';
+ import { showToast } from '../components/common/Toast';
+ import ErrorPanel from '../components/common/ErrorPanel';
+ import ProfileBar from '../components/ProfileBar';
+ import GlobalStatusBar from '../components/GlobalStatusBar';
+ import MoreActionsMenu from '../components/MoreActionsMenu';
+-import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
++import MinimalSurface from '../components/MinimalSurface';
+ import MenuTree from '../components/MenuTree';
+ import MenuItemEditor from '../components/MenuItemEditor';
+ import CommandSelector from '../components/CommandSelector';
+ import MenuPreviewDialog from '../components/MenuPreviewDialog';
+ import MenuApplyPlanDialog from '../components/MenuApplyPlanDialog';
+ import { useMenuApplyPlan } from '../hooks/useMenuApplyPlan';
++import { getPageSurface } from '../config/pageSurfaces';
+ 
+ type TabType = 'tree' | 'commands' | 'refs';
+ 
+ interface LinkedCommand {
+   commandName: string;
+   sourceSkillId?: string;
+   sourceSkillName?: string;
+   sourceSkillFile?: string;
+   sourceType?: string;
+   entryType?: string;
+@@ -330,20 +331,32 @@ const MenuPage: React.FC = () => {
+   // ═══════════════════════════════════════════════════
+   // 菜单树校验结果
+   // ═══════════════════════════════════════════════════
+ 
+   const treeValidation = useMemo(() => {
+     return validateMenuTree(items);
+   }, [items]);
+ 
+   /** 是否有阻塞性错误（不允许生成 Apply Plan / IL） */
+   const hasBlockingError = treeValidation.hasError;
++  const menuSurface = getPageSurface('menu');
++  const menuSummaryLine = [
++    `${items.length} ???`,
++    hasUnsavedChanges ? '?????' : '?????',
++    treeValidation.hasError
++      ? `${treeValidation.errors.length} ???`
++      : treeValidation.hasWarning
++        ? `${treeValidation.warnings.length} ???`
++        : fileStatus?.ilExists
++          ? 'IL ???'
++          : 'IL ???',
++  ];
+ 
+   // ═══════════════════════════════════════════════════
+   // 筛选
+   // ═══════════════════════════════════════════════════
+ 
+   const filteredItems = useMemo(() => {
+     let result = items;
+     if (search.trim()) {
+       const q = search.toLowerCase();
+       const matches = (item: MenuItemConfig): boolean =>
+@@ -873,46 +886,32 @@ const MenuPage: React.FC = () => {
+         <ErrorPanel message={error} onRetry={loadData} />
+       </div>
+     );
+   }
+ 
+   return (
+     <div
+       className="workspace-page workspace-page-menu page-container"
+       style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}
+     >
+-      <CoreWorkspaceHero
+-        eyebrow="Menu Workspace"
+-        title="菜单工作台"
+-        description="先看草稿状态，再看结构错误和生成结果，让菜单树、命令视图和 Apply Plan 变成一个连续流程。"
+-        metrics={[
+-          { label: '草稿节点', value: String(items.length), tone: 'accent' },
+-          {
+-            label: '草稿状态',
+-            value: hasUnsavedChanges ? '待保存' : '已保存',
+-            tone: hasUnsavedChanges ? 'warning' : 'default',
+-          },
+-          { label: 'IL 结果', value: fileStatus?.ilExists ? '已生成' : '未生成' },
+-          {
+-            label: '结构校验',
+-            value: treeValidation.hasError
+-              ? `${treeValidation.errors.length} 个错误`
+-              : treeValidation.hasWarning
+-                ? `${treeValidation.warnings.length} 个警告`
+-                : '已通过',
+-          },
+-        ]}
++      <MinimalSurface
++        title={menuSurface.title}
++        subtitle={menuSurface.subtitle}
++        prompt={menuSurface.prompt}
++        summaryLine={menuSummaryLine}
++        cards={menuSurface.actions.map((action) => ({
++          id: action.id,
++          title: action.label,
++          meta: action.meta,
++        }))}
+       />
+ 
+-      {/* ════════════════════════════════════════ */}
+-      {/* 顶部工具栏 */}
+-      {/* ════════════════════════════════════════ */}
+       <div style={{
+         display: 'flex',
+         alignItems: 'center',
+         gap: '8px',
+         padding: '12px 20px',
+         borderBottom: '1px solid var(--border-color)',
+         flexWrap: 'wrap',
+       }}>
+         <span style={{ fontWeight: 600, fontSize: '15px', marginRight: '8px' }}>
+           📋 菜单管理
+
+### src/pages/DashboardPage.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\DashboardPage.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\DashboardPage.tsx"
+index c61c895..5e09d90 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\DashboardPage.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\DashboardPage.tsx"
+@@ -1,19 +1,20 @@
+ /**
+  * ATM - 概览页面
+  */
+ import React, { useEffect, useState } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import type { EnvironmentInfo, HealthScore } from '../types/environment';
+-import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
++import MinimalSurface from '../components/MinimalSurface';
+ import FileStatusCard from '../components/FileStatusCard';
+ import VersionInfoPanel from '../components/common/VersionInfoPanel';
++import { getPageSurface } from '../config/pageSurfaces';
+ 
+ // window.atm 类型定义见 src/types/window.d.ts
+ 
+ const DashboardPage: React.FC = () => {
+   const navigate = useNavigate();
+   const [loading, setLoading] = useState(true);
+   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
+   const [health, setHealth] = useState<HealthScore | null>(null);
+   const [error, setError] = useState<string | null>(null);
+ 
+@@ -50,31 +51,39 @@ const DashboardPage: React.FC = () => {
+ 
+   const getScoreLevelText = (level: string) => {
+     switch (level) {
+       case 'safe': return '安全';
+       case 'warning': return '警告';
+       case 'danger': return '危险';
+       default: return '未知';
+     }
+   };
+ 
++  const overviewSurface = getPageSurface('overview');
++  const overviewSummaryLine = [
++    health ? `健康 ${health.score}` : '健康 --',
++    envInfo?.envExists ? 'env 已检测' : 'env 缺失',
++    envInfo?.pcbenvPath ? 'pcbenv 已定位' : 'pcbenv 未定位',
++  ];
++
+   return (
+     <div className="workspace-page utility-page">
+-      <CoreWorkspaceHero
+-        eyebrow="Overview"
+-        title="概览"
+-        description="快速确认当前环境是否健康、配置目录是否就绪，以及三个核心工作区该先处理哪里。"
+-        metrics={[
+-          { label: '健康分', value: health ? String(health.score) : '--', tone: 'accent' },
+-          { label: 'env 状态', value: envInfo?.envExists ? '已检测' : '未检测' },
+-          { label: 'pcbenv', value: envInfo?.pcbenvPath ? '已定位' : '未定位' },
+-        ]}
++      <MinimalSurface
++        title={overviewSurface.title}
++        subtitle={overviewSurface.subtitle}
++        prompt={overviewSurface.prompt}
++        summaryLine={overviewSummaryLine}
++        cards={overviewSurface.actions.map((action) => ({
++          id: action.id,
++          title: action.label,
++          meta: action.meta,
++        }))}
+       />
+ 
+       {error && (
+         <div className="message message-warning">
+           {error}
+           <button className="btn btn-sm" style={{ marginLeft: 12 }} onClick={loadEnvironment}>
+             重试
+           </button>
+         </div>
+       )}
+
+### src/pages/EnvironmentPage.tsx
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\EnvironmentPage.tsx" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\EnvironmentPage.tsx"
+index 984b172..586d464 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\src\\pages\\EnvironmentPage.tsx"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\src\\pages\\EnvironmentPage.tsx"
+@@ -1,17 +1,18 @@
+ /**
+  * ATM - 环境检测页面
+  */
+ import React, { useEffect, useState } from 'react';
+ import type { EnvironmentInfo } from '../types/environment';
+-import CoreWorkspaceHero from '../components/CoreWorkspaceHero';
++import MinimalSurface from '../components/MinimalSurface';
+ import FileStatusCard from '../components/FileStatusCard';
++import { getPageSurface } from '../config/pageSurfaces';
+ 
+ /** Windows 环境变量键值对 */
+ type EnvVarMap = Record<string, string | null>;
+ 
+ interface EnvVarResult {
+   success: boolean;
+   data?: EnvVarMap;
+   error?: string;
+ }
+ 
+@@ -78,31 +79,39 @@ const EnvironmentPage: React.FC = () => {
+       case 'local': return '本地用户配置';
+       case 'cloud_install_user_config': return '云端安装用户配置';
+       default: return '未知';
+     }
+   };
+ 
+   if (loading && !envInfo) {
+     return <div className="loading">正在检测 Allegro 配置环境...</div>;
+   }
+ 
++  const environmentSurface = getPageSurface('environment');
++  const environmentSummaryLine = [
++    envInfo ? getDetectionModeText(envInfo.detectedMode) : '检测模式未知',
++    envInfo?.envExists ? 'env 已检测' : 'env 缺失',
++    envInfo?.pcbenvExists ? 'pcbenv 可用' : 'pcbenv 缺失',
++  ];
++
+   return (
+     <div className="workspace-page utility-page">
+-      <CoreWorkspaceHero
+-        eyebrow="Diagnostics"
+-        title="环境检测"
+-        description="检查 Windows 变量、配置目录与文件权限，为快捷键、Skill 和菜单三条链路提供可靠基础。"
+-        metrics={[
+-          { label: '检测模式', value: envInfo ? getDetectionModeText(envInfo.detectedMode) : '未检测', tone: 'accent' },
+-          { label: 'env 文件', value: envInfo?.envExists ? '存在' : '缺失' },
+-          { label: 'pcbenv', value: envInfo?.pcbenvExists ? '可用' : '未找到' },
+-        ]}
++      <MinimalSurface
++        title={environmentSurface.title}
++        subtitle={environmentSurface.subtitle}
++        prompt={environmentSurface.prompt}
++        summaryLine={environmentSummaryLine}
++        cards={environmentSurface.actions.map((action) => ({
++          id: action.id,
++          title: action.label,
++          meta: action.meta,
++        }))}
+       />
+ 
+       {error && (
+         <div className="message message-warning">
+           {error}
+         </div>
+       )}
+ 
+       {/* 检测路径 */}
+       <div className="card">
+
+### tests/pageSurfaces.test.ts
+diff --git "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\tests\\pageSurfaces.snapshot.txt" "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\pageSurfaces.test.ts"
+index 337fd1c..3b283c2 100644
+--- "a/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\docs\\superpowers\\sdd\\2026-07-02-ui-reset-marvis-minimal\\task-5-before\\tests\\pageSurfaces.snapshot.txt"
++++ "b/C:\\Users\\89539\\Documents\\ClaudeCode\\AllegroDevOpsTool\\tests\\pageSurfaces.test.ts"
+@@ -1,22 +1,27 @@
++import { readFileSync } from 'node:fs';
+ import { describe, expect, it } from 'vitest';
+ import {
+   APP_NAV_ITEMS,
+   PRIMARY_WORKSPACES,
+   getDefaultWorkspaceRoute,
+ } from '../src/config/appShell';
+ import {
+   PAGE_SURFACES,
+   getPageSurface,
+   getPrimaryWorkspaceSurfaces,
+ } from '../src/config/pageSurfaces';
+ 
++function readPageSource(page: string): string {
++  return readFileSync(new URL(page, import.meta.url), 'utf8');
++}
++
+ describe('page surfaces', () => {
+   it('keeps hotkeys as the default route', () => {
+     expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
+   });
+ 
+   it('defines the minimal surface copy for hotkeys', () => {
+     expect(getPageSurface('hotkeys').title).toBe('快捷键工作台');
+     expect(getPageSurface('hotkeys').actions.length).toBeGreaterThanOrEqual(3);
+   });
+ 
+@@ -45,11 +50,103 @@ describe('page surfaces', () => {
+     ]);
+   });
+ 
+   it('marks hotkeys as the default entry in the overview surface actions', () => {
+     const action = getPageSurface('overview').actions.find(
+       (item) => item.id === 'hotkeys',
+     );
+ 
+     expect(action?.meta).toContain('默认');
+   });
++  it('keeps quick-entry cards for skills and menu pages', () => {
++    expect(getPageSurface('skills').actions.map((item) => item.id)).toEqual([
++      'scan',
++      'refs',
++      'registry',
++    ]);
++    expect(getPageSurface('menu').actions.map((item) => item.id)).toEqual([
++      'tree',
++      'commands',
++      'preview',
++    ]);
++  });
++
++  it('uses prompt-first action ids for overview and environment helper pages', () => {
++    expect(getPageSurface('overview').actions.map((item) => item.id)).toEqual([
++      'health',
++      'hotkeys',
++      'skills',
++    ]);
++    expect(getPageSurface('environment').actions.map((item) => item.id)).toEqual([
++      'pcbenv',
++      'scan',
++      'vars',
++    ]);
++  });
++
++  it('switches the remaining page headers to MinimalSurface', () => {
++    const pages = [
++      '../src/pages/SkillPage.tsx',
++      '../src/pages/MenuPage.tsx',
++      '../src/pages/DashboardPage.tsx',
++      '../src/pages/EnvironmentPage.tsx',
++    ];
++
++    for (const page of pages) {
++      const source = readPageSource(page);
++      expect(source).toContain('MinimalSurface');
++      expect(source).not.toContain('CoreWorkspaceHero');
++    }
++  });
++
++  it('keeps workspace pages on the same prompt-first contract as hotkeys', () => {
++    const skillSource = readPageSource('../src/pages/SkillPage.tsx');
++    const menuSource = readPageSource('../src/pages/MenuPage.tsx');
++    const dashboardSource = readPageSource('../src/pages/DashboardPage.tsx');
++    const environmentSource = readPageSource('../src/pages/EnvironmentPage.tsx');
++
++    for (const source of [skillSource, menuSource, dashboardSource, environmentSource]) {
++      expect(source).toContain('const ');
++      expect(source).toContain('Surface = getPageSurface(');
++      expect(source).toContain('SummaryLine = [');
++      expect(source).toContain('title={');
++      expect(source).toContain('subtitle={');
++      expect(source).toContain('prompt={');
++      expect(source).toContain('summaryLine={');
++      expect(source).toContain('cards={');
++      expect(source).toContain('.actions.map((action) => ({');
++    }
++  });
++
++  it('keeps menu summary signals visible for errors, warnings, and IL fallback', () => {
++    const source = readPageSource('../src/pages/MenuPage.tsx');
++
++    expect(source).toContain('const menuSummaryLine = [');
++    expect(source).toContain('treeValidation.hasError');
++    expect(source).toContain('treeValidation.hasWarning');
++    expect(source).toContain('treeValidation.warnings.length');
++    expect(source).toContain('fileStatus?.ilExists');
++  });
++
++  it('keeps page-specific operating signals visible in each summary line', () => {
++    const skillSource = readPageSource('../src/pages/SkillPage.tsx');
++    const menuSource = readPageSource('../src/pages/MenuPage.tsx');
++    const dashboardSource = readPageSource('../src/pages/DashboardPage.tsx');
++    const environmentSource = readPageSource('../src/pages/EnvironmentPage.tsx');
++
++    expect(skillSource).toContain('const skillSummaryLine = [');
++    expect(skillSource).toContain('allSkills.length');
++    expect(skillSource).toContain('userSkills.length');
++    expect(skillSource).not.toContain('activeSkillProfile?.name ||');
++
++    expect(menuSource).toContain('items.length');
++    expect(menuSource).toContain('hasUnsavedChanges');
++
++    expect(dashboardSource).toContain('health ?');
++    expect(dashboardSource).toContain('envInfo?.envExists');
++    expect(dashboardSource).toContain('envInfo?.pcbenvPath');
++
++    expect(environmentSource).toContain('getDetectionModeText(envInfo.detectedMode)');
++    expect(environmentSource).toContain('envInfo?.envExists');
++    expect(environmentSource).toContain('envInfo?.pcbenvExists');
++  });
+ });
+

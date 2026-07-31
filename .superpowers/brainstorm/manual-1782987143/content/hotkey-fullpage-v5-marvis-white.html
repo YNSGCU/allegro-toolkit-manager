@@ -1,0 +1,384 @@
+<style>
+  .marvis-wrap {
+    min-height: 82vh;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 14px 18px;
+  }
+
+  .marvis-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 42px;
+    min-height: 76vh;
+  }
+
+  .marvis-side {
+    padding: 10px 0 10px 6px;
+    border-right: 1px solid #f1efec;
+  }
+
+  .marvis-brand {
+    font-size: 17px;
+    font-weight: 800;
+    color: #171717;
+    margin: 10px 0 20px;
+  }
+
+  .marvis-search {
+    height: 34px;
+    width: 172px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px #ece9e5;
+    background: #ffffff;
+    margin-bottom: 18px;
+  }
+
+  .marvis-side-group {
+    margin-bottom: 20px;
+  }
+
+  .marvis-side-label {
+    font-size: 12px;
+    color: #b1aaa2;
+    margin: 0 0 8px 10px;
+  }
+
+  .marvis-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .marvis-nav-item {
+    width: 172px;
+    min-height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: #5f5b56;
+    font-size: 14px;
+  }
+
+  .marvis-nav-item.active {
+    background: #f5f5f5;
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .marvis-note {
+    margin-top: 34px;
+    width: 172px;
+    font-size: 12px;
+    color: #9b948c;
+    line-height: 1.9;
+  }
+
+  .marvis-main {
+    padding: 52px 20px 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .marvis-head {
+    width: min(920px, 100%);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .marvis-avatar {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #131313 0%, #1d1d1d 72%, #ea5639 72%, #ea5639 100%);
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  .marvis-avatar::before {
+    content: "";
+    position: absolute;
+    left: 17px;
+    top: 15px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0.92;
+  }
+
+  .marvis-head h1 {
+    margin: 0;
+    font-size: 42px;
+    letter-spacing: -0.05em;
+    color: #171717;
+    line-height: 1.04;
+  }
+
+  .marvis-head p {
+    margin: 5px 0 0;
+    font-size: 15px;
+    color: #8c867f;
+  }
+
+  .marvis-panel {
+    width: min(920px, 100%);
+    min-height: 156px;
+    border-radius: 22px;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #ece9e5;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .marvis-panel-title {
+    font-size: 17px;
+    color: #bbbbbb;
+  }
+
+  .marvis-panel-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .marvis-light-btn {
+    min-height: 38px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px #ece9e5;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    color: #44413d;
+    font-size: 14px;
+    background: #fff;
+  }
+
+  .marvis-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9e9e9;
+  }
+
+  .marvis-strip {
+    width: min(920px, 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .marvis-tabs {
+    display: flex;
+    gap: 24px;
+    color: #b0aaa2;
+    font-size: 14px;
+  }
+
+  .marvis-tabs .on {
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .marvis-inline {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #918980;
+  }
+
+  .marvis-inline strong {
+    color: #171717;
+    font-weight: 700;
+  }
+
+  .marvis-grid {
+    width: min(920px, 100%);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .marvis-card {
+    min-height: 142px;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #f0ece8;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .marvis-card-title {
+    font-size: 21px;
+    font-weight: 700;
+    color: #171717;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+
+  .marvis-card p {
+    margin: 0;
+    color: #8b847d;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .marvis-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #bbb4ad;
+    font-size: 12px;
+  }
+</style>
+
+<h2>快捷键页完整样稿 / Marvis 白色版</h2>
+<p class="subtitle">这版把大圆角包裹块基本去掉了，主题直接贴近 Marvis 的白色体系，只留下必要的输入面、轻导航和轻卡片。</p>
+
+<div class="mockup">
+  <div class="mockup-header">ATM / Hotkeys / Marvis White</div>
+  <div class="mockup-body">
+    <div class="marvis-wrap">
+      <div class="marvis-layout">
+        <aside class="marvis-side">
+          <div class="marvis-brand">ATM</div>
+          <div class="marvis-search"></div>
+
+          <div class="marvis-side-group">
+            <div class="marvis-nav">
+              <div class="marvis-nav-item active">快捷键</div>
+              <div class="marvis-nav-item">Skill</div>
+              <div class="marvis-nav-item">菜单</div>
+            </div>
+          </div>
+
+          <div class="marvis-side-group">
+            <div class="marvis-side-label">辅助页面</div>
+            <div class="marvis-nav">
+              <div class="marvis-nav-item">概览</div>
+              <div class="marvis-nav-item">环境</div>
+            </div>
+          </div>
+
+          <div class="marvis-note">
+            所有写入都走 Apply Plan。<br>
+            视觉尽量收轻，但效率不后退。
+          </div>
+        </aside>
+
+        <section class="marvis-main">
+          <div class="marvis-head">
+            <div class="marvis-avatar"></div>
+            <div>
+              <h1>快捷键工作台</h1>
+              <p>当前方案、冲突情况和键位编辑都收在这里，但页面先像一个干净入口。</p>
+            </div>
+          </div>
+
+          <div class="marvis-panel">
+            <div class="marvis-panel-title">当前方案：自用，继续编辑快捷键，或直接应用到 Allegro</div>
+            <div class="marvis-panel-foot">
+              <div class="marvis-light-btn">选择 env / 切换方案 / 导入导出</div>
+              <div class="marvis-send"></div>
+            </div>
+          </div>
+
+          <div class="marvis-strip">
+            <div class="marvis-tabs">
+              <span class="on">推荐</span>
+              <span>键盘总览</span>
+              <span>冲突</span>
+              <span>方案</span>
+            </div>
+            <div class="marvis-inline">
+              <span><strong>36</strong> 条快捷键</span>
+              <span><strong>0</strong> 冲突</span>
+              <span><strong>用户层</strong> env</span>
+            </div>
+          </div>
+
+          <div class="marvis-grid">
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">快速进入键盘总览</div>
+                <p>先看物理键位占用，再决定是编辑、替换还是合并现有方案。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>默认入口</span>
+                <span>↗</span>
+              </div>
+            </div>
+
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">处理冲突与保留键</div>
+                <p>把真正需要注意的风险前置，不用在一堆块里找状态。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>0 个待处理</span>
+                <span>↗</span>
+              </div>
+            </div>
+
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">应用当前方案</div>
+                <p>确认方案、生成 Apply Plan，然后再写入，这条主线保持不变。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>当前方案：自用</span>
+                <span>↗</span>
+              </div>
+            </div>
+
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">导入旧 env</div>
+                <p>把历史配置快速带入当前工作区，不用再从头整理。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>辅助操作</span>
+                <span>↗</span>
+              </div>
+            </div>
+
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">方案切换与对比</div>
+                <p>保留效率优先的方案能力，但不把它铺成一整排工具后台。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>2 个方案</span>
+                <span>↗</span>
+              </div>
+            </div>
+
+            <div class="marvis-card">
+              <div>
+                <div class="marvis-card-title">导出速查表</div>
+                <p>最后把已经整理好的键位方案导出，作为团队或个人查阅材料。</p>
+              </div>
+              <div class="marvis-card-meta">
+                <span>完成后动作</span>
+                <span>↗</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

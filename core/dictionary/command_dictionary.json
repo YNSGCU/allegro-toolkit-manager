@@ -1,0 +1,1308 @@
+{
+  "description": "Allegro PCB Editor 命令字典 — 命令中文名称、分类、说明和默认来源",
+  "version": "1.0",
+  "commands": {
+    "add": {
+      "chineseName": "添加",
+      "category": "编辑",
+      "description": "添加走线/铜皮/过孔/元件等对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "add connect": {
+      "chineseName": "添加连线",
+      "category": "布线",
+      "description": "添加走线连接",
+      "defaultSource": "allegro_builtin"
+    },
+    "add line": {
+      "chineseName": "添加线段",
+      "category": "编辑",
+      "description": "添加线段/外形线",
+      "defaultSource": "allegro_builtin"
+    },
+    "add arc": {
+      "chineseName": "添加圆弧",
+      "category": "编辑",
+      "description": "添加圆弧走线",
+      "defaultSource": "allegro_builtin"
+    },
+    "add shape": {
+      "chineseName": "添加铜皮",
+      "category": "编辑",
+      "description": "添加铜皮填充",
+      "defaultSource": "allegro_builtin"
+    },
+    "add text": {
+      "chineseName": "添加文字",
+      "category": "编辑",
+      "description": "添加文本标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "move": {
+      "chineseName": "移动",
+      "category": "编辑",
+      "description": "移动选中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "copy": {
+      "chineseName": "复制",
+      "category": "编辑",
+      "description": "复制选中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "delete": {
+      "chineseName": "删除",
+      "category": "编辑",
+      "description": "删除选中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "mirror": {
+      "chineseName": "镜像",
+      "category": "编辑",
+      "description": "镜像翻转选中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "rotate": {
+      "chineseName": "旋转",
+      "category": "编辑",
+      "description": "旋转选中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "slide": {
+      "chineseName": "推挤走线",
+      "category": "布线",
+      "description": "推挤/修整走线线段",
+      "defaultSource": "allegro_builtin"
+    },
+    "vertex": {
+      "chineseName": "编辑顶点",
+      "category": "编辑",
+      "description": "添加/移动/删除走线或铜皮的顶点",
+      "defaultSource": "allegro_builtin"
+    },
+    "change": {
+      "chineseName": "修改属性",
+      "category": "编辑",
+      "description": "修改对象的属性（线宽、层面等）",
+      "defaultSource": "allegro_builtin"
+    },
+    "replace": {
+      "chineseName": "替换",
+      "category": "编辑",
+      "description": "替换封装或焊盘",
+      "defaultSource": "allegro_builtin"
+    },
+    "undo": {
+      "chineseName": "撤销",
+      "category": "编辑",
+      "description": "撤销上一步操作",
+      "defaultSource": "allegro_builtin"
+    },
+    "redo": {
+      "chineseName": "重做",
+      "category": "编辑",
+      "description": "重做已撤销的操作",
+      "defaultSource": "allegro_builtin"
+    },
+    "save": {
+      "chineseName": "保存",
+      "category": "文件",
+      "description": "保存当前设计文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "open": {
+      "chineseName": "打开",
+      "category": "文件",
+      "description": "打开设计文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "new": {
+      "chineseName": "新建",
+      "category": "文件",
+      "description": "新建设计文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "close": {
+      "chineseName": "关闭",
+      "category": "文件",
+      "description": "关闭当前设计",
+      "defaultSource": "allegro_builtin"
+    },
+    "export": {
+      "chineseName": "导出",
+      "category": "文件",
+      "description": "导出设计数据",
+      "defaultSource": "allegro_builtin"
+    },
+    "import": {
+      "chineseName": "导入",
+      "category": "文件",
+      "description": "导入外部数据",
+      "defaultSource": "allegro_builtin"
+    },
+    "plot": {
+      "chineseName": "出图",
+      "category": "文件",
+      "description": "生成光绘/打印文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom": {
+      "chineseName": "缩放",
+      "category": "视图",
+      "description": "缩放视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom in": {
+      "chineseName": "放大",
+      "category": "视图",
+      "description": "放大视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom out": {
+      "chineseName": "缩小",
+      "category": "视图",
+      "description": "缩小视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom fit": {
+      "chineseName": "全屏适配",
+      "category": "视图",
+      "description": "缩放至全部对象可见",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom points": {
+      "chineseName": "框选缩放",
+      "category": "视图",
+      "description": "框选区域放大",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom center": {
+      "chineseName": "居中缩放",
+      "category": "视图",
+      "description": "以点击点为中心缩放",
+      "defaultSource": "allegro_builtin"
+    },
+    "pan": {
+      "chineseName": "平移",
+      "category": "视图",
+      "description": "平移视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "spin": {
+      "chineseName": "旋转视图",
+      "category": "视图",
+      "description": "旋转 3D 视角",
+      "defaultSource": "allegro_builtin"
+    },
+    "highlight": {
+      "chineseName": "高亮",
+      "category": "显示",
+      "description": "高亮选中的网络或对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "dehighlight": {
+      "chineseName": "取消高亮",
+      "category": "显示",
+      "description": "取消网络/对象的高亮",
+      "defaultSource": "allegro_builtin"
+    },
+    "show": {
+      "chineseName": "显示信息",
+      "category": "显示",
+      "description": "显示选中对象的详细信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "show measure": {
+      "chineseName": "测量",
+      "category": "显示",
+      "description": "测量距离/间距",
+      "defaultSource": "allegro_builtin"
+    },
+    "show element": {
+      "chineseName": "显示元素属性",
+      "category": "显示",
+      "description": "显示选中元素的完整属性",
+      "defaultSource": "allegro_builtin"
+    },
+    "select": {
+      "chineseName": "选择",
+      "category": "选择",
+      "description": "进入选择模式",
+      "defaultSource": "allegro_builtin"
+    },
+    "assign": {
+      "chineseName": "分配",
+      "category": "选择",
+      "description": "分配选择集",
+      "defaultSource": "allegro_builtin"
+    },
+    "temp group": {
+      "chineseName": "临时选择组",
+      "category": "选择",
+      "description": "创建临时选择组",
+      "defaultSource": "allegro_builtin"
+    },
+    "property": {
+      "chineseName": "属性编辑",
+      "category": "编辑",
+      "description": "编辑对象属性",
+      "defaultSource": "allegro_builtin"
+    },
+    "place": {
+      "chineseName": "布局放置",
+      "category": "布局",
+      "description": "自动/手动放置元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "place manual": {
+      "chineseName": "手动放置",
+      "category": "布局",
+      "description": "手动放置元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "place autoplace": {
+      "chineseName": "自动布局",
+      "category": "布局",
+      "description": "自动布局元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "unplace": {
+      "chineseName": "取消放置",
+      "category": "布局",
+      "description": "取消元件的放置状态",
+      "defaultSource": "allegro_builtin"
+    },
+    "swap": {
+      "chineseName": "交换",
+      "category": "布局",
+      "description": "交换元件或引脚",
+      "defaultSource": "allegro_builtin"
+    },
+    "swap components": {
+      "chineseName": "交换元件",
+      "category": "布局",
+      "description": "交换两个元件的位置",
+      "defaultSource": "allegro_builtin"
+    },
+    "swap pins": {
+      "chineseName": "交换引脚",
+      "category": "布局",
+      "description": "交换门电路引脚",
+      "defaultSource": "allegro_builtin"
+    },
+    "route": {
+      "chineseName": "布线",
+      "category": "布线",
+      "description": "进入布线模式",
+      "defaultSource": "allegro_builtin"
+    },
+    "route connect": {
+      "chineseName": "交互式连线",
+      "category": "布线",
+      "description": "交互式手动布线",
+      "defaultSource": "allegro_builtin"
+    },
+    "route fanout": {
+      "chineseName": "扇出布线",
+      "category": "布线",
+      "description": "BGA 扇出布线",
+      "defaultSource": "allegro_builtin"
+    },
+    "route net": {
+      "chineseName": "网络布线",
+      "category": "布线",
+      "description": "总线/网络布线",
+      "defaultSource": "allegro_builtin"
+    },
+    "route tenting": {
+      "chineseName": "过孔覆盖",
+      "category": "布线",
+      "description": "设置过孔阻焊覆盖",
+      "defaultSource": "allegro_builtin"
+    },
+    "unroute": {
+      "chineseName": "删除走线",
+      "category": "布线",
+      "description": "删除选中的走线",
+      "defaultSource": "allegro_builtin"
+    },
+    "unroute net": {
+      "chineseName": "删除网络走线",
+      "category": "布线",
+      "description": "删除整个网络的走线",
+      "defaultSource": "allegro_builtin"
+    },
+    "delay": {
+      "chineseName": "延迟调节",
+      "category": "布线",
+      "description": "走线等长/延迟调节",
+      "defaultSource": "allegro_builtin"
+    },
+    "delay tune": {
+      "chineseName": "等长调线",
+      "category": "布线",
+      "description": "交互式等长走线调节",
+      "defaultSource": "allegro_builtin"
+    },
+    "electrical constraint": {
+      "chineseName": "电气约束",
+      "category": "约束",
+      "description": "电气约束设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "physical constraint": {
+      "chineseName": "物理约束",
+      "category": "约束",
+      "description": "物理约束设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "spacing constraint": {
+      "chineseName": "间距约束",
+      "category": "约束",
+      "description": "间距规则设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "same net spacing": {
+      "chineseName": "同网络间距",
+      "category": "约束",
+      "description": "同网络间距规则",
+      "defaultSource": "allegro_builtin"
+    },
+    "design parameter": {
+      "chineseName": "设计参数",
+      "category": "工具",
+      "description": "打开设计参数设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "user preference": {
+      "chineseName": "用户偏好",
+      "category": "工具",
+      "description": "用户偏好设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "color": {
+      "chineseName": "颜色设置",
+      "category": "显示",
+      "description": "打开颜色/层面显示设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "color layer": {
+      "chineseName": "层面颜色",
+      "category": "显示",
+      "description": "管理层面颜色显示",
+      "defaultSource": "allegro_builtin"
+    },
+    "display": {
+      "chineseName": "显示设置",
+      "category": "显示",
+      "description": "显示/层面控制面板",
+      "defaultSource": "allegro_builtin"
+    },
+    "rats": {
+      "chineseName": "显示飞线",
+      "category": "显示",
+      "description": "打开所有飞线显示",
+      "defaultSource": "allegro_builtin"
+    },
+    "unrats": {
+      "chineseName": "隐藏飞线",
+      "category": "显示",
+      "description": "关闭所有飞线显示",
+      "defaultSource": "allegro_builtin"
+    },
+    "rats all": {
+      "chineseName": "显示全部飞线",
+      "category": "显示",
+      "description": "显示全部飞线",
+      "defaultSource": "allegro_builtin"
+    },
+    "unrats all": {
+      "chineseName": "隐藏全部飞线",
+      "category": "显示",
+      "description": "隐藏全部飞线",
+      "defaultSource": "allegro_builtin"
+    },
+    "rats net": {
+      "chineseName": "显示网络飞线",
+      "category": "显示",
+      "description": "显示指定网络的飞线",
+      "defaultSource": "allegro_builtin"
+    },
+    "unrats net": {
+      "chineseName": "隐藏网络飞线",
+      "category": "显示",
+      "description": "隐藏指定网络的飞线",
+      "defaultSource": "allegro_builtin"
+    },
+    "grid": {
+      "chineseName": "栅格设置",
+      "category": "工具",
+      "description": "打开栅格设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "snap": {
+      "chineseName": "吸附设置",
+      "category": "工具",
+      "description": "打开捕捉设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "snap pick to": {
+      "chineseName": "捕捉到",
+      "category": "工具",
+      "description": "设置捕捉模式（栅格/引脚/孔等）",
+      "defaultSource": "allegro_builtin"
+    },
+    "iangle": {
+      "chineseName": "角度增量",
+      "category": "工具",
+      "description": "设置交互式角度增量",
+      "defaultSource": "allegro_builtin"
+    },
+    "ipick_to_gridunit": {
+      "chineseName": "拾取到栅格",
+      "category": "工具",
+      "description": "设置拾取点捕捉到栅格单位",
+      "defaultSource": "allegro_builtin"
+    },
+    "cvn": {
+      "chineseName": "自动保存切换",
+      "category": "工具",
+      "description": "切换自动保存功能",
+      "defaultSource": "allegro_builtin"
+    },
+    "snp": {
+      "chineseName": "切换吸附",
+      "category": "工具",
+      "description": "切换栅格吸附开关",
+      "defaultSource": "allegro_builtin"
+    },
+    "cmgr": {
+      "chineseName": "约束管理器",
+      "category": "约束",
+      "description": "打开约束管理器",
+      "defaultSource": "allegro_builtin"
+    },
+    "floorplan": {
+      "chineseName": "楼层规划",
+      "category": "布局",
+      "description": "打开楼层规划器",
+      "defaultSource": "allegro_builtin"
+    },
+    "gloss": {
+      "chineseName": "优化",
+      "category": "布线",
+      "description": "走线优化（Gloss）",
+      "defaultSource": "allegro_builtin"
+    },
+    "gloss design": {
+      "chineseName": "设计优化",
+      "category": "布线",
+      "description": "整体设计优化",
+      "defaultSource": "allegro_builtin"
+    },
+    "gloss parameters": {
+      "chineseName": "优化参数",
+      "category": "布线",
+      "description": "优化参数设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "edit": {
+      "chineseName": "编辑",
+      "category": "编辑",
+      "description": "高级编辑选项",
+      "defaultSource": "allegro_builtin"
+    },
+    "group": {
+      "chineseName": "编组",
+      "category": "选择",
+      "description": "创建/管理对象编组",
+      "defaultSource": "allegro_builtin"
+    },
+    "degroup": {
+      "chineseName": "取消编组",
+      "category": "选择",
+      "description": "取消对象编组",
+      "defaultSource": "allegro_builtin"
+    },
+    "clear": {
+      "chineseName": "清除选择",
+      "category": "选择",
+      "description": "清除当前选择",
+      "defaultSource": "allegro_builtin"
+    },
+    "done": {
+      "chineseName": "完成操作",
+      "category": "编辑",
+      "description": "完成当前操作并清除选择",
+      "defaultSource": "allegro_builtin"
+    },
+    "cancel": {
+      "chineseName": "取消操作",
+      "category": "编辑",
+      "description": "取消当前命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "ops": {
+      "chineseName": "操作历史",
+      "category": "编辑",
+      "description": "操作历史记录查看",
+      "defaultSource": "allegro_builtin"
+    },
+    "bundle": {
+      "chineseName": "差分对",
+      "category": "布线",
+      "description": "差分对布线",
+      "defaultSource": "allegro_builtin"
+    },
+    "flow fan": {
+      "chineseName": "自动扇出",
+      "category": "布线",
+      "description": "自动扇出走线",
+      "defaultSource": "allegro_builtin"
+    },
+    "wire": {
+      "chineseName": "走线",
+      "category": "布线",
+      "description": "手动走线",
+      "defaultSource": "allegro_builtin"
+    },
+    "stretch": {
+      "chineseName": "拉伸",
+      "category": "编辑",
+      "description": "拉伸对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "find": {
+      "chineseName": "查找",
+      "category": "选择",
+      "description": "查找对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "report": {
+      "chineseName": "报表",
+      "category": "工具",
+      "description": "生成设计报表",
+      "defaultSource": "allegro_builtin"
+    },
+    "script": {
+      "chineseName": "脚本",
+      "category": "工具",
+      "description": "录制/回放脚本",
+      "defaultSource": "allegro_builtin"
+    },
+    "update": {
+      "chineseName": "更新",
+      "category": "编辑",
+      "description": "更新设计中的对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "update symbols": {
+      "chineseName": "更新封装",
+      "category": "布局",
+      "description": "更新封装符号",
+      "defaultSource": "allegro_builtin"
+    },
+    "refresh": {
+      "chineseName": "刷新",
+      "category": "视图",
+      "description": "刷新屏幕显示",
+      "defaultSource": "allegro_builtin"
+    },
+    "redraw": {
+      "chineseName": "重绘",
+      "category": "视图",
+      "description": "重绘当前画面",
+      "defaultSource": "allegro_builtin"
+    },
+    "hilite": {
+      "chineseName": "高亮（快捷）",
+      "category": "显示",
+      "description": "高亮选中对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "dehilite": {
+      "chineseName": "取消高亮（快捷）",
+      "category": "显示",
+      "description": "取消高亮选中对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "mark": {
+      "chineseName": "标记",
+      "category": "显示",
+      "description": "设置/清除标记点",
+      "defaultSource": "allegro_builtin"
+    },
+    "measure": {
+      "chineseName": "测量距离",
+      "category": "显示",
+      "description": "测量两点间距离",
+      "defaultSource": "allegro_builtin"
+    },
+    "database check": {
+      "chineseName": "数据库检查",
+      "category": "工具",
+      "description": "检查设计数据库完整性",
+      "defaultSource": "allegro_builtin"
+    },
+    "database": {
+      "chineseName": "数据库管理",
+      "category": "工具",
+      "description": "数据库维护工具",
+      "defaultSource": "allegro_builtin"
+    },
+    "design rules check": {
+      "chineseName": "设计规则检查",
+      "category": "工具",
+      "description": "运行 DRC 检查",
+      "defaultSource": "allegro_builtin"
+    },
+    "drc": {
+      "chineseName": "DRC 检查",
+      "category": "工具",
+      "description": "设计规则检查",
+      "defaultSource": "allegro_builtin"
+    },
+    "check drc": {
+      "chineseName": "运行 DRC",
+      "category": "工具",
+      "description": "运行在线 DRC 检查",
+      "defaultSource": "allegro_builtin"
+    },
+    "status": {
+      "chineseName": "状态检查",
+      "category": "工具",
+      "description": "显示设计状态信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "stats": {
+      "chineseName": "统计信息",
+      "category": "工具",
+      "description": "显示设计统计信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "manufacture": {
+      "chineseName": "制造输出",
+      "category": "文件",
+      "description": "制造文件输出",
+      "defaultSource": "allegro_builtin"
+    },
+    "artwork": {
+      "chineseName": "光绘输出",
+      "category": "文件",
+      "description": "光绘文件生成",
+      "defaultSource": "allegro_builtin"
+    },
+    "nc drill": {
+      "chineseName": "钻孔输出",
+      "category": "文件",
+      "description": "钻孔文件生成",
+      "defaultSource": "allegro_builtin"
+    },
+    "nc route": {
+      "chineseName": "NC 铣削",
+      "category": "文件",
+      "description": "数控铣削文件输出",
+      "defaultSource": "allegro_builtin"
+    },
+    "silkscreen": {
+      "chineseName": "丝印输出",
+      "category": "文件",
+      "description": "丝印层输出",
+      "defaultSource": "allegro_builtin"
+    },
+    "testprep": {
+      "chineseName": "测试点准备",
+      "category": "制造",
+      "description": "自动添加测试点",
+      "defaultSource": "allegro_builtin"
+    },
+    "testprep manual": {
+      "chineseName": "手动测试点",
+      "category": "制造",
+      "description": "手动添加测试点",
+      "defaultSource": "allegro_builtin"
+    },
+    "add testpin": {
+      "chineseName": "添加测试针",
+      "category": "制造",
+      "description": "添加测试探头",
+      "defaultSource": "allegro_builtin"
+    },
+    "analysis": {
+      "chineseName": "分析",
+      "category": "分析",
+      "description": "信号完整性/电源完整性分析",
+      "defaultSource": "allegro_builtin"
+    },
+    "si simulation": {
+      "chineseName": "信号完整性仿真",
+      "category": "分析",
+      "description": "信号完整性仿真设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "constraint": {
+      "chineseName": "约束设置",
+      "category": "约束",
+      "description": "约束规则管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "constraint manager": {
+      "chineseName": "约束管理器",
+      "category": "约束",
+      "description": "打开约束管理器",
+      "defaultSource": "allegro_builtin"
+    },
+    "clear drc": {
+      "chineseName": "清除 DRC",
+      "category": "工具",
+      "description": "清除 DRC 标记",
+      "defaultSource": "allegro_builtin"
+    },
+    "outline": {
+      "chineseName": "板框编辑",
+      "category": "编辑",
+      "description": "编辑板框外形",
+      "defaultSource": "allegro_builtin"
+    },
+    "create detail": {
+      "chineseName": "创建细节",
+      "category": "编辑",
+      "description": "创建制图细节/标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "dimension": {
+      "chineseName": "尺寸标注",
+      "category": "编辑",
+      "description": "添加尺寸标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "dimension polar": {
+      "chineseName": "极坐标标注",
+      "category": "编辑",
+      "description": "极坐标尺寸标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "dimension linear": {
+      "chineseName": "线性标注",
+      "category": "编辑",
+      "description": "线性尺寸标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "dimension diametral": {
+      "chineseName": "直径标注",
+      "category": "编辑",
+      "description": "直径尺寸标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "dimension angular": {
+      "chineseName": "角度标注",
+      "category": "编辑",
+      "description": "角度尺寸标注",
+      "defaultSource": "allegro_builtin"
+    },
+    "label": {
+      "chineseName": "标签",
+      "category": "编辑",
+      "description": "添加标签",
+      "defaultSource": "allegro_builtin"
+    },
+    "layer": {
+      "chineseName": "层面管理",
+      "category": "工具",
+      "description": "层面管理器",
+      "defaultSource": "allegro_builtin"
+    },
+    "cross section": {
+      "chineseName": "叠层设置",
+      "category": "工具",
+      "description": "层叠结构设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "material": {
+      "chineseName": "材料设置",
+      "category": "工具",
+      "description": "材料属性设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "pad": {
+      "chineseName": "焊盘编辑",
+      "category": "编辑",
+      "description": "焊盘编辑器",
+      "defaultSource": "allegro_builtin"
+    },
+    "padstack": {
+      "chineseName": "焊盘堆栈",
+      "category": "编辑",
+      "description": "焊盘堆栈编辑",
+      "defaultSource": "allegro_builtin"
+    },
+    "symbol": {
+      "chineseName": "封装编辑",
+      "category": "编辑",
+      "description": "封装编辑器",
+      "defaultSource": "allegro_builtin"
+    },
+    "techfile": {
+      "chineseName": "技术文件",
+      "category": "工具",
+      "description": "导入/导出技术文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "subclass": {
+      "chineseName": "子类管理",
+      "category": "工具",
+      "description": "子层面管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "xsection": {
+      "chineseName": "截面设置",
+      "category": "工具",
+      "description": "横截面设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "group manager": {
+      "chineseName": "编组管理器",
+      "category": "选择",
+      "description": "编组管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "room": {
+      "chineseName": "房间管理",
+      "category": "布局",
+      "description": "布局房间管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "module": {
+      "chineseName": "模块管理",
+      "category": "布局",
+      "description": "模块复用管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "reuse": {
+      "chineseName": "模块复用",
+      "category": "布局",
+      "description": "电路模块复用",
+      "defaultSource": "allegro_builtin"
+    },
+    "use legacy": {
+      "chineseName": "使用传统工具",
+      "category": "工具",
+      "description": "切换到传统工具模式",
+      "defaultSource": "allegro_builtin"
+    },
+    "toolbar": {
+      "chineseName": "工具栏",
+      "category": "显示",
+      "description": "自定义工具栏",
+      "defaultSource": "allegro_builtin"
+    },
+    "worksheet": {
+      "chineseName": "图框设置",
+      "category": "工具",
+      "description": "图框/图纸设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "form": {
+      "chineseName": "表单",
+      "category": "工具",
+      "description": "打开表单/对话框",
+      "defaultSource": "allegro_builtin"
+    },
+    "help": {
+      "chineseName": "帮助",
+      "category": "工具",
+      "description": "打开帮助文档",
+      "defaultSource": "allegro_builtin"
+    },
+    "set": {
+      "chineseName": "设置变量",
+      "category": "工具",
+      "description": "设置环境变量",
+      "defaultSource": "allegro_builtin"
+    },
+    "env": {
+      "chineseName": "环境设置",
+      "category": "工具",
+      "description": "环境变量设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "skill": {
+      "chineseName": "Skill 命令",
+      "category": "工具",
+      "description": "执行 SKILL 命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "setwindow": {
+      "chineseName": "窗口切换",
+      "category": "视图",
+      "description": "切换活动窗口",
+      "defaultSource": "allegro_builtin"
+    },
+    "menu": {
+      "chineseName": "菜单设置",
+      "category": "工具",
+      "description": "自定义菜单",
+      "defaultSource": "allegro_builtin"
+    },
+    "accelerator": {
+      "chineseName": "加速键",
+      "category": "工具",
+      "description": "快捷键加速设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "pop": {
+      "chineseName": "弹出菜单",
+      "category": "显示",
+      "description": "弹出快捷菜单",
+      "defaultSource": "allegro_builtin"
+    },
+    "shell": {
+      "chineseName": "Shell 命令行",
+      "category": "工具",
+      "description": "打开系统 Shell",
+      "defaultSource": "allegro_builtin"
+    },
+    "clipboard": {
+      "chineseName": "剪贴板",
+      "category": "编辑",
+      "description": "剪贴板操作",
+      "defaultSource": "allegro_builtin"
+    },
+    "cut": {
+      "chineseName": "剪切",
+      "category": "编辑",
+      "description": "剪切到剪贴板",
+      "defaultSource": "allegro_builtin"
+    },
+    "paste": {
+      "chineseName": "粘贴",
+      "category": "编辑",
+      "description": "从剪贴板粘贴",
+      "defaultSource": "allegro_builtin"
+    },
+    "stroke": {
+      "chineseName": "鼠标手势",
+      "category": "工具",
+      "description": "鼠标手势命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "minimize": {
+      "chineseName": "最小化",
+      "category": "视图",
+      "description": "最小化窗口",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom previous": {
+      "chineseName": "上一个视图",
+      "category": "视图",
+      "description": "回到上一个缩放视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom selection": {
+      "chineseName": "缩放到选择",
+      "category": "视图",
+      "description": "缩放到选中对象",
+      "defaultSource": "allegro_builtin"
+    },
+    "zoom world": {
+      "chineseName": "全局视图",
+      "category": "视图",
+      "description": "显示全部设计区域",
+      "defaultSource": "allegro_builtin"
+    },
+    "shape add": {
+      "chineseName": "添加铜皮",
+      "category": "编辑",
+      "description": "添加铜皮/填充区域",
+      "defaultSource": "allegro_builtin"
+    },
+    "shape delete": {
+      "chineseName": "删除铜皮",
+      "category": "编辑",
+      "description": "删除铜皮填充",
+      "defaultSource": "allegro_builtin"
+    },
+    "shape edit": {
+      "chineseName": "修改铜皮",
+      "category": "编辑",
+      "description": "编辑铜皮边界",
+      "defaultSource": "allegro_builtin"
+    },
+    "void": {
+      "chineseName": "挖空",
+      "category": "编辑",
+      "description": "铜皮挖空",
+      "defaultSource": "allegro_builtin"
+    },
+    "void auto": {
+      "chineseName": "自动挖空",
+      "category": "编辑",
+      "description": "自动铜皮挖空",
+      "defaultSource": "allegro_builtin"
+    },
+    "void manual": {
+      "chineseName": "手动挖空",
+      "category": "编辑",
+      "description": "手动铜皮挖空",
+      "defaultSource": "allegro_builtin"
+    },
+    "void element": {
+      "chineseName": "元件挖空",
+      "category": "编辑",
+      "description": "根据元件挖空铜皮",
+      "defaultSource": "allegro_builtin"
+    },
+    "boundary": {
+      "chineseName": "边界编辑",
+      "category": "编辑",
+      "description": "编辑铜皮边界",
+      "defaultSource": "allegro_builtin"
+    },
+    "merge": {
+      "chineseName": "合并",
+      "category": "编辑",
+      "description": "合并铜皮",
+      "defaultSource": "allegro_builtin"
+    },
+    "subtract": {
+      "chineseName": "相减",
+      "category": "编辑",
+      "description": "铜皮相减操作",
+      "defaultSource": "allegro_builtin"
+    },
+    "isolate": {
+      "chineseName": "隔离",
+      "category": "编辑",
+      "description": "铜皮隔离操作",
+      "defaultSource": "allegro_builtin"
+    },
+    "check": {
+      "chineseName": "检查",
+      "category": "工具",
+      "description": "执行检查命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "quick check": {
+      "chineseName": "快速检查",
+      "category": "工具",
+      "description": "快速设计检查",
+      "defaultSource": "allegro_builtin"
+    },
+    "quick measure": {
+      "chineseName": "快速测量",
+      "category": "显示",
+      "description": "快速测量距离",
+      "defaultSource": "allegro_builtin"
+    },
+    "quick show": {
+      "chineseName": "快速显示",
+      "category": "显示",
+      "description": "快速显示对象信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "reset": {
+      "chineseName": "重置",
+      "category": "编辑",
+      "description": "重置当前命令状态",
+      "defaultSource": "allegro_builtin"
+    },
+    "resume": {
+      "chineseName": "恢复",
+      "category": "编辑",
+      "description": "恢复当前命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "suspend": {
+      "chineseName": "暂停",
+      "category": "编辑",
+      "description": "暂停当前命令",
+      "defaultSource": "allegro_builtin"
+    },
+    "inquiry": {
+      "chineseName": "查询",
+      "category": "显示",
+      "description": "查询对象属性",
+      "defaultSource": "allegro_builtin"
+    },
+    "infom": {
+      "chineseName": "查询测量",
+      "category": "显示",
+      "description": "查询测量信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "show dimension": {
+      "chineseName": "显示标注",
+      "category": "显示",
+      "description": "显示尺寸标注信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "list": {
+      "chineseName": "列表显示",
+      "category": "显示",
+      "description": "列表显示选中对象信息",
+      "defaultSource": "allegro_builtin"
+    },
+    "tplace": {
+      "chineseName": "临时放置",
+      "category": "布局",
+      "description": "临时放置元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "trotate": {
+      "chineseName": "临时旋转",
+      "category": "布局",
+      "description": "临时旋转元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "tmove": {
+      "chineseName": "临时移动",
+      "category": "布局",
+      "description": "临时移动元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "tmirror": {
+      "chineseName": "临时镜像",
+      "category": "布局",
+      "description": "临时镜像元件",
+      "defaultSource": "allegro_builtin"
+    },
+    "tzoom": {
+      "chineseName": "临时缩放",
+      "category": "视图",
+      "description": "临时缩放视图",
+      "defaultSource": "allegro_builtin"
+    },
+    "angle": {
+      "chineseName": "角度设置",
+      "category": "工具",
+      "description": "设置走线角度模式",
+      "defaultSource": "allegro_builtin"
+    },
+    "line lock": {
+      "chineseName": "走线锁定",
+      "category": "布线",
+      "description": "走线角度锁定",
+      "defaultSource": "allegro_builtin"
+    },
+    "line width": {
+      "chineseName": "线宽设置",
+      "category": "布线",
+      "description": "设置当前走线宽度",
+      "defaultSource": "allegro_builtin"
+    },
+    "via": {
+      "chineseName": "过孔设置",
+      "category": "布线",
+      "description": "设置/切换过孔类型",
+      "defaultSource": "allegro_builtin"
+    },
+    "via array": {
+      "chineseName": "过孔阵列",
+      "category": "布线",
+      "description": "放置过孔阵列",
+      "defaultSource": "allegro_builtin"
+    },
+    "via bar": {
+      "chineseName": "过栏杆",
+      "category": "布线",
+      "description": "放置过栏杆",
+      "defaultSource": "allegro_builtin"
+    },
+    "bbvia": {
+      "chineseName": "盲埋孔",
+      "category": "布线",
+      "description": "添加盲埋过孔",
+      "defaultSource": "allegro_builtin"
+    },
+    "microvia": {
+      "chineseName": "微过孔",
+      "category": "布线",
+      "description": "添加微过孔",
+      "defaultSource": "allegro_builtin"
+    },
+    "net group": {
+      "chineseName": "网络编组",
+      "category": "布线",
+      "description": "创建网络组",
+      "defaultSource": "allegro_builtin"
+    },
+    "net list": {
+      "chineseName": "网表",
+      "category": "工具",
+      "description": "网表管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "net logic": {
+      "chineseName": "网络逻辑",
+      "category": "约束",
+      "description": "网络逻辑设置",
+      "defaultSource": "allegro_builtin"
+    },
+    "profile": {
+      "chineseName": "配置文件",
+      "category": "工具",
+      "description": "配置文件管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "project": {
+      "chineseName": "项目管理",
+      "category": "文件",
+      "description": "项目文件管理",
+      "defaultSource": "allegro_builtin"
+    },
+    "project manager": {
+      "chineseName": "项目管理器",
+      "category": "文件",
+      "description": "打开项目管理器",
+      "defaultSource": "allegro_builtin"
+    },
+    "extract": {
+      "chineseName": "提取",
+      "category": "编辑",
+      "description": "提取设计数据",
+      "defaultSource": "allegro_builtin"
+    },
+    "filter": {
+      "chineseName": "过滤器",
+      "category": "选择",
+      "description": "设置选择过滤器",
+      "defaultSource": "allegro_builtin"
+    },
+    "context": {
+      "chineseName": "上下文菜单",
+      "category": "显示",
+      "description": "右键上下文菜单",
+      "defaultSource": "allegro_builtin"
+    },
+    "options": {
+      "chineseName": "选项面板",
+      "category": "显示",
+      "description": "显示选项面板",
+      "defaultSource": "allegro_builtin"
+    },
+    "visibility": {
+      "chineseName": "可见性控制",
+      "category": "显示",
+      "description": "对象可见性控制",
+      "defaultSource": "allegro_builtin"
+    },
+    "logfile": {
+      "chineseName": "日志文件",
+      "category": "工具",
+      "description": "查看日志文件",
+      "defaultSource": "allegro_builtin"
+    },
+    "echo": {
+      "chineseName": "输出信息",
+      "category": "工具",
+      "description": "输出文本到命令行窗口",
+      "defaultSource": "allegro_builtin"
+    },
+    "axl": {
+      "chineseName": "AXL 命令",
+      "category": "工具",
+      "description": "执行 AXL API 命令",
+      "defaultSource": "allegro_builtin"
+    }
+  }
+}

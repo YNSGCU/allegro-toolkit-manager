@@ -1,0 +1,11 @@
+; Allegro ilinit file - with existing load commands
+; Testing: 已有非 ATM load 逻辑时插入 bootstrap
+
+; 公司 Skill 初始化
+load("S:/PCB/Skill/company_init.il")
+
+; 用户自定义加载
+load("C:/Users/pcbenv/skill/my_utils.il")
+
+; 环境设置
+setSkillPath("S:/PCB/Skill")

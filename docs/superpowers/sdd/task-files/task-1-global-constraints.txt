@@ -1,0 +1,8 @@
+﻿Global constraints for Task 1:
+- 一级导航保持不变：快捷键、Skill、菜单、概览、环境。
+- 快捷键模块内部必须拆成四个子工作区：/hotkeys/overview、/hotkeys/editor、/hotkeys/conflicts、/hotkeys/import-export。
+- 默认进入 /hotkeys 时必须重定向到 /hotkeys/overview。
+- 不改动 core/、electron/、IPC 协议和快捷键解析/校验规则。
+- 视觉继续沿用当前白色极简主题，不把所有功能重新塞回同一页。
+- 第一轮优先做结构拆分与组件复挂，不强行重写所有弹窗。
+- 仓库当前没有 .git，提交步骤跳过，但测试与报告要求保留。
