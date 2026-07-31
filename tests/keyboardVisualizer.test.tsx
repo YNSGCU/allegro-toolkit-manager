@@ -223,6 +223,55 @@ describe('keyboard visualizer fixed typography', () => {
     expect(screen.getByText('来源: 用户 env')).toBeInTheDocument();
   });
 
+  it('opens hover cards below keys in the upper keyboard rows', () => {
+    const { container } = render(
+      <KeyboardVisualizer
+        bindings={[
+          {
+            id: 'f1-help',
+            key: 'F1',
+            command: 'help',
+            type: 'funckey',
+            bindingSource: 'user_env_original',
+            status: 'normal',
+          },
+        ]}
+        conflicts={[]}
+        selectedKey={null}
+        onSelectKey={() => {}}
+      />,
+    );
+
+    const wrapper = container.querySelector('.keyboard-wrapper') as HTMLElement;
+    const keycap = screen.getByText('F1').closest('.keycap') as HTMLElement;
+    vi.spyOn(wrapper, 'getBoundingClientRect').mockReturnValue({
+      x: 220,
+      y: 376,
+      top: 376,
+      right: 1180,
+      bottom: 738,
+      left: 220,
+      width: 960,
+      height: 362,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(keycap, 'getBoundingClientRect').mockReturnValue({
+      x: 436,
+      y: 382,
+      top: 382,
+      right: 482,
+      bottom: 428,
+      left: 436,
+      width: 46,
+      height: 46,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.mouseEnter(keycap);
+
+    expect(container.querySelector('.kv-hover-card')).toHaveClass('kv-hover-card--below');
+  });
+
   it('marks readonly reserved occupancy as occupied in my view when the key is not free', () => {
     vi.stubGlobal(
       'ResizeObserver',

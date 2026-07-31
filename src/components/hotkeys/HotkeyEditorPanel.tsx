@@ -250,13 +250,10 @@ export default function HotkeyEditorPanel({
     <section className="hotkey-editor-panel" aria-label="键位编辑">
       <header className="hotkey-editor-panel-header">
         <div>
-          <h1>键位编辑</h1>
+          <h2>键位编辑</h2>
           <p>在真实工作区里查找、筛选、修改和新增当前方案中的快捷键。</p>
         </div>
         <div className="hotkey-editor-panel-actions">
-          <button className="btn" onClick={() => void actions.reloadData()} disabled={state.loading}>
-            刷新数据
-          </button>
           <button
             className="btn btn-primary"
             onClick={openAddBindingFlow}

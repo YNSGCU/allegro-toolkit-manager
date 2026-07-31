@@ -46,6 +46,8 @@ type ImportedProfilePayload = {
   };
 };
 
+type HotkeyDataLoadState = 'loading' | 'ready' | 'error';
+
 function buildStats(bindings: HotkeyBinding[], conflicts: Conflict[]): HotkeyWorkspaceStats {
   return {
     total: bindings.length,
@@ -118,6 +120,7 @@ function buildImportPreview(
 export default function HotkeyWorkspacePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [dataLoadState, setDataLoadState] = useState<HotkeyDataLoadState>('loading');
   const [error, setError] = useState<string | null>(null);
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
   const [entries, setEntries] = useState<EnvEntry[]>([]);
@@ -176,6 +179,7 @@ export default function HotkeyWorkspacePage() {
     const shouldResetState = options?.resetState ?? true;
     if (shouldResetState) {
       setLoading(true);
+      setDataLoadState('loading');
       setError(null);
     }
     let settled = false;
@@ -187,6 +191,7 @@ export default function HotkeyWorkspacePage() {
       }
       flushSync(() => {
         applyLoadedData(loaded);
+        setDataLoadState('ready');
         setLoading(false);
       });
       settled = true;
@@ -194,6 +199,7 @@ export default function HotkeyWorkspacePage() {
       if (canSafelySetState()) {
         flushSync(() => {
           setError(formatUserError(loadError, '加载快捷键工作区失败'));
+          setDataLoadState('error');
           setLoading(false);
         });
         settled = true;
@@ -232,6 +238,7 @@ export default function HotkeyWorkspacePage() {
 
   const switchProfile = useCallback(async (profileId: string) => {
     setLoading(true);
+    setDataLoadState('loading');
     setError(null);
     try {
       const loaded = await loadHotkeyWorkspaceData(profileId);
@@ -240,12 +247,14 @@ export default function HotkeyWorkspacePage() {
       }
       flushSync(() => {
         applyLoadedData(loaded);
+        setDataLoadState('ready');
         setLoading(false);
       });
     } catch (err) {
       if (canSafelySetState()) {
         flushSync(() => {
           setError(formatUserError(err, '切换快捷键方案失败'));
+          setDataLoadState('error');
           setLoading(false);
         });
       }
@@ -648,6 +657,53 @@ export default function HotkeyWorkspacePage() {
     }
   }, []);
 
+  const statusItems = dataLoadState === 'ready'
+    ? [
+        {
+          label: '键位',
+          value: `${bindings.length} 条`,
+          tone: bindings.length > 0 ? 'ok' as const : 'muted' as const,
+        },
+        {
+          label: '问题',
+          value: `${stats.errorCount + stats.warningCount} 个`,
+          tone: stats.errorCount > 0
+            ? 'error' as const
+            : stats.warningCount > 0
+              ? 'warning' as const
+              : 'ok' as const,
+        },
+        {
+          label: 'env',
+          value: envInfo?.envFilePath ? '已连接' : '未检测到',
+          tone: envInfo?.envFilePath ? 'ok' as const : 'warning' as const,
+          tooltip: envInfo?.envFilePath || '未检测到活动 env 文件',
+        },
+      ]
+    : [
+        {
+          label: '数据',
+          value: dataLoadState === 'error' ? '加载失败' : '加载中',
+          tone: dataLoadState === 'error' ? 'error' as const : 'muted' as const,
+        },
+        {
+          label: '键位',
+          value: '未加载',
+          tone: 'muted' as const,
+        },
+        {
+          label: '问题',
+          value: '尚未检查',
+          tone: 'muted' as const,
+        },
+        {
+          label: 'env',
+          value: envInfo?.envFilePath ? '已连接' : '未检测到',
+          tone: envInfo?.envFilePath ? 'ok' as const : 'warning' as const,
+          tooltip: envInfo?.envFilePath || '未检测到活动 env 文件',
+        },
+      ];
+
   return (
     <WorkspacePage className="hotkey-workspace-page" density="compact" scroll="contained">
       <input
@@ -702,24 +758,7 @@ export default function HotkeyWorkspacePage() {
         />
         <StatusStrip
           label="快捷键当前状态"
-          items={[
-            {
-              label: '键位',
-              value: `${bindings.length} 条`,
-              tone: bindings.length > 0 ? 'ok' : 'muted',
-            },
-            {
-              label: '问题',
-              value: `${stats.errorCount + stats.warningCount} 个`,
-              tone: stats.errorCount > 0 ? 'error' : stats.warningCount > 0 ? 'warning' : 'ok',
-            },
-            {
-              label: 'env',
-              value: envInfo?.envFilePath ? '已连接' : '未检测到',
-              tone: envInfo?.envFilePath ? 'ok' : 'warning',
-              tooltip: envInfo?.envFilePath || '未检测到活动 env 文件',
-            },
-          ]}
+          items={statusItems}
         />
         <HotkeySubnav />
         <Routes>

@@ -88,13 +88,10 @@ export default function HotkeyConflictsPanel({
     <section className="hotkey-conflicts-panel" aria-label="冲突处理">
       <header className="hotkey-conflicts-panel-header">
         <div>
-          <h1>冲突处理</h1>
+          <h2>冲突处理</h2>
           <p>集中查看冲突、覆盖风险与应用前检查结果，直接复用现有诊断和 Apply Plan 流。</p>
         </div>
         <div className="hotkey-conflicts-panel-actions">
-          <button className="btn" onClick={() => void actions.reloadData()} disabled={state.loading}>
-            刷新诊断
-          </button>
           <button
             className="btn btn-primary"
             onClick={() => void actions.handleCreatePlan()}

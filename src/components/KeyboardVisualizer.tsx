@@ -545,7 +545,16 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
         Math.max(rect.left + rect.width / 2, 24 + cardWidth / 2),
         window.innerWidth - 24 - cardWidth / 2,
       );
-      const placement = rect.top < 190 ? 'below' : 'above';
+      const keyboardRect = event.currentTarget
+        .closest('.keyboard-wrapper')
+        ?.getBoundingClientRect();
+      const placement = keyboardRect
+        ? rect.top < keyboardRect.top + keyboardRect.height * 0.35
+          ? 'below'
+          : 'above'
+        : rect.top < 190
+          ? 'below'
+          : 'above';
       const nextTop = placement === 'below' ? rect.bottom + 8 : Math.max(rect.top - 8, 16);
 
       setHoverCard({

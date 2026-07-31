@@ -1,6 +1,6 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import HotkeyWorkspacePage from '../src/pages/HotkeyWorkspacePage';
 
 function mockAtm() {
@@ -26,6 +26,10 @@ function mockAtm() {
 }
 
 describe('hotkey workspace routing', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('redirects /hotkeys to overview, renders compact tabs, and does not render page scaler wrappers', async () => {
     mockAtm();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -74,10 +78,34 @@ describe('hotkey workspace routing', () => {
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '新建' })).toBeInTheDocument();
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '复制' })).toBeInTheDocument();
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '更多' })).toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '应用此方案' })).toBeEnabled();
+    expect(within(profileBar as HTMLElement).getByRole('combobox', { name: '快捷键方案选择' })).toHaveDisplayValue('暂无方案');
+    expect(within(profileBar as HTMLElement).getByRole('button', { name: '应用此方案' })).toBeDisabled();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '重命名' })).not.toBeInTheDocument();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '删除' })).not.toBeInTheDocument();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '导入' })).not.toBeInTheDocument();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '导出' })).not.toBeInTheDocument();
+  });
+
+  it('does not report a successful diagnosis when workspace data failed to load', async () => {
+    Object.defineProperty(window, 'atm', {
+      writable: true,
+      value: {
+        locateEnvironment: vi.fn().mockRejectedValue(new Error('window.atm bridge unavailable')),
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/hotkeys/overview']}>
+        <Routes>
+          <Route path="/hotkeys/*" element={<HotkeyWorkspacePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const status = await screen.findByLabelText('快捷键当前状态');
+    expect(status).toHaveTextContent('数据加载失败');
+    expect(status).toHaveTextContent('问题尚未检查');
+    expect(status).not.toHaveTextContent('问题0 个');
+    expect(await screen.findByRole('alert')).toHaveTextContent('加载快捷键工作区失败');
   });
 });

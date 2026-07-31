@@ -186,6 +186,11 @@
 }
 
 .hotkey-workspace-content {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   gap: var(--ui-space-2);
 }
 
@@ -255,7 +260,9 @@
 .hotkey-overview-header h2 {
   margin: 0;
   color: var(--ui-text);
-  font-size: var(--ui-font-size-lg);
+  font-size: var(--ui-font-size-xl);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 .hotkey-overview-header p {
@@ -383,7 +390,13 @@
 }
 
 .keycap-binding-count {
-  font-size: 11px;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  border-radius: 9px;
+  font-size: var(--ui-font-size-xs);
 }
 
 .kv-hover-card--below {

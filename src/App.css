@@ -5398,10 +5398,13 @@ textarea.atm-input:focus {
   flex-wrap: wrap;
 }
 
-.hotkey-conflicts-panel-header h1 {
-  font-size: 32px;
-  line-height: 1.04;
-  letter-spacing: -0.04em;
+.hotkey-conflicts-panel-header h2,
+.hotkey-editor-panel-header h2,
+.hotkey-import-export-panel > .workspace-section-header h2 {
+  margin: 0;
+  font-size: var(--ui-font-size-xl);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 .hotkey-conflicts-panel-header p {
@@ -5564,7 +5567,7 @@ textarea.atm-input:focus {
   border-radius: 999px;
   background: rgba(13, 148, 136, 0.14);
   color: var(--accent-blue);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -5595,7 +5598,7 @@ textarea.atm-input:focus {
 }
 
 .hotkey-io-env-copy code {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -5603,7 +5606,7 @@ textarea.atm-input:focus {
 }
 
 .hotkey-io-env-kicker {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5653,12 +5656,6 @@ textarea.atm-input:focus {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-}
-
-.hotkey-editor-panel-header h1 {
-  font-size: 32px;
-  line-height: 1.04;
-  letter-spacing: -0.04em;
 }
 
 .hotkey-editor-panel-header p {
@@ -5783,11 +5780,6 @@ textarea.atm-input:focus {
 }
 
 @media (max-width: 640px) {
-  .hotkey-conflicts-panel-header h1,
-  .hotkey-editor-panel-header h1 {
-    font-size: 28px;
-  }
-
   .hotkey-io-inline-status span {
     min-width: 0;
   }

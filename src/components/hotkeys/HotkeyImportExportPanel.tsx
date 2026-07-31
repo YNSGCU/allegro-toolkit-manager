@@ -136,7 +136,7 @@ export default function HotkeyImportExportPanel({
     <section className="hotkey-import-export-panel" aria-label="导入导出">
       <header className="workspace-section-header">
         <div>
-          <h1>导入导出</h1>
+          <h2>导入导出</h2>
           <p>把 env、方案、速查表和变更历史拆成同一条操作带，减少来回切页。</p>
         </div>
       </header>

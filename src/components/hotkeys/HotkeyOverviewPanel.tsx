@@ -25,7 +25,11 @@ export default function HotkeyOverviewPanel({ sharedState: state, actions }: Hot
         </div>
       </header>
 
-      {state.error ? <p className="hotkey-overview-note">{state.error}</p> : null}
+      {state.error ? (
+        <div className="message message-error hotkey-overview-message" role="alert">
+          {state.error}
+        </div>
+      ) : null}
       {state.loading ? <p className="hotkey-overview-note">正在加载快捷键总览...</p> : null}
 
       <section className="hotkey-overview-keyboard" aria-label="快捷键键盘总览">

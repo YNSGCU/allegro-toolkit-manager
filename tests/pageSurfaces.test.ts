@@ -77,4 +77,18 @@ describe('页面工作区契约', () => {
     expect(serviceSource).toContain('export async function loadHotkeyWorkspaceData');
     expect(serviceSource).not.toContain('React.FC');
   });
+
+  it('快捷键工作区使用可滚动内容链并统一分区标题层级', () => {
+    const workspaceCss = readPageSource('../src/shared/ui/foundations/workspace.css');
+    const editorSource = readPageSource('../src/components/hotkeys/HotkeyEditorPanel.tsx');
+    const conflictsSource = readPageSource('../src/components/hotkeys/HotkeyConflictsPanel.tsx');
+    const importExportSource = readPageSource('../src/components/hotkeys/HotkeyImportExportPanel.tsx');
+
+    expect(workspaceCss).toMatch(
+      /\.hotkey-workspace-content\s*\{[^}]*height:\s*100%;[^}]*overflow-y:\s*auto;/s,
+    );
+    expect(editorSource).toContain('<h2>键位编辑</h2>');
+    expect(conflictsSource).toContain('<h2>冲突处理</h2>');
+    expect(importExportSource).toContain('<h2>导入导出</h2>');
+  });
 });

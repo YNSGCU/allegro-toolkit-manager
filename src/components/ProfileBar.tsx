@@ -55,6 +55,7 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
   const isDefaultProfile =
     DEFAULT_PROFILE_NAMES.includes(activeName) || activeProfileId === 'default';
   const isApplied = Boolean(activeProfileId) && appliedProfileId === activeProfileId;
+  const canApply = Boolean(activeProfile) && !isApplied;
   const isRenameEditing = renameId === activeProfileId;
 
   const handleCreate = () => {
@@ -236,7 +237,8 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
       <button
         className={`btn btn-sm profile-bar-apply${isApplied ? ' is-applied' : ''}`}
         onClick={onApply}
-        disabled={isApplied}
+        disabled={!canApply}
+        title={activeProfile ? undefined : '请先创建或选择方案'}
       >
         {isApplied ? '已应用' : applyLabel}
       </button>
@@ -292,7 +294,8 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
       <button
         className={`btn btn-sm profile-bar-apply${isApplied ? ' is-applied' : ''}`}
         onClick={onApply}
-        disabled={isApplied}
+        disabled={!canApply}
+        title={activeProfile ? undefined : '请先创建或选择方案'}
       >
         {isApplied ? '已应用' : applyLabel}
       </button>
@@ -313,6 +316,11 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
           aria-label={`${title}选择`}
           title={activeProfile?.id}
         >
+          {profiles.length === 0 ? (
+            <option value="" disabled>
+              暂无方案
+            </option>
+          ) : null}
           {profiles.map((profile) => (
             <option key={profile.id} value={profile.id}>
               {profile.name}
