@@ -61,7 +61,7 @@ const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose,
       <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: 15 }}>新增绑定 — 物理键 {physicalKey}</h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
         <div className="modal-body" style={{ padding: '12px 0' }}>
           {/* 修饰键层 */}

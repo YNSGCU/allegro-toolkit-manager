@@ -31,7 +31,7 @@ import CommandSelector from '../components/CommandSelector';
 import MenuPreviewDialog from '../components/MenuPreviewDialog';
 import MenuApplyPlanDialog from '../components/MenuApplyPlanDialog';
 import { useMenuApplyPlan } from '../hooks/useMenuApplyPlan';
-import { PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import { formatUserError, PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'tree' | 'commands' | 'refs';
 
@@ -164,7 +164,7 @@ const MenuPage: React.FC = () => {
       // 加载菜单方案
       const profilesRes = await window.atm.menuLoadProfiles();
       if (!profilesRes.success) {
-        setError(profilesRes.error || '加载菜单方案失败');
+        setError(formatUserError(profilesRes.error, '加载菜单方案失败'));
         setLoading(false);
         return;
       }
@@ -204,7 +204,7 @@ const MenuPage: React.FC = () => {
       setHasUnsavedChanges(false);
       setLoading(false);
     } catch (err) {
-      setError(`加载菜单数据失败: ${(err as Error).message}`);
+      setError(formatUserError(err, '加载菜单数据失败'));
       setLoading(false);
     }
   }, []);
@@ -900,13 +900,6 @@ const MenuPage: React.FC = () => {
         actions={(
           <div className="menu-page-actions">
             <button onClick={handleSaveDraft} className="btn btn-sm">保存草稿</button>
-            <button
-              onClick={handleGeneratePlan}
-              className="btn btn-sm btn-primary"
-              title="打开写入确认；确认后生成菜单脚本并配置 Allegro 启动加载。"
-            >
-              应用到 Allegro
-            </button>
             <MoreActionsMenu
               actions={[
                 { label: '预览 IL', onClick: handlePreview },
@@ -958,12 +951,9 @@ const MenuPage: React.FC = () => {
               setSelectedId(null);
             }
           }}
-          onApply={() => {
-            showToast('info', '请先在菜单编辑器中编辑菜单树，然后使用"生成 Apply Plan"按钮。');
-          }}
-          applyLabel="编辑菜单"
+          onApply={handleGeneratePlan}
+          applyLabel="应用方案"
           compact
-          showCompactManagementActions
         />
       )}
 
@@ -976,21 +966,23 @@ const MenuPage: React.FC = () => {
             status: !items.length ? 'muted' : hasUnsavedChanges ? 'warning' : 'ok',
           },
           {
-            label: 'menu_profile',
+            label: '方案文件',
             value: fileStatus?.profileExists ? '已生成' : items.length ? '待生成' : '未生成',
             status: fileStatus?.profileExists ? 'ok' : items.length ? 'warning' : 'muted',
+            tooltip: 'menu_profile.json',
           },
           {
-            label: 'generated_menu.il',
+            label: '菜单脚本',
             value: fileStatus?.ilExists
               ? (hasUnsavedChanges ? '需要重新生成' : '已生成')
               : items.length ? '待生成' : '未生成',
             status: fileStatus?.ilExists
               ? (hasUnsavedChanges ? 'warning' : 'ok')
               : items.length ? 'warning' : 'muted',
+            tooltip: 'generated_menu.il',
           },
           {
-            label: 'bootstrap',
+            label: '启动加载',
             value: fileStatus?.bootstrapHasMenu ? '已配置' : '未配置',
             status: fileStatus?.bootstrapHasMenu ? 'ok' : 'warning',
           },

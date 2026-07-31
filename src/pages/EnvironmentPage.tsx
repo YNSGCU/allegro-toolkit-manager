@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FolderOpen, RefreshCw } from 'lucide-react';
 import type { EnvironmentInfo } from '../types/environment';
 import FileStatusCard from '../components/FileStatusCard';
-import { PageState, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import { formatUserError, PageState, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type EnvVarMap = Record<string, string | null>;
 
@@ -42,7 +42,7 @@ const EnvironmentPage: React.FC = () => {
         setEnvInfo(result.data);
         if (result.data.warnings.length > 0) setError(result.data.warnings.join('；'));
       } else {
-        setError(result.error || '环境检测失败');
+        setError(formatUserError(result.error, '环境检测失败'));
       }
 
       try {
@@ -52,7 +52,7 @@ const EnvironmentPage: React.FC = () => {
         // 环境变量只用于诊断展示，不阻塞主检测结果。
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : String(loadError));
+      setError(formatUserError(loadError, '环境检测失败'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ const EnvironmentPage: React.FC = () => {
         await loadEnvironment(result.data);
       }
     } catch (selectError) {
-      setError(selectError instanceof Error ? selectError.message : String(selectError));
+      setError(formatUserError(selectError, '选择环境文件失败'));
     } finally {
       setLoading(false);
     }

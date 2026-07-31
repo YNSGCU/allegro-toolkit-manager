@@ -1,12 +1,17 @@
-/**
- * ATM - 菜单预览弹窗组件（V5.5）
- *
- * 三个 Tab：
- * 1. 可视化预览 — 树形显示菜单结构
- * 2. generated_menu.il — SKILL 脚本
- * 3. menu_profile.json — JSON 配置
- */
 import React, { useState } from 'react';
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  ClipboardCopy,
+  Eye,
+  FileJson,
+  FileText,
+  Folder,
+  Minus,
+  TerminalSquare,
+  X,
+} from 'lucide-react';
 import type { MenuItemConfig } from '../types/menu';
 
 interface MenuPreviewDialogProps {
@@ -16,17 +21,16 @@ interface MenuPreviewDialogProps {
   profileJson?: string;
   itemCount?: { total: number; commands: number; menus: number; separators: number };
   onApplyPlan?: () => void;
-  /** 用于可视化预览的菜单项 */
   items?: MenuItemConfig[];
 }
 
 type PreviewTab = 'visual' | 'il' | 'json';
 
-const TYPE_ICONS: Record<string, string> = {
-  menu: '📁',
-  command: '⚡',
-  separator: '➖',
-};
+const TYPE_ICONS = {
+  menu: Folder,
+  command: TerminalSquare,
+  separator: Minus,
+} as const;
 
 const MenuPreviewDialog: React.FC<MenuPreviewDialogProps> = ({
   open,
@@ -41,275 +45,116 @@ const MenuPreviewDialog: React.FC<MenuPreviewDialogProps> = ({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    const content = tab === 'il' ? ilContent : (profileJson || '');
     try {
-      const content = tab === 'il' ? ilContent : (profileJson || '');
       await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       const textArea = document.createElement('textarea');
-      textArea.value = tab === 'il' ? ilContent : (profileJson || '');
+      textArea.value = content;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
-  /** 递归渲染菜单项预览 */
   const renderVisualItem = (item: MenuItemConfig, depth: number): React.ReactNode => {
-    const indent = depth * 20;
     const isDisabled = !item.enabled;
     const hasIssue = item.status === 'error' || item.status === 'warning';
-    const issueColor = item.status === 'error' ? '#f87171' : '#fbbf24';
 
     if (item.type === 'separator') {
       return (
-        <div key={item.id} style={{
-          padding: '2px 0 2px 12px',
-          paddingLeft: `${12 + indent}px`,
-          opacity: isDisabled ? 0.4 : 1,
-        }}>
-          <div style={{
-            height: '1px',
-            background: 'var(--border-color)',
-            margin: '4px 0',
-            width: '100%',
-          }} />
+        <div
+          key={item.id}
+          className={`menu-preview-separator${isDisabled ? ' is-disabled' : ''}`}
+          style={{ '--menu-depth': depth } as React.CSSProperties}
+        >
+          <span />
         </div>
       );
     }
 
+    const TypeIcon = TYPE_ICONS[item.type] || FileText;
     return (
       <div key={item.id}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '3px 0 3px 12px',
-          paddingLeft: `${12 + indent}px`,
-          opacity: isDisabled ? 0.4 : 1,
-          fontSize: '13px',
-        }}>
-          <span style={{ fontSize: '13px' }}>{TYPE_ICONS[item.type] || '📄'}</span>
-          <span style={{ fontWeight: item.type === 'menu' ? 600 : 400 }}>
-            {item.label || '(未命名)'}
-          </span>
-          {item.command && (
-            <span style={{
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              color: 'var(--text-secondary)',
-              marginLeft: '4px',
-            }}>
-              ({item.command})
-            </span>
-          )}
-          {isDisabled && (
-            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>（禁用）</span>
-          )}
-          {hasIssue && (
-            <span style={{ fontSize: '11px', color: issueColor }}>⚠</span>
-          )}
-          {item.type === 'menu' && item.children && item.children.length > 0 && (
-            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>▼</span>
-          )}
+        <div
+          className={`menu-preview-row${isDisabled ? ' is-disabled' : ''}`}
+          style={{ '--menu-depth': depth } as React.CSSProperties}
+        >
+          <TypeIcon aria-hidden="true" />
+          <span className={item.type === 'menu' ? 'is-menu' : ''}>{item.label || '（未命名）'}</span>
+          {item.command ? <code>({item.command})</code> : null}
+          {isDisabled ? <small>已禁用</small> : null}
+          {hasIssue ? <AlertTriangle className="menu-preview-issue" aria-label="存在问题" /> : null}
+          {item.type === 'menu' && item.children?.length ? <ChevronDown className="menu-preview-chevron" aria-hidden="true" /> : null}
         </div>
-        {item.children && item.children.map(child => renderVisualItem(child, depth + 1))}
+        {item.children?.map((child) => renderVisualItem(child, depth + 1))}
       </div>
     );
   };
 
-  /** 递归用展开/折叠状态渲染预览 */
-  const [expandedVisual, setExpandedVisual] = useState(true);
-
   if (!open) return null;
 
+  const tabs = [
+    { key: 'visual' as const, label: '可视化预览', icon: Eye },
+    { key: 'il' as const, label: 'generated_menu.il', icon: FileText },
+    { key: 'json' as const, label: 'menu_profile.json', icon: FileJson },
+  ];
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div style={{
-        background: 'var(--bg-surface)',
-        borderRadius: '8px',
-        width: '800px',
-        maxHeight: '85vh',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-      }}>
-        {/* 标题 */}
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
+    <div className="ui-dialog-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="ui-dialog menu-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="menu-preview-title">
+        <header className="ui-dialog-header">
           <div>
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>菜单预览</span>
-            {itemCount && (
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>
-                {itemCount.total} 个菜单项 · {itemCount.commands} 个命令 · {itemCount.menus} 个菜单 · {itemCount.separators} 个分隔线
-              </span>
-            )}
+            <h2 id="menu-preview-title">菜单预览</h2>
+            {itemCount ? (
+              <p>{itemCount.total} 个菜单项 · {itemCount.commands} 个命令 · {itemCount.menus} 个菜单 · {itemCount.separators} 个分隔线</p>
+            ) : null}
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: '18px',
-              padding: '0 4px',
-            }}
-          >
-            ✕
-          </button>
+          <button className="ui-icon-button" onClick={onClose} aria-label="关闭菜单预览"><X aria-hidden="true" /></button>
+        </header>
+
+        <div className="menu-preview-tabs" role="tablist" aria-label="菜单预览格式">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              className={tab === key ? 'is-active' : ''}
+              onClick={() => setTab(key)}
+            >
+              <Icon aria-hidden="true" />
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--border-color)',
-          padding: '0 20px',
-        }}>
-          <TabButton
-            label="👁 可视化预览"
-            active={tab === 'visual'}
-            onClick={() => setTab('visual')}
-          />
-          <TabButton
-            label="📜 generated_menu.il"
-            active={tab === 'il'}
-            onClick={() => setTab('il')}
-          />
-          <TabButton
-            label="📋 menu_profile.json"
-            active={tab === 'json'}
-            onClick={() => setTab('json')}
-          />
+        <div className="ui-dialog-body menu-preview-body">
+          {tab === 'visual' ? (
+            items?.length ? <div className="menu-preview-tree">{items.map((item) => renderVisualItem(item, 0))}</div> : <div className="menu-preview-empty">暂无菜单项</div>
+          ) : (
+            <pre className="menu-preview-code">{tab === 'il' ? ilContent : (profileJson || '暂无 JSON 预览')}</pre>
+          )}
         </div>
 
-        {/* 预览内容 */}
-        {tab === 'visual' ? (
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '16px 20px',
-            maxHeight: '50vh',
-            background: 'var(--bg-surface)',
-          }}>
-            {items && items.length > 0 ? (
-              items.map(item => renderVisualItem(item, 0))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
-                暂无菜单项
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '12px 20px',
-            background: 'var(--bg-code, #1a1a2e)',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            lineHeight: '1.6',
-            whiteSpace: 'pre-wrap',
-            color: '#e0e0e0',
-            maxHeight: '50vh',
-          }}>
-            {tab === 'il' ? ilContent : (profileJson || '暂无 JSON 预览')}
-          </div>
-        )}
-
-        {/* 底部 */}
-        <div style={{
-          padding: '12px 20px',
-          borderTop: '1px solid var(--border-color)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-            <span>⚠ 需要重启 Allegro 或重新加载菜单后生效</span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {tab !== 'visual' && (
-              <button
-                onClick={handleCopy}
-                className="btn btn-sm"
-                style={{
-                  padding: '6px 16px',
-                  background: 'var(--bg-hover)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                }}
-              >
-                {copied ? '✅ 已复制' : '📋 复制'}
+        <footer className="ui-dialog-footer menu-preview-footer">
+          <span className="menu-preview-restart"><AlertTriangle aria-hidden="true" />应用后需要重启 Allegro 或重新加载菜单。</span>
+          <div>
+            {tab !== 'visual' ? (
+              <button className="btn btn-sm" onClick={handleCopy}>
+                {copied ? <Check aria-hidden="true" /> : <ClipboardCopy aria-hidden="true" />}
+                {copied ? '已复制' : '复制'}
               </button>
-            )}
-            {onApplyPlan && (
-              <button
-                onClick={onApplyPlan}
-                className="btn btn-sm btn-primary"
-                style={{
-                  padding: '6px 16px',
-                  background: 'var(--accent-blue)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                }}
-              >
-                生成 Apply Plan
-              </button>
-            )}
+            ) : null}
+            {onApplyPlan ? <button className="btn btn-sm btn-primary" onClick={onApplyPlan}>生成 Apply Plan</button> : null}
           </div>
-        </div>
-      </div>
+        </footer>
+      </section>
     </div>
   );
 };
-
-/** Tab 按钮 */
-const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({
-  label, active, onClick,
-}) => (
-  <button
-    onClick={onClick}
-    style={{
-      padding: '8px 16px',
-      border: 'none',
-      borderBottom: active ? '2px solid var(--accent-blue)' : '2px solid transparent',
-      background: 'transparent',
-      color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
-      cursor: 'pointer',
-      fontSize: '13px',
-      fontWeight: active ? 600 : 400,
-      transition: 'all 0.15s',
-    }}
-  >
-    {label}
-  </button>
-);
 
 export default MenuPreviewDialog;

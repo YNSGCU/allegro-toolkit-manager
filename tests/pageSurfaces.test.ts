@@ -61,9 +61,11 @@ describe('页面工作区契约', () => {
   it('菜单页保留草稿、生成文件和 bootstrap 状态', () => {
     const source = readPageSource('../src/pages/MenuPage.tsx');
     expect(source).toContain("label: '草稿'");
-    expect(source).toContain("label: 'menu_profile'");
-    expect(source).toContain("label: 'generated_menu.il'");
-    expect(source).toContain("label: 'bootstrap'");
+    expect(source).toContain("label: '方案文件'");
+    expect(source).toContain("tooltip: 'menu_profile.json'");
+    expect(source).toContain("label: '菜单脚本'");
+    expect(source).toContain("tooltip: 'generated_menu.il'");
+    expect(source).toContain("label: '启动加载'");
     expect(source).toContain('treeValidation.hasError');
     expect(source).toContain('<MoreActionsMenu');
   });

@@ -85,16 +85,16 @@ export function useSkillApplyPlan(): UseSkillApplyPlanReturn {
     try {
       const result = await window.atm.applySkillChanges(JSON.stringify(pendingPlan));
       if (result.success) {
-        setApplyResult('✅ Apply Plan 已成功执行');
+        setApplyResult('Apply Plan 已成功执行');
         setPendingPlan(null);
         setPendingSkills({});
         return true;
       } else {
-        setApplyResult(`❌ 执行失败: ${result.error || '未知错误'}`);
+        setApplyResult(`执行失败：${result.error || '未知错误'}`);
         return false;
       }
     } catch (err) {
-      setApplyResult(`❌ 执行异常: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`执行异常：${err instanceof Error ? err.message : String(err)}`);
       return false;
     } finally {
       setApplying(false);

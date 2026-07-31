@@ -30,7 +30,6 @@ export interface HotkeyWorkspaceStats {
 }
 
 export interface HotkeyWorkspaceSharedState {
-  workspaceScale: number;
   loading: boolean;
   error: string | null;
   envInfo: EnvironmentInfo | null;

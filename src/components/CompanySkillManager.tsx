@@ -38,7 +38,7 @@ const CompanySkillManager: React.FC<CompanySkillManagerProps> = ({
         onClick={() => setExpanded(!expanded)}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>🏢 公司 Skill（只读）— {companySkills.length} 个 Skill</span>
+          <span>公司 Skill（只读）— {companySkills.length} 个 Skill</span>
           {directories.length > 0 && (
             <span className="badge badge-info" style={{ fontSize: 10 }}>{directories.length} 个目录</span>
           )}
@@ -61,10 +61,10 @@ const CompanySkillManager: React.FC<CompanySkillManagerProps> = ({
           {/* 手动添加目录 */}
           <div style={{ marginBottom: 12 }}>
             <button className="btn btn-sm" onClick={onAddDirectory} disabled={scanning}>
-              {scanning ? '🔄 扫描中...' : '📂 添加只读 Skill 目录'}
+              {scanning ? '扫描中...' : '添加只读 Skill 目录'}
             </button>
             <button className="btn btn-sm" onClick={onRefresh} disabled={scanning} style={{ marginLeft: 8 }}>
-              🔄 重新扫描全部
+              重新扫描全部
             </button>
           </div>
 
@@ -85,13 +85,13 @@ const CompanySkillManager: React.FC<CompanySkillManagerProps> = ({
                   </div>
                   <div className="company-dir-actions">
                     <button className="btn btn-sm" onClick={() => onRescanDirectory(dir.id)} title="重新扫描">
-                      🔄
+                      扫描
                     </button>
                     <button className="btn btn-sm" onClick={() => onOpenDirectory(dir.path)} title="打开目录">
-                      📁
+                      打开
                     </button>
                     <button className="btn btn-sm atm-btn-danger" onClick={() => onRemoveDirectory(dir.id)} title="移除">
-                      🗑️
+                      删除
                     </button>
                   </div>
                 </div>

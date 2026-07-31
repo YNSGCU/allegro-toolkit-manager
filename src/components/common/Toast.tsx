@@ -5,6 +5,7 @@
  * 不再使用 console.log 替代用户反馈。
  */
 import React, { useEffect, useCallback } from 'react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -29,54 +30,24 @@ const ToastItem: React.FC<{ toast: ToastMessage; onRemove: (id: string) => void 
     return () => clearTimeout(timer);
   }, [toast.id, toast.duration, onRemove]);
 
-  const iconMap: Record<ToastType, string> = {
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️',
+  const iconMap: Record<ToastType, LucideIcon> = {
+    success: CheckCircle2,
+    error: XCircle,
+    warning: AlertTriangle,
+    info: Info,
   };
-
-  const colorMap: Record<ToastType, { bg: string; border: string }> = {
-    success: { bg: 'var(--toast-success-bg, #1a3a2a)', border: 'var(--toast-success-border, #2ecc71)' },
-    error: { bg: 'var(--toast-error-bg, #3a1a1a)', border: 'var(--toast-error-border, #e74c3c)' },
-    warning: { bg: 'var(--toast-warning-bg, #3a3a1a)', border: 'var(--toast-warning-border, #f1c40f)' },
-    info: { bg: 'var(--toast-info-bg, #1a2a3a)', border: 'var(--toast-info-border, #3498db)' },
-  };
-
-  const colors = colorMap[toast.type];
+  const Icon = iconMap[toast.type];
 
   return (
-    <div
-      style={{
-        padding: '10px 16px',
-        background: colors.bg,
-        border: `1px solid ${colors.border}`,
-        borderRadius: 6,
-        color: '#eee',
-        fontSize: 13,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-        pointerEvents: 'auto',
-        maxWidth: 400,
-        wordBreak: 'break-word',
-      }}
-    >
-      <span>{iconMap[toast.type]}</span>
-      <span style={{ flex: 1 }}>{toast.message}</span>
+    <div className={`toast-item toast-item--${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}>
+      <Icon className="toast-item-icon" aria-hidden="true" />
+      <span className="toast-item-message">{toast.message}</span>
       <button
         onClick={() => onRemove(toast.id)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#888',
-          cursor: 'pointer',
-          fontSize: 16,
-          padding: '0 4px',
-        }}
+        className="toast-item-close"
+        aria-label="关闭提示"
       >
-        ×
+        <X aria-hidden="true" />
       </button>
     </div>
   );
@@ -85,18 +56,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onRemove: (id: string) => void 
 /** Toast 容器 — 固定在右上角 */
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 16,
-        right: 16,
-        zIndex: 10000,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        pointerEvents: 'none',
-      }}
-    >
+    <div className="toast-container" aria-live="polite">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onRemove={onRemove} />
       ))}

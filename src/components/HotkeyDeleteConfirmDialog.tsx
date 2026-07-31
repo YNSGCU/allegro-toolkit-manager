@@ -25,8 +25,8 @@ const HotkeyDeleteConfirmDialog: React.FC<HotkeyDeleteConfirmDialogProps> = ({
         style={{ maxWidth: 480 }}
       >
         <div className="modal-header">
-          <h3 style={{ margin: 0 }}>⚠️ 确认删除快捷键</h3>
-          <button className="btn btn-sm" onClick={onCancel}>✕</button>
+          <h3 style={{ margin: 0 }}>确认删除快捷键</h3>
+          <button className="btn btn-sm" onClick={onCancel}>关闭</button>
         </div>
 
         <div style={{ padding: '16px 20px' }}>
@@ -69,7 +69,7 @@ const HotkeyDeleteConfirmDialog: React.FC<HotkeyDeleteConfirmDialogProps> = ({
             fontSize: 12, color: 'var(--text-secondary)',
             marginBottom: 16,
           }}>
-            💡 该操作不会物理删除 env 行，而是将其注释，方便恢复。
+            该操作不会物理删除 env 行，而是将其注释，方便恢复。
             <br />
             修改前：<code style={{ fontSize: 11 }}>{binding.type} {binding.key} "{binding.command}"</code>
             <br />

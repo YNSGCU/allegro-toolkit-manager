@@ -43,7 +43,7 @@ const EditApplyPlanPreview: React.FC<EditApplyPlanPreviewProps> = ({
   return (
     <div className="card" style={{ border: '1px solid var(--accent-blue)' }}>
       <div className="card-header">
-        📋 编辑 Apply Plan 预览
+        编辑 Apply Plan 预览
         <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
           {plan.createdAt ? new Date(plan.createdAt).toLocaleString() : ''}
         </span>
@@ -86,7 +86,7 @@ const EditApplyPlanPreview: React.FC<EditApplyPlanPreviewProps> = ({
 
             <div style={{ padding: '8px 10px', fontSize: 12 }}>
               <div style={{ marginBottom: 6, color: 'var(--text-secondary)' }}>
-                📁 {step.target}
+                {step.target}
               </div>
               <div style={{ marginBottom: 4, color: 'var(--text-muted)' }}>
                 {step.description}
@@ -147,10 +147,10 @@ const EditApplyPlanPreview: React.FC<EditApplyPlanPreviewProps> = ({
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '8px 14px', borderTop: '1px solid var(--border-color)' }}>
         <button className="btn" onClick={onCancel} disabled={isApplying}>
-          ✕ 取消
+          取消
         </button>
         <button className="btn btn-primary" onClick={onConfirm} disabled={isApplying}>
-          {isApplying ? '⏳ 执行中...' : '✅ 确认执行'}
+          {isApplying ? '执行中...' : '确认执行'}
         </button>
       </div>
     </div>

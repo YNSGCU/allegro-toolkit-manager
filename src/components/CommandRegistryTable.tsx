@@ -299,19 +299,19 @@ const CommandRegistryTable: React.FC<CommandRegistryTableProps> = ({
                       {onBindHotkey && (
                         <button className="atm-btn-small btn" style={{ fontSize: 10, padding: '2px 6px' }}
                           onClick={() => onBindHotkey(cmd.name)} title="绑定快捷键">
-                          ⌨️
+                          绑定
                         </button>
                       )}
                       {onAddMenu && (
                         <button className="atm-btn-small btn" style={{ fontSize: 10, padding: '2px 6px' }}
                           onClick={() => onAddMenu(cmd.name)} title="添加菜单">
-                          📋
+                          菜单
                         </button>
                       )}
                       {onViewSkill && (
                         <button className="atm-btn-small btn" style={{ fontSize: 10, padding: '2px 6px' }}
                           onClick={() => onViewSkill(cmd.sourceSkillId)} title="查看来源">
-                          👁️
+                          查看
                         </button>
                       )}
                     </div>

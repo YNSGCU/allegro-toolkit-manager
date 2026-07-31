@@ -20,14 +20,14 @@ interface EnvSourceTagProps {
 }
 
 const ENV_ROLE_CONFIG: Record<string, { label: string; className: string; icon: string }> = {
-  user_env: { label: '用户 env', className: 'env-source-tag--user', icon: '📝' },
-  install_default_env: { label: '默认 env', className: 'env-source-tag--default', icon: '⚙️' },
-  site_env: { label: '站点 env', className: 'env-source-tag--site', icon: '🏢' },
-  company_env: { label: '公司 env', className: 'env-source-tag--company', icon: '🏛️' },
-  reference_env: { label: '参考 env', className: 'env-source-tag--reference', icon: '📄' },
+  user_env: { label: '用户 env', className: 'env-source-tag--user', icon: '' },
+  install_default_env: { label: '默认 env', className: 'env-source-tag--default', icon: '' },
+  site_env: { label: '站点 env', className: 'env-source-tag--site', icon: '' },
+  company_env: { label: '公司 env', className: 'env-source-tag--company', icon: '' },
+  reference_env: { label: '参考 env', className: 'env-source-tag--reference', icon: '' },
 };
 
-const DEFAULT_CONFIG = { label: '未知来源', className: 'env-source-tag--unknown', icon: '❓' };
+const DEFAULT_CONFIG = { label: '未知来源', className: 'env-source-tag--unknown', icon: '' };
 
 const EnvSourceTag: React.FC<EnvSourceTagProps> = ({
   envRole,

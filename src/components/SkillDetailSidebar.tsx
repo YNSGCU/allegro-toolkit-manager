@@ -140,7 +140,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
       case 'skill':
         return (
           <div key={node.name} className="usage-tree-node usage-tree-skill">
-            <span className="usage-tree-icon">📦</span>
+            <span className="usage-tree-icon">Skill</span>
             <span className="usage-tree-name">{node.name}</span>
             {node.children && node.children.length > 0 && (
               <div className="usage-tree-children">
@@ -152,11 +152,11 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
       case 'command':
         return (
           <div key={node.name} className="usage-tree-node usage-tree-command">
-            <span className="usage-tree-icon">⌨️</span>
+            <span className="usage-tree-icon">键位</span>
             <code className="usage-tree-name">{node.name}</code>
             {node.detail && <span className="usage-tree-detail">{node.detail}</span>}
             {node.conflictStatus === 'duplicate_command' && (
-              <span className="usage-tree-warning">⚠️ 冲突</span>
+              <span className="usage-tree-warning">冲突</span>
             )}
             {node.children && node.children.length > 0 && (
               <div className="usage-tree-children">
@@ -169,13 +169,13 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
         return (
           <div key={`${node.name}-${depth}`} className="usage-tree-node usage-tree-hotkey">
             <span className="usage-tree-icon">
-              {node.hasConflict ? '🔴' : node.isStale ? '💀' : '⌨️'}
+              {node.hasConflict ? '冲突' : node.isStale ? '失效' : '键位'}
             </span>
             <code className="usage-tree-key">{node.name}</code>
             <span className="usage-tree-arrow">→</span>
             <span className="usage-tree-detail">{node.detail}</span>
             {node.source && (
-              <span className="usage-tree-source" title={node.source}>📄</span>
+              <span className="usage-tree-source" title={node.source}>来源</span>
             )}
             {node.lineNumber && (
               <span className="usage-tree-line">L{node.lineNumber}</span>
@@ -183,12 +183,12 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
             <div className="usage-tree-actions">
               {onJumpToHotkey && (
                 <button className="btn btn-sm" onClick={() => onJumpToHotkey(node.name)} title="跳转" style={{ fontSize: 10, padding: '1px 5px' }}>
-                  🔗
+                  跳转
                 </button>
               )}
               {onEditHotkey && (
                 <button className="btn btn-sm" onClick={() => onEditHotkey(node.name)} title="编辑" style={{ fontSize: 10, padding: '1px 5px' }}>
-                  ✏️
+                  编辑
                 </button>
               )}
             </div>
@@ -197,7 +197,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
       case 'menu':
         return (
           <div key={`${node.name}-${depth}`} className="usage-tree-node usage-tree-menu">
-            <span className="usage-tree-icon">📋</span>
+            <span className="usage-tree-icon">菜单</span>
             <span className="usage-tree-name">{node.name}</span>
             <span className="usage-tree-detail">{node.detail}</span>
           </div>
@@ -205,7 +205,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
       case 'empty':
         return (
           <div key="empty" className="usage-tree-node usage-tree-empty">
-            <span className="usage-tree-icon">💤</span>
+            <span className="usage-tree-icon">无</span>
             <span className="usage-tree-name" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
               {node.name}
             </span>
@@ -222,7 +222,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
         <div className="skill-detail-sidebar-title">
           <h3>{skill.name}</h3>
         </div>
-        <button className="btn btn-sm" onClick={onClose}>✕</button>
+        <button className="btn btn-sm" onClick={onClose}>关闭</button>
       </div>
 
       <div className="skill-detail-tabs" role="tablist" aria-label="Skill 详情分类">
@@ -257,11 +257,11 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
               background: skill.enabled ? 'rgba(158, 206, 106, 0.15)' : 'rgba(108, 108, 138, 0.15)',
               color: skill.enabled ? 'var(--accent-green)' : 'var(--text-muted)',
             }}>
-              {skill.enabled ? '✅ 已启用' : '⛔ 未启用'}
+              {skill.enabled ? '已启用' : '未启用'}
             </span>
             {skill.readonly && (
               <span className="skill-status-tag" style={{ background: 'rgba(187, 154, 247, 0.15)', color: 'var(--accent-purple)' }}>
-                🔒 只读
+                只读
               </span>
             )}
           </div>
@@ -309,13 +309,13 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
               <tr><td className="skill-detail-label">路径</td><td className="skill-detail-value path-display" title={skill.path}>{skill.path}</td></tr>
               <tr><td className="skill-detail-label">来源</td><td className="skill-detail-value">{getSourceTypeLabel(skill.sourceType)}</td></tr>
               <tr><td className="skill-detail-label">层级</td><td className="skill-detail-value">{skill.tier === 'company' ? '公司' : skill.tier === 'user' ? '用户' : 'ATM'}</td></tr>
-              <tr><td className="skill-detail-label">可写</td><td className="skill-detail-value">{skill.writable ? '✅ 是' : '❌ 否'}</td></tr>
+              <tr><td className="skill-detail-label">可写</td><td className="skill-detail-value">{skill.writable ? '是' : '否'}</td></tr>
               <tr><td className="skill-detail-label">文件大小</td><td className="skill-detail-value">{fileSizeStr}</td></tr>
               <tr><td className="skill-detail-label">修改时间</td><td className="skill-detail-value">{lastModifiedStr}</td></tr>
               <tr><td className="skill-detail-label">解析状态</td><td className="skill-detail-value">
-                {skill.parseStatus === 'ok' ? <span style={{ color: 'var(--accent-green)' }}>✅ 解析成功</span>
-                  : skill.parseStatus === 'warning' ? <span style={{ color: 'var(--accent-yellow)' }}>⚠️ 部分解析</span>
-                  : <span style={{ color: 'var(--accent-red)' }}>❌ 解析失败</span>}
+                {skill.parseStatus === 'ok' ? <span style={{ color: 'var(--accent-green)' }}>解析成功</span>
+                  : skill.parseStatus === 'warning' ? <span style={{ color: 'var(--accent-yellow)' }}>部分解析</span>
+                  : <span style={{ color: 'var(--accent-red)' }}>解析失败</span>}
               </td></tr>
               {skill.parseError && <tr><td className="skill-detail-label">错误信息</td><td className="skill-detail-value" style={{ color: 'var(--accent-red)' }}>{skill.parseError}</td></tr>}
               {skill.hasPackageJson && <tr><td className="skill-detail-label">依赖</td><td className="skill-detail-value">{skill.dependencies.length > 0 ? skill.dependencies.join(', ') : '无依赖'}</td></tr>}
@@ -328,8 +328,8 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
           <div className="skill-detail-section-title">
             说明
             <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-              {onEditNote && <button className="btn btn-sm" onClick={() => onEditNote(skill)} title="编辑备注" style={{ fontSize: 11 }}>📝 编辑备注</button>}
-              {onReAnalyze && <button className="btn btn-sm" onClick={() => onReAnalyze(skill)} title="重新自动分析" style={{ fontSize: 11 }}>🔄 重新分析</button>}
+              {onEditNote && <button className="btn btn-sm" onClick={() => onEditNote(skill)} title="编辑备注" style={{ fontSize: 11 }}>编辑备注</button>}
+              {onReAnalyze && <button className="btn btn-sm" onClick={() => onReAnalyze(skill)} title="重新自动分析" style={{ fontSize: 11 }}>重新分析</button>}
             </div>
           </div>
           {!meta ? (
@@ -362,7 +362,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                   <span className="skill-detail-label" style={{ minWidth: 60 }}>自动简介</span>
                   <span style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     {meta.autoSummary}
-                    {onCopySummary && <button className="btn btn-sm" style={{ marginLeft: 6, fontSize: 10 }} onClick={() => onCopySummary(meta.autoSummary || '')} title="复制说明">📋</button>}
+                    {onCopySummary && <button className="btn btn-sm" style={{ marginLeft: 6, fontSize: 10 }} onClick={() => onCopySummary(meta.autoSummary || '')} title="复制说明">复制</button>}
                   </span>
                 </div>
               )}
@@ -429,16 +429,16 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                         <span className="skill-detail-ref-type" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{ref.type}</span>
                         <span className="skill-detail-ref-source" style={{ fontSize: 10, color: 'var(--text-muted)' }}>({ref.source}, 行 {ref.lineNumber})</span>
                         <div className="skill-detail-ref-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 3 }}>
-                          {onJumpToHotkey && <button className="btn btn-sm" onClick={() => onJumpToHotkey(ref.key)} title="跳转" style={{ fontSize: 10, padding: '2px 6px' }}>🔗</button>}
-                          {onEditHotkey && <button className="btn btn-sm" onClick={() => onEditHotkey(ref.key)} title="编辑" style={{ fontSize: 10, padding: '2px 6px' }}>✏️</button>}
-                          {onDeleteHotkeyBinding && <button className="btn btn-sm" onClick={() => onDeleteHotkeyBinding(ref)} title="删除" style={{ fontSize: 10, padding: '2px 6px', color: 'var(--accent-red)' }}>🗑️</button>}
-                          {onViewEnvRawLine && <button className="btn btn-sm" onClick={() => onViewEnvRawLine(ref.source, ref.lineNumber)} title="查看 env 原始行" style={{ fontSize: 10, padding: '2px 6px' }}>📄</button>}
+                          {onJumpToHotkey && <button className="btn btn-sm" onClick={() => onJumpToHotkey(ref.key)} title="跳转" style={{ fontSize: 10, padding: '2px 6px' }}>跳转</button>}
+                          {onEditHotkey && <button className="btn btn-sm" onClick={() => onEditHotkey(ref.key)} title="编辑" style={{ fontSize: 10, padding: '2px 6px' }}>编辑</button>}
+                          {onDeleteHotkeyBinding && <button className="btn btn-sm" onClick={() => onDeleteHotkeyBinding(ref)} title="删除" style={{ fontSize: 10, padding: '2px 6px', color: 'var(--accent-red)' }}>删除</button>}
+                          {onViewEnvRawLine && <button className="btn btn-sm" onClick={() => onViewEnvRawLine(ref.source, ref.lineNumber)} title="查看 env 原始行" style={{ fontSize: 10, padding: '2px 6px' }}>原文</button>}
                         </div>
                       </div>
                     ))}
                     {skill.menuRefs.map((ref, idx) => (
                       <div key={`menu-${idx}`} className="skill-detail-ref-row" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0' }}>
-                        <span style={{ fontSize: 11 }}>📋</span>
+                        <span style={{ fontSize: 11 }}>菜单</span>
                         <span className="skill-detail-menu-path" style={{ fontSize: 12 }}>{ref.path}</span>
                         <code className="skill-detail-ref-cmd" style={{ fontSize: 11 }}>{ref.command}</code>
                       </div>
@@ -459,7 +459,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
             {configFiles && configFiles.length > 0 ? <div className="config-files-list">
               {configFiles.map((cf, idx) => (
                 <div key={idx} className="config-file-row">
-                  <span className="config-file-icon">📄</span>
+                  <span className="config-file-icon">文件</span>
                   <span className="config-file-name">{cf.fileName}</span>
                   <span className="config-file-status" style={{
                     color: cf.exists ? 'var(--accent-green)' : 'var(--text-muted)',
@@ -529,13 +529,13 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                       <span className="badge badge-error" style={{ fontSize: 10 }}>冲突</span>
                     )}
                     {cmd.hotkeys.length > 0 && (
-                      <span className="skill-detail-hotkey-hint">⌨️ {cmd.hotkeys.join(', ')}</span>
+                      <span className="skill-detail-hotkey-hint">键位：{cmd.hotkeys.join(', ')}</span>
                     )}
                   </div>
                   <div className="skill-detail-command-actions">
-                    {onCopyCommand && <button className="btn btn-sm" onClick={() => onCopyCommand(cmd.name)} title="复制命令名">📋</button>}
-                    {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey(cmd.name)} title="绑定快捷键">⌨️</button>}
-                    {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu(cmd.name)} title="添加菜单入口">📋</button>}
+                    {onCopyCommand && <button className="btn btn-sm" onClick={() => onCopyCommand(cmd.name)} title="复制命令名">复制</button>}
+                    {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey(cmd.name)} title="绑定快捷键">绑定</button>}
+                    {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu(cmd.name)} title="添加菜单入口">菜单</button>}
                   </div>
                 </div>
               ))}
@@ -583,9 +583,9 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {refStats && (
                 <div style={{ display: 'flex', gap: 12, fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--accent-red)' }}>❌ {refStats.errors}</span>
-                  <span style={{ color: 'var(--accent-yellow)' }}>⚠️ {refStats.warnings}</span>
-                  <span style={{ color: 'var(--accent-cyan)' }}>ℹ️ {refStats.infos}</span>
+                  <span style={{ color: 'var(--accent-red)' }}>错误 {refStats.errors}</span>
+                  <span style={{ color: 'var(--accent-yellow)' }}>警告 {refStats.warnings}</span>
+                  <span style={{ color: 'var(--accent-cyan)' }}>信息 {refStats.infos}</span>
                 </div>
               )}
               {refIssues.slice(0, 5).map((issue) => (
@@ -596,7 +596,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                   borderRadius: 'var(--radius-sm)', fontSize: 12, opacity: issue.ignored ? 0.4 : 1,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span>{issue.severity === 'error' ? '❌' : issue.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                    <span>{issue.severity === 'error' ? '错误' : issue.severity === 'warning' ? '警告' : '信息'}</span>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{issue.title}</span>
                   </div>
                   {issue.description && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{issue.description}</div>}
@@ -620,16 +620,16 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
           <div className="skill-detail-actions">
             {!isCompany && (
               <button className="btn btn-primary btn-sm" onClick={() => onToggle(skill.path, !skill.enabled)}>
-                {skill.enabled ? '⛔ 禁用' : '✅ 启用'}
+                {skill.enabled ? '禁用' : '启用'}
               </button>
             )}
-            {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey('')}>⌨️ 绑定快捷键</button>}
-            {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu('')}>📋 添加菜单入口</button>}
-            {onAddToLoader && !skill.enabled && <button className="btn btn-sm" onClick={() => onAddToLoader(skill.path)}>📄 加入 Loader</button>}
-            {onOpenFileLocation && <button className="btn btn-sm" onClick={() => onOpenFileLocation(skill.path)}>📁 打开文件位置</button>}
-            {onReParse && <button className="btn btn-sm" onClick={() => onReParse(skill.path)}>🔄 重新解析</button>}
-            {onGenerateReadme && <button className="btn btn-sm" onClick={() => onGenerateReadme(skill)}>📝 生成说明</button>}
-            {onExportPackage && <button className="btn btn-sm" onClick={() => onExportPackage(skill)}>📦 导出包</button>}
+            {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey('')}>绑定快捷键</button>}
+            {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu('')}>添加菜单入口</button>}
+            {onAddToLoader && !skill.enabled && <button className="btn btn-sm" onClick={() => onAddToLoader(skill.path)}>加入 Loader</button>}
+            {onOpenFileLocation && <button className="btn btn-sm" onClick={() => onOpenFileLocation(skill.path)}>打开文件位置</button>}
+            {onReParse && <button className="btn btn-sm" onClick={() => onReParse(skill.path)}>重新解析</button>}
+            {onGenerateReadme && <button className="btn btn-sm" onClick={() => onGenerateReadme(skill)}>生成说明</button>}
+            {onExportPackage && <button className="btn btn-sm" onClick={() => onExportPackage(skill)}>导出包</button>}
           </div>
           {onDelete && !isCompany && (
             <div className="skill-danger-zone">

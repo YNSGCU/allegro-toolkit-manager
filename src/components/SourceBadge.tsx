@@ -54,7 +54,7 @@ const SourceBadge: React.FC<SourceBadgeProps> = ({
       }}
       title={label + (readOnly ? '（只读）' : '')}
     >
-      {readOnly && <span style={{ opacity: 0.6 }}>🔒</span>}
+      {readOnly && <span style={{ opacity: 0.6 }}>只读</span>}
       {badge}
       {showLabel && <span style={{ marginLeft: 2 }}>{label}</span>}
     </span>

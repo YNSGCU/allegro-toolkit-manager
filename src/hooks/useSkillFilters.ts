@@ -240,17 +240,17 @@ export function useSkillFilters({
 
     const company = visibleSkills.filter((s) => s.sourceType === 'company_skill');
     if (company.length > 0) {
-      groups.push({ label: '公司 Skill', icon: '🏢', skills: company });
+      groups.push({ label: '公司 Skill', icon: '', skills: company });
     }
 
     const user = visibleSkills.filter((s) => s.sourceType === 'user_skill');
     if (user.length > 0) {
-      groups.push({ label: '用户 Skill', icon: '👤', skills: user });
+      groups.push({ label: '用户 Skill', icon: '', skills: user });
     }
 
     const atm = visibleSkills.filter((s) => s.sourceType === 'atm_managed_skill');
     if (atm.length > 0) {
-      groups.push({ label: 'ATM 托管', icon: '🤖', skills: atm });
+      groups.push({ label: 'ATM 托管', icon: '', skills: atm });
     }
 
     return groups;

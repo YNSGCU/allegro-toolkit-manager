@@ -74,7 +74,7 @@ describe('hotkey workspace routing', () => {
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '新建' })).toBeInTheDocument();
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '复制' })).toBeInTheDocument();
     expect(within(profileBar as HTMLElement).getByRole('button', { name: '更多' })).toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '当前已应用' })).toBeInTheDocument();
+    expect(within(profileBar as HTMLElement).getByRole('button', { name: '应用此方案' })).toBeEnabled();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '重命名' })).not.toBeInTheDocument();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '删除' })).not.toBeInTheDocument();
     expect(within(profileBar as HTMLElement).queryByRole('button', { name: '导入' })).not.toBeInTheDocument();

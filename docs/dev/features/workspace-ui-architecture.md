@@ -13,7 +13,7 @@
 - `foundations/shell.css`：216px 侧栏、主内容区和导航状态。
 - `foundations/controls.css`：按钮、输入框、方案栏和表格基线。
 - `foundations/workspace.css`：页头、状态条、页面状态和各工作区布局。
-- `foundations/dialogs.css`：统一 Apply Plan 对话框。
+- `foundations/dialogs.css`：统一 Apply Plan、确认框、Toast 和菜单预览对话框。
 
 公共组件：
 
@@ -34,7 +34,15 @@
 5. 主工作区
 6. `ApplyPlanDialog` 与结果反馈
 
-快捷键页使用固定密度和紧凑页签，不再按窗口尺寸缩放整页。菜单页使用受控高度的树/属性分栏。概览和环境页显示真实运行数据，不再渲染重复的营销式入口卡片。
+快捷键页使用固定密度和紧凑页签，不再按窗口尺寸缩放键盘或文字；空间不足时由键盘容器内部滚动。菜单页使用剩余高度驱动的树/属性分栏。概览和环境页显示真实运行数据，不再渲染重复的营销式入口卡片。
+
+可读性约束：
+
+- 可见正文、辅助文案和侧栏分组标签不小于 12px。
+- 页面标题统一为 26px，说明文字为 14px，普通控件高度至少 34px。
+- 方案栏只显示一处应用状态；内部方案 ID 仅保留在控件提示中。
+- 顶部悬浮提示优先向下展开，避免遮住方案栏和工具栏。
+- Renderer 异常通过 `formatUserError()` 转为中文用户提示，不直接显示 `window.atm`、IPC 方法名或 JavaScript 异常类型。
 
 ## 写入安全边界
 
@@ -50,6 +58,6 @@ UI 重置不授权任何直接写文件行为。Hotkey、Skill 和 Menu 的写�
 - `npx.cmd tsc -p tsconfig.electron.json --noEmit`
 - `npm test`
 - `npm run build:renderer`
-- 1220×820、1360×920、1600×1000 三档浏览器检查，无横向溢出
+- 1220×820、1360×920、1600×856 三档浏览器检查，无页面级横向溢出且可见文字不小于 12px
 
 生产构建当前仍会提示主 JS chunk 大于 500kB；这不阻断本次 UI 重置，后续可通过路由级动态导入处理。

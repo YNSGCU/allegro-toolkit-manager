@@ -69,8 +69,8 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
         <div className="env-source-dialog__status">
           {src.exists ? (
             <>
-              {src.readable ? '📖' : '🚫'}
-              {src.writable ? '✏️' : '🔒'}
+              {src.readable ? '可读' : '不可读'}
+              {src.writable ? '可写' : '只读'}
             </>
           ) : (
             <span style={{ color: 'var(--accent-red)' }}>缺失</span>
@@ -98,7 +98,7 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
               onClick={() => onSetActive(src.id)}
               title="设为当前编辑 env"
             >
-              ✅ 设为活动
+              设为活动
             </button>
           )}
 
@@ -110,7 +110,7 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
               onClick={() => onRemoveReference(src.id)}
               title="移除参考"
             >
-              🗑️ 移除
+              移除
             </button>
           )}
 
@@ -140,8 +140,8 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
         style={{ maxWidth: 800, maxHeight: '80vh', overflowY: 'auto' }}
       >
         <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: 15 }}>📂 管理 Env 来源</h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <h3 style={{ margin: 0, fontSize: 15 }}>管理 Env 来源</h3>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
 
         <div className="modal-body" style={{ padding: '12px 0' }}>
@@ -204,7 +204,7 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
         </div>
 
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn" onClick={onRefresh}>🔄 重新扫描</button>
+          <button className="btn" onClick={onRefresh}>重新扫描</button>
           <button className="btn btn-primary" onClick={onClose}>关闭</button>
         </div>
       </div>

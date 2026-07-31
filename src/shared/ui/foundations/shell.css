@@ -67,7 +67,7 @@
 .atm-brand-subtitle {
   margin-top: 3px;
   color: var(--ui-text-muted);
-  font-size: 10px;
+  font-size: var(--ui-font-size-xs);
   white-space: nowrap;
 }
 
@@ -92,7 +92,7 @@
 .atm-nav-group-label {
   padding: 0 10px 4px;
   color: var(--ui-text-muted);
-  font-size: 10px;
+  font-size: var(--ui-font-size-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -152,7 +152,7 @@
   padding: 12px 9px 0;
   border-top: 1px solid var(--ui-border);
   color: var(--ui-text-muted);
-  font-size: 10px;
+  font-size: var(--ui-font-size-xs);
 }
 
 .atm-sidebar-footer svg {

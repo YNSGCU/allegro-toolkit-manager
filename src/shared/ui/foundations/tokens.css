@@ -10,7 +10,7 @@
 
   --ui-text: #17202a;
   --ui-text-secondary: #55616d;
-  --ui-text-muted: #707c88;
+  --ui-text-muted: #65717d;
   --ui-text-inverse: #ffffff;
 
   --ui-border: #dce2e7;
@@ -29,12 +29,12 @@
 
   --ui-font-sans: 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
   --ui-font-mono: 'Cascadia Mono', 'Consolas', monospace;
-  --ui-font-size-xs: 11px;
-  --ui-font-size-sm: 12px;
-  --ui-font-size-md: 13px;
-  --ui-font-size-lg: 15px;
-  --ui-font-size-xl: 18px;
-  --ui-font-size-2xl: 24px;
+  --ui-font-size-xs: 12px;
+  --ui-font-size-sm: 13px;
+  --ui-font-size-md: 14px;
+  --ui-font-size-lg: 16px;
+  --ui-font-size-xl: 20px;
+  --ui-font-size-2xl: 26px;
 
   --ui-space-1: 4px;
   --ui-space-2: 8px;
@@ -51,8 +51,8 @@
   --ui-transition: 160ms ease;
 
   --ui-sidebar-width: 216px;
-  --ui-page-padding-x: 28px;
-  --ui-page-padding-y: 24px;
+  --ui-page-padding-x: 24px;
+  --ui-page-padding-y: 20px;
 
   /* 兼容旧组件；迁移完成后移除。 */
   --bg-primary: var(--ui-canvas);

@@ -1,12 +1,7 @@
-/**
- * ATM - 菜单树组件（V5.5）
- *
- * 递归显示菜单层级，支持选中、展开/折叠、操作按钮。
- * 每项显示：label, type 图标, enabled 状态, source 徽章, issues 指示器
- */
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { AlertTriangle, ChevronDown, ChevronRight, FileText, Folder, Minus, TerminalSquare } from 'lucide-react';
 import type { MenuItemConfig } from '../types/menu';
-import { getMenuSourceBadge, isMenuSourceReadOnly, MENU_SOURCE_LABELS } from '../types/menu';
+import { getMenuSourceBadge, isMenuSourceReadOnly } from '../types/menu';
 
 interface MenuTreeProps {
   items: MenuItemConfig[];
@@ -17,35 +12,21 @@ interface MenuTreeProps {
   onDuplicate: (itemId: string) => void;
   onMoveUp: (itemId: string) => void;
   onMoveDown: (itemId: string) => void;
-  /** 搜索过滤文本 */
   filterText?: string;
 }
 
-const typeIcons: Record<string, string> = {
-  menu: '📁',
-  command: '⚡',
-  separator: '➖',
-};
+const TYPE_ICONS = {
+  menu: Folder,
+  command: TerminalSquare,
+  separator: Minus,
+} as const;
 
-const issueCountColors: Record<string, string> = {
-  error: '#f87171',
-  warning: '#fbbf24',
-  info: '#60a5fa',
-};
-
-/** 单个菜单树节点 */
-const MenuTreeItem: React.FC<{
+interface MenuTreeItemProps extends Omit<MenuTreeProps, 'items'> {
   item: MenuItemConfig;
   depth: number;
-  selectedId: string | null;
-  onSelect: (item: MenuItemConfig) => void;
-  onAddChild: (parentId: string) => void;
-  onDelete: (itemId: string) => void;
-  onDuplicate: (itemId: string) => void;
-  onMoveUp: (itemId: string) => void;
-  onMoveDown: (itemId: string) => void;
-  filterText?: string;
-}> = React.memo(({
+}
+
+const MenuTreeItem: React.FC<MenuTreeItemProps> = React.memo(({
   item,
   depth,
   selectedId,
@@ -59,117 +40,58 @@ const MenuTreeItem: React.FC<{
 }) => {
   const [expanded, setExpanded] = useState(true);
   const isSelected = selectedId === item.id;
-  const hasChildren = item.children && item.children.length > 0;
-  const isReadOnly = isMenuSourceReadOnly(item.menuSource);
-  const sourceBadge = getMenuSourceBadge(item.menuSource);
-
-  // 计算问题数量
-  const errorCount = item.issues?.filter(i => i.severity === 'error').length || 0;
-  const warningCount = item.issues?.filter(i => i.severity === 'warning').length || 0;
+  const hasChildren = Boolean(item.children?.length);
+  const errorCount = item.issues?.filter((issue) => issue.severity === 'error').length || 0;
+  const warningCount = item.issues?.filter((issue) => issue.severity === 'warning').length || 0;
   const totalIssues = errorCount + warningCount;
+  const query = filterText?.trim().toLowerCase();
+  const matches = !query || item.label.toLowerCase().includes(query);
+  const childMatches = Boolean(query && item.children?.some((child) => child.label.toLowerCase().includes(query)));
+  const TypeIcon = TYPE_ICONS[item.type] || FileText;
 
-  // 是否匹配搜索
-  const matchesFilter = !filterText || item.label.toLowerCase().includes(filterText.toLowerCase());
-  const childrenMatchFilter = hasChildren && item.children!.some(c => {
-    if (!filterText) return false;
-    return c.label.toLowerCase().includes(filterText.toLowerCase());
-  });
-
-  if (filterText && !matchesFilter && !childrenMatchFilter) {
-    return null;
-  }
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onSelect(item);
-  };
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpanded(!expanded);
-  };
+  if (!matches && !childMatches) return null;
 
   return (
-    <div style={{ userSelect: 'none' }}>
-      <div
-        onClick={handleClick}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '4px 8px',
-          paddingLeft: `${12 + depth * 20}px`,
-          cursor: 'pointer',
-          borderRadius: '4px',
-          background: isSelected ? 'var(--accent-blue)' : 'transparent',
-          color: isSelected ? '#fff' : 'var(--text-primary)',
-          opacity: item.enabled ? 1 : 0.5,
-          fontSize: '13px',
-          transition: 'background 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)';
-        }}
-        onMouseLeave={(e) => {
-          if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent';
-        }}
+    <div className="menu-tree-branch">
+      <button
+        type="button"
+        className={`menu-tree-row${isSelected ? ' is-selected' : ''}${item.enabled ? '' : ' is-disabled'}`}
+        style={{ '--menu-depth': depth } as React.CSSProperties}
+        onClick={() => onSelect(item)}
       >
-        {/* 展开/折叠 */}
         <span
-          onClick={hasChildren ? handleToggle : undefined}
-          style={{
-            width: '16px',
-            textAlign: 'center',
-            cursor: hasChildren ? 'pointer' : 'default',
-            fontSize: '10px',
-            color: isSelected ? '#fff' : 'var(--text-secondary)',
-            visibility: hasChildren ? 'visible' : 'hidden',
+          className={`menu-tree-toggle${hasChildren ? '' : ' is-hidden'}`}
+          role="button"
+          tabIndex={hasChildren ? 0 : -1}
+          aria-label={expanded ? '折叠子菜单' : '展开子菜单'}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (hasChildren) setExpanded((value) => !value);
+          }}
+          onKeyDown={(event) => {
+            if (hasChildren && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              event.stopPropagation();
+              setExpanded((value) => !value);
+            }
           }}
         >
-          {expanded ? '▼' : '▶'}
+          {expanded ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
         </span>
-
-        {/* 类型图标 */}
-        <span style={{ fontSize: '14px' }}>{typeIcons[item.type] || '📄'}</span>
-
-        {/* 标签 */}
-        <span style={{
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          fontWeight: isSelected ? 600 : 400,
-        }}>
-          {item.label || '(未命名)'}
+        <TypeIcon className="menu-tree-type-icon" aria-hidden="true" />
+        <span className="menu-tree-label">{item.label || '（未命名）'}</span>
+        <span className={`menu-tree-source${isMenuSourceReadOnly(item.menuSource) ? ' is-readonly' : ''}`}>
+          {getMenuSourceBadge(item.menuSource)}
         </span>
-
-        {/* 来源徽章 */}
-        <span style={{
-          fontSize: '10px',
-          padding: '1px 4px',
-          borderRadius: '3px',
-          background: 'var(--bg-surface)',
-          color: isSelected ? '#fff' : 'var(--text-secondary)',
-          border: `1px solid ${isSelected ? 'rgba(255,255,255,0.3)' : 'var(--border-color)'}`,
-          whiteSpace: 'nowrap',
-        }}>
-          {sourceBadge}
-        </span>
-
-        {/* 问题指示器 */}
-        {totalIssues > 0 && (
-          <span style={{
-            fontSize: '10px',
-            color: errorCount > 0 ? '#f87171' : '#fbbf24',
-            fontWeight: 600,
-          }}>
-            {errorCount > 0 ? `✕${errorCount}` : `⚠${warningCount}`}
+        {totalIssues > 0 ? (
+          <span className={`menu-tree-issue${errorCount > 0 ? ' is-error' : ''}`} title={`${totalIssues} 个问题`}>
+            <AlertTriangle aria-hidden="true" />
+            {errorCount > 0 ? errorCount : warningCount}
           </span>
-        )}
-      </div>
+        ) : null}
+      </button>
 
-      {/* 子菜单 */}
-      {hasChildren && expanded && (
+      {hasChildren && expanded ? (
         <div>
           {item.children!.map((child) => (
             <MenuTreeItem
@@ -187,55 +109,26 @@ const MenuTreeItem: React.FC<{
             />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 });
 
-/** 主菜单树组件 */
-const MenuTree: React.FC<MenuTreeProps> = ({
-  items,
-  selectedId,
-  onSelect,
-  onAddChild,
-  onDelete,
-  onDuplicate,
-  onMoveUp,
-  onMoveDown,
-  filterText,
-}) => {
-  if (items.length === 0) {
+const MenuTree: React.FC<MenuTreeProps> = (props) => {
+  if (props.items.length === 0) {
     return (
-      <div style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-      }}>
-        <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
-        <div>暂无菜单项</div>
-        <div style={{ fontSize: '12px', marginTop: '8px' }}>
-          点击上方工具栏 "新建菜单" 开始创建
-        </div>
+      <div className="menu-tree-empty">
+        <FileText aria-hidden="true" />
+        <strong>暂无菜单项</strong>
+        <span>使用上方工具栏创建菜单或命令项。</span>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '4px 0' }}>
-      {items.map((item) => (
-        <MenuTreeItem
-          key={item.id}
-          item={item}
-          depth={0}
-          selectedId={selectedId}
-          onSelect={onSelect}
-          onAddChild={onAddChild}
-          onDelete={onDelete}
-          onDuplicate={onDuplicate}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          filterText={filterText}
-        />
+    <div className="menu-tree-list">
+      {props.items.map((item) => (
+        <MenuTreeItem key={item.id} {...props} item={item} depth={0} />
       ))}
     </div>
   );

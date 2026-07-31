@@ -12,17 +12,17 @@ const ConflictList: React.FC<ConflictListProps> = ({ conflicts }) => {
   if (conflicts.length === 0) {
     return (
       <div className="message message-info">
-        ✓ 未检测到快捷键冲突
+        未检测到快捷键冲突
       </div>
     );
   }
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
-      case 'error': return '🔴';
-      case 'warning': return '🟡';
-      case 'info': return '🔵';
-      default: return '⚪';
+      case 'error': return '错误';
+      case 'warning': return '警告';
+      case 'info': return '信息';
+      default: return '普通';
     }
   };
 

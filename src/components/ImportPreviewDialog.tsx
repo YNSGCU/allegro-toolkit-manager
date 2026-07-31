@@ -61,9 +61,9 @@ const ImportPreviewDialog: React.FC<ImportPreviewDialogProps> = ({
         {/* ── Header ── */}
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: 15 }}>
-            📥 导入快捷键方案
+            导入快捷键方案
           </h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
 
         {/* ── Body ── */}
@@ -98,7 +98,7 @@ const ImportPreviewDialog: React.FC<ImportPreviewDialogProps> = ({
             {/* 同名方案警告 */}
             {data.sameNameProfiles.length > 0 && (
               <div style={{ padding: '8px 12px', marginBottom: 8, background: 'var(--bg-warning-bg, #fff3cd)', borderRadius: 'var(--radius)', color: 'var(--text-warning, #856404)' }}>
-                ⚠️ 已存在同名方案：
+                已存在同名方案：
                 {data.sameNameProfiles.map((name) => (
                   <code key={name} style={{ margin: '0 4px' }}>{name}</code>
                 ))}
@@ -109,14 +109,14 @@ const ImportPreviewDialog: React.FC<ImportPreviewDialogProps> = ({
             {/* env 冲突警告 */}
             {data.envConflictCount > 0 && (
               <div style={{ padding: '8px 12px', marginBottom: 8, background: 'var(--bg-warning-bg, #fff3cd)', borderRadius: 'var(--radius)', color: 'var(--text-warning, #856404)' }}>
-                ⚠️ 与当前 env 中的 {data.envConflictCount} 个快捷键按键冲突。
+                与当前 env 中的 {data.envConflictCount} 个快捷键按键冲突。
               </div>
             )}
 
             {/* 覆盖保留键警告 */}
             {data.reservedOverrideCount > 0 && (
               <div style={{ padding: '8px 12px', marginBottom: 8, background: 'var(--bg-warning-bg, #fff3cd)', borderRadius: 'var(--radius)', color: 'var(--text-warning, #856404)' }}>
-                ⚠️ {data.reservedOverrideCount} 个快捷键会覆盖默认/保留键。
+                {data.reservedOverrideCount} 个快捷键会覆盖默认/保留键。
               </div>
             )}
 
@@ -125,7 +125,7 @@ const ImportPreviewDialog: React.FC<ImportPreviewDialogProps> = ({
              data.envConflictCount === 0 &&
              data.reservedOverrideCount === 0 && (
               <div style={{ padding: '8px 12px', background: 'var(--bg-info-bg, #d1ecf1)', borderRadius: 'var(--radius)', color: 'var(--text-info, #0c5460)' }}>
-                ✅ 方案检查通过，无冲突。
+                方案检查通过，无冲突。
               </div>
             )}
           </div>
@@ -140,10 +140,10 @@ const ImportPreviewDialog: React.FC<ImportPreviewDialogProps> = ({
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
           <button className="btn" onClick={onClose}>取消</button>
           <button className="btn" onClick={() => onImportAsNew(data)}>
-            📋 导入为新方案
+            导入为新方案
           </button>
           <button className="btn btn-primary" onClick={() => onImportAndPreview(data)}>
-            📥 导入并预览应用
+            导入并预览应用
           </button>
         </div>
       </div>

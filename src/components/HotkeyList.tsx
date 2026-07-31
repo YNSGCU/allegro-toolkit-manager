@@ -105,7 +105,7 @@ const HotkeyList: React.FC<HotkeyListProps> = ({
                 `加载: ${loadCfg?.label || '未知'}\n` +
                 (binding.lineNumber ? `行号: ${binding.lineNumber}\n` : '\n') +
                 (binding.warnWhenOverride && binding.defaultOccupier
-                  ? `⚠️ 覆盖风险：默认占用 ${binding.key} → ${binding.defaultOccupier.command}`
+                  ? `覆盖风险：默认占用 ${binding.key} → ${binding.defaultOccupier.command}`
                   : '')
               }
             >
@@ -150,7 +150,7 @@ const HotkeyList: React.FC<HotkeyListProps> = ({
                 {getStatusBadge(binding.status)}
                 {binding.warnWhenOverride && binding.defaultOccupier && (
                   <div className="overlay-warning" style={{ fontSize: 10, color: 'var(--accent-yellow)', marginTop: 2, whiteSpace: 'nowrap' }}>
-                    ⚠️ 覆盖风险
+                    覆盖风险
                   </div>
                 )}
               </td>
@@ -161,14 +161,14 @@ const HotkeyList: React.FC<HotkeyListProps> = ({
                     className="btn btn-sm"
                     onClick={(e) => { e.stopPropagation(); onEdit?.(binding); }}
                     title="编辑"
-                  >✏️</button>
+                  >编辑</button>
                   {showAdopt && (
                     <button
                       className="btn btn-sm"
                       onClick={(e) => { e.stopPropagation(); onAdopt?.(binding); }}
                       title="接管到当前方案"
                       style={{ color: 'var(--accent-blue)' }}
-                    >📋</button>
+                    >接管</button>
                   )}
                   {!binding.isSourceOverridden && (
                     <button
@@ -176,7 +176,7 @@ const HotkeyList: React.FC<HotkeyListProps> = ({
                       onClick={(e) => { e.stopPropagation(); onOverrideSource?.(binding); }}
                       title="修正命令来源"
                       style={{ color: 'var(--accent-yellow)' }}
-                    >🔧</button>
+                    >修正</button>
                   )}
                 </div>
               </td>
@@ -187,7 +187,7 @@ const HotkeyList: React.FC<HotkeyListProps> = ({
                   <span style={{ fontWeight: 600 }}>我的绑定：</span>{binding.command}
                   &nbsp;&nbsp;|&nbsp;&nbsp;
                   <span style={{ fontWeight: 600 }}>默认占用：</span>{binding.defaultOccupier.command}
-                  &nbsp;&nbsp;|&nbsp;&nbsp;⚠️ 可能覆盖软件默认功能
+                  &nbsp;&nbsp;|&nbsp;&nbsp;可能覆盖软件默认功能
                 </td>
               </tr>
             )}

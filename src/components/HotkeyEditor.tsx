@@ -72,7 +72,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
     if (occupiedEnvBinding) {
       impacts.push({
         type: 'warning',
-        message: `⚠️ 新按键 "${newKey}" 已被 "${occupiedEnvBinding.command}" 占用（env 中）`,
+        message: `新按键“${newKey}”已被“${occupiedEnvBinding.command}”占用（env 中）`,
       });
       riskLevel = 'warning';
     }
@@ -84,7 +84,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
     if (occupiedProfileBinding) {
       impacts.push({
         type: 'warning',
-        message: `⚠️ 新按键 "${newKey}" 在当前方案中被 "${occupiedProfileBinding.command}" 占用`,
+        message: `新按键“${newKey}”在当前方案中被“${occupiedProfileBinding.command}”占用`,
       });
       riskLevel = 'warning';
     }
@@ -97,13 +97,13 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
       if (reservedMatch.warnWhenOverride) {
         impacts.push({
           type: 'warning',
-          message: `⚠️ "${newKey}" 是 Allegro 默认占用键 (${reservedMatch.defaultOccupier?.command || reservedMatch.command})，绑定后可能不生效`,
+          message: `“${newKey}”是 Allegro 默认占用键（${reservedMatch.defaultOccupier?.command || reservedMatch.command}），绑定后可能不生效`,
         });
         riskLevel = 'warning';
       } else {
         impacts.push({
           type: 'info',
-          message: `ℹ️ "${newKey}" 在保留键列表中 (${reservedMatch.defaultOccupier?.source || '系统'})`,
+          message: `“${newKey}”在保留键列表中（${reservedMatch.defaultOccupier?.source || '系统'}）`,
         });
         if (riskLevel === 'safe') riskLevel = 'info';
       }
@@ -114,7 +114,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
     if (needsRestart && key.trim() !== binding.key) {
       impacts.push({
         type: 'info',
-        message: 'ℹ️ 修改 funckey 需要重启 Allegro 才能生效',
+        message: '修改 funckey 需要重启 Allegro 才能生效',
       });
     }
 
@@ -212,7 +212,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
       <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: 16 }}>编辑快捷键</h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
 
         <div className="modal-body" style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -301,7 +301,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
             {/* 右栏：推荐可用键位 */}
             <div style={{ width: 200, borderLeft: '1px solid var(--border-color)', paddingLeft: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>
-                💡 推荐可用键位
+                推荐可用键位
               </div>
               {loadingRecommendations ? (
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>加载中...</div>
@@ -347,10 +347,10 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
           {impactPreview && (
             <div className={`impact-preview impact-${impactPreview.riskLevel}`}>
               <div className="impact-preview-header">
-                <span className="impact-preview-title">📋 修改影响预览</span>
+                <span className="impact-preview-title">修改影响预览</span>
                 <span className={`impact-risk-badge risk-${impactPreview.riskLevel}`}>
-                  {impactPreview.riskLevel === 'safe' ? '✅ 安全' :
-                   impactPreview.riskLevel === 'warning' ? '⚠️ 有风险' : '❌ 危险'}
+                  {impactPreview.riskLevel === 'safe' ? '安全' :
+                   impactPreview.riskLevel === 'warning' ? '有风险' : '高风险'}
                 </span>
               </div>
 
@@ -380,7 +380,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
 
               {impactPreview.requiresRestart && (
                 <div className="impact-restart-warning">
-                  🔄 需要重启 Allegro 才能生效
+                  需要重启 Allegro 才能生效
                 </div>
               )}
             </div>
@@ -428,18 +428,18 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
 
             {validation.errors.length > 0 && (
               <div style={{ color: 'var(--accent-red)', marginTop: 4 }}>
-                {validation.errors.map((e, i) => <div key={i}>❌ {e}</div>)}
+                {validation.errors.map((e, i) => <div key={i}>{e}</div>)}
               </div>
             )}
 
             {validation.warnings.length > 0 && (
               <div style={{ color: 'var(--accent-yellow)', marginTop: 4 }}>
-                {validation.warnings.map((w, i) => <div key={i}>⚠️ {w}</div>)}
+                {validation.warnings.map((w, i) => <div key={i}>{w}</div>)}
               </div>
             )}
 
             {!validating && validation.warnings.length === 0 && validation.errors.length === 0 && (
-              <div style={{ color: 'var(--accent-green)' }}>✅ 通过检测</div>
+              <div style={{ color: 'var(--accent-green)' }}>通过检测</div>
             )}
           </div>
         </div>
@@ -447,7 +447,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
           <button className="btn" onClick={onClose}>取消</button>
           <button className="btn btn-primary" onClick={handleSave} disabled={!canSave}>
-            {canSave ? '📝 生成 Apply Plan' : '请修正错误'}
+            {canSave ? '生成 Apply Plan' : '请修正错误'}
           </button>
         </div>
       </div>

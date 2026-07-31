@@ -115,7 +115,7 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
             ＋ 为 {selectedKey} 新增绑定
           </button>
           <button className="btn btn-sm" onClick={onClose}>
-            ✕ 关闭
+            关闭
           </button>
         </div>
       </div>
@@ -209,7 +209,7 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                 {/* 覆盖风险提示 */}
                 {b.warnWhenOverride && b.defaultOccupier && (
                   <span style={{ fontSize: 10, color: 'var(--accent-yellow)', marginLeft: 4 }}>
-                    ⚠️ 覆盖风险
+                    覆盖风险
                   </span>
                 )}
 
@@ -231,7 +231,7 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                 {/* 编辑 */}
                 {!readonly && (
                   <button className="btn btn-sm" onClick={() => onEdit(b)} title="编辑此快捷键">
-                    ✏️
+                    编辑
                   </button>
                 )}
 
@@ -242,12 +242,12 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                     onClick={() => handleDelete(b)}
                     title={isConfirming ? '再次点击确认删除' : '删除此快捷键'}
                   >
-                    {isConfirming ? '确认?' : '🗑️'}
+                    {isConfirming ? '确认？' : '删除'}
                   </button>
                 )}
                 {isConfirming && (
                   <button className="btn btn-sm" onClick={handleCancelDelete} title="取消删除">
-                    ✕
+                    取消
                   </button>
                 )}
 
@@ -259,7 +259,7 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                     title="接管到当前方案"
                     style={{ color: 'var(--accent-blue)' }}
                   >
-                    📋
+                    接管
                   </button>
                 )}
 
@@ -271,7 +271,7 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                     title="修正命令来源"
                     style={{ color: 'var(--accent-yellow)' }}
                   >
-                    🔧
+                    修正
                   </button>
                 )}
 
@@ -282,13 +282,13 @@ const PhysicalKeyBindingPanel: React.FC<PhysicalKeyBindingPanelProps> = ({
                     onClick={() => toggleRawLine(b.id)}
                     title="查看原始行"
                   >
-                    {isExpanded ? '📕' : '📄'}
+                    {isExpanded ? '收起' : '详情'}
                   </button>
                 )}
 
                 {/* 只读标记 */}
                 {readonly && (
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>🔒 只读</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>只读</span>
                 )}
               </div>
             </div>

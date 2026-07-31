@@ -7,7 +7,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('keyboard visualizer scaling', () => {
+describe('keyboard visualizer fixed typography', () => {
   it('reserves an overflow-safe area for edge binding badges', () => {
     vi.stubGlobal(
       'ResizeObserver',
@@ -30,7 +30,7 @@ describe('keyboard visualizer scaling', () => {
     expect(container.querySelector('.keyboard-board')).toHaveClass('keyboard-board--overflow-safe');
   });
 
-  it('uses the measured keyboard height instead of a guessed constant when fitting vertically', async () => {
+  it('does not shrink the board when vertical space is limited', async () => {
     const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
     const originalClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
     const originalOffsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
@@ -86,14 +86,7 @@ describe('keyboard visualizer scaling', () => {
     const board = container.querySelector('.keyboard-board') as HTMLElement | null;
     expect(board).not.toBeNull();
 
-    await waitFor(() => {
-      const transform = board?.style.transform ?? '';
-      const match = transform.match(/scale\(([^)]+)\)/);
-      expect(match).not.toBeNull();
-      const scale = Number(match?.[1]);
-      expect(scale).toBeCloseTo(332 / 360, 3);
-      expect(scale).toBeLessThan(1);
-    });
+    await waitFor(() => expect(board?.style.transform).toBe(''));
 
     if (originalClientWidth) {
       Object.defineProperty(HTMLElement.prototype, 'clientWidth', originalClientWidth);
@@ -106,7 +99,7 @@ describe('keyboard visualizer scaling', () => {
     }
   });
 
-  it('uses the measured keyboard width instead of the fallback width when fitting horizontally', async () => {
+  it('does not enlarge or shrink the board when horizontal space changes', async () => {
     const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
     const originalClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
     const originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
@@ -173,14 +166,7 @@ describe('keyboard visualizer scaling', () => {
     const board = container.querySelector('.keyboard-board') as HTMLElement | null;
     expect(board).not.toBeNull();
 
-    await waitFor(() => {
-      const transform = board?.style.transform ?? '';
-      const match = transform.match(/scale\(([^)]+)\)/);
-      expect(match).not.toBeNull();
-      const scale = Number(match?.[1]);
-    expect(scale).toBeCloseTo((980 - 24) / 860, 3);
-      expect(scale).toBeGreaterThan(1);
-    });
+    await waitFor(() => expect(board?.style.transform).toBe(''));
 
     if (originalClientWidth) {
       Object.defineProperty(HTMLElement.prototype, 'clientWidth', originalClientWidth);

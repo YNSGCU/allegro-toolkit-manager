@@ -39,7 +39,6 @@ export default function HotkeyOverviewPanel({ sharedState: state, actions }: Hot
           onViewModeChange={actions.setViewMode}
           activeLayer={state.activeLayer}
           onLayerChange={actions.setActiveLayer}
-          workspaceScale={state.workspaceScale}
         />
       </section>
     </div>

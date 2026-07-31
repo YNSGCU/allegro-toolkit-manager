@@ -54,7 +54,7 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
   const activeName = activeProfile?.name || '选择方案';
   const isDefaultProfile =
     DEFAULT_PROFILE_NAMES.includes(activeName) || activeProfileId === 'default';
-  const isApplied = appliedProfileId === activeProfileId;
+  const isApplied = Boolean(activeProfileId) && appliedProfileId === activeProfileId;
   const isRenameEditing = renameId === activeProfileId;
 
   const handleCreate = () => {
@@ -236,8 +236,9 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
       <button
         className={`btn btn-sm profile-bar-apply${isApplied ? ' is-applied' : ''}`}
         onClick={onApply}
+        disabled={isApplied}
       >
-        {isApplied ? '当前已应用' : applyLabel}
+        {isApplied ? '已应用' : applyLabel}
       </button>
     </div>
   );
@@ -291,8 +292,9 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
       <button
         className={`btn btn-sm profile-bar-apply${isApplied ? ' is-applied' : ''}`}
         onClick={onApply}
+        disabled={isApplied}
       >
-        {isApplied ? '当前已应用' : applyLabel}
+        {isApplied ? '已应用' : applyLabel}
       </button>
     </div>
   );
@@ -302,15 +304,14 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
       <div className={`profile-bar-main${compact ? ' profile-bar-main--compact' : ''}`}>
         <div className="profile-bar-title">
           <span className="profile-bar-kicker">{title}</span>
-          <span className={`profile-bar-status ${isApplied ? ' applied' : ' pending'}`}>
-            {isApplied ? '已应用' : '待应用'}
-          </span>
         </div>
 
         <select
           value={activeProfileId}
           onChange={(event) => onSwitch(event.target.value)}
           className="profile-bar-select"
+          aria-label={`${title}选择`}
+          title={activeProfile?.id}
         >
           {profiles.map((profile) => (
             <option key={profile.id} value={profile.id}>
@@ -318,12 +319,6 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
             </option>
           ))}
         </select>
-
-        {activeProfile ? (
-          <span className="profile-bar-id" title={activeProfile.id}>
-            {activeProfile.id.slice(0, 8)}...
-          </span>
-        ) : null}
 
         <div className="profile-bar-spacer" />
 

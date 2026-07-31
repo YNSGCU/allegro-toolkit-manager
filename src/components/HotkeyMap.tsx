@@ -38,21 +38,21 @@ const CATEGORY_LABEL: Record<string, string> = {
   alias: 'alias 别名',
   atm_managed: 'ATM 托管快捷键',
   conflict_warning: '冲突/警告项',
-  allegro_default_group: '🔒 Allegro 软件默认键',
-  system_reserved_group: '🔒 系统保留键',
-  overlay_conflict_group: '⚠️ 覆盖风险（用户已绑定默认占用键）',
+  allegro_default_group: 'Allegro 软件默认键',
+  system_reserved_group: '系统保留键',
+  overlay_conflict_group: '覆盖风险（用户已绑定默认占用键）',
 };
 
 const CATEGORY_ICON: Record<string, string> = {
-  letter_funckey: '🔤',
-  function_funckey: '⌨️',
-  number_funckey: '🔢',
-  alias: '🔗',
-  atm_managed: '🤖',
-  conflict_warning: '⚠️',
-  allegro_default_group: '🔒',
-  system_reserved_group: '🔒',
-  overlay_conflict_group: '⚠️',
+  letter_funckey: 'ABC',
+  function_funckey: 'F',
+  number_funckey: '123',
+  alias: 'A',
+  atm_managed: 'ATM',
+  conflict_warning: '!',
+  allegro_default_group: 'D',
+  system_reserved_group: 'R',
+  overlay_conflict_group: '!',
 };
 
 // ─── 来源标签配置（从 hotkeyItem.ts 共享）────────────────────────
@@ -88,7 +88,7 @@ function buildTooltip(b: HotkeyBinding): string {
   if (b.lineNumber) lines.push(`行号: ${b.lineNumber}`);
   if (b.defaultOccupier) {
     lines.push(`---`);
-    lines.push(`⚠️ 默认占用: ${b.defaultOccupier.command}`);
+    lines.push(`默认占用：${b.defaultOccupier.command}`);
     lines.push(`   ${b.defaultOccupier.description}`);
   }
   if (b.confidence) {
@@ -173,7 +173,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
               status: b.status === 'normal' ? 'duplicate' : b.status,
               warnWhenOverride: true,
               defaultOccupier: reserved.defaultOccupier,
-              notes: [...(b.notes || []), `⚠️ 覆盖风险：Allegro 默认占用 ${reserved.key} → ${reserved.command}`],
+              notes: [...(b.notes || []), `覆盖风险：Allegro 默认占用 ${reserved.key} → ${reserved.command}`],
             });
             // 将被覆盖的保留键也加入
             result.push({
@@ -281,18 +281,17 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
 
   return (
     <div className="card hotkey-map">
-      <div className="card-header">🗺️ 快捷键地图</div>
 
       {/* 视图说明 */}
       {viewMode === 'reserved' && (
         <p className="card-subtitle" style={{ marginBottom: 8 }}>
-          🔒 这些是 Allegro 软件默认占用或系统保留的快捷键，仅用于参考，不可直接编辑。
+          这些是 Allegro 软件默认占用或系统保留的快捷键，仅用于参考，不可直接编辑。
           {reservedBindings.length > 0 && ' 若要覆盖，在"我的快捷键"中绑定相同按键即可。'}
         </p>
       )}
       {viewMode === 'overlay' && (
         <p className="card-subtitle" style={{ marginBottom: 8 }}>
-          📌 同时展示用户快捷键和系统默认键。黄色 ⚠️ 标记表示用户绑定了默认占用键，存在覆盖风险。
+          同时展示用户快捷键和系统默认键。黄色标记表示用户绑定了默认占用键，存在覆盖风险。
         </p>
       )}
 
@@ -323,10 +322,10 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
       {/* V3.0 视图切换标签栏 */}
       <div className="hotkey-map-view-switcher">
         {[
-          { key: 'key' as MapContentViewMode, label: '🔑 按键视图' },
-          { key: 'command' as MapContentViewMode, label: '📋 命令视图' },
-          { key: 'source' as MapContentViewMode, label: '📦 来源视图' },
-          { key: 'conflict' as MapContentViewMode, label: '⚔️ 冲突视图' },
+          { key: 'key' as MapContentViewMode, label: '按键视图' },
+          { key: 'command' as MapContentViewMode, label: '命令视图' },
+          { key: 'source' as MapContentViewMode, label: '来源视图' },
+          { key: 'conflict' as MapContentViewMode, label: '冲突视图' },
         ].map((opt) => (
           <button
             key={opt.key}
@@ -350,7 +349,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
           {grouped.map(({ cat, bindings: catBindings }) => (
             <div key={cat} className="hotkey-map-group">
               <div className="hotkey-map-group-header">
-                {CATEGORY_ICON[cat] || '📌'} {CATEGORY_LABEL[cat] || cat}
+                {CATEGORY_ICON[cat] || ''} {CATEGORY_LABEL[cat] || cat}
                 <span className="hotkey-map-count">{catBindings.length}</span>
               </div>
               <div className="hotkey-map-cards">
@@ -377,7 +376,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
                         <span className={`badge ${b.type === 'funckey' ? 'badge-info' : 'badge-success'}`}>
                           {b.type === 'funckey' ? 'F' : 'A'}
                         </span>
-                        {isReadOnly && <span className="hotkey-card-lock" title="只读（系统/软件默认占用）">🔒</span>}
+                        {isReadOnly && <span className="hotkey-card-lock" title="只读（系统/软件默认占用）">只读</span>}
                       </div>
 
                       <div className="hotkey-card-chinese" title={b.description || b.command}>
@@ -407,7 +406,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
 
                       {isOverlayConflict && b.defaultOccupier && (
                         <div className="hotkey-card-override-warning">
-                          <div>⚠️ 覆盖风险</div>
+                          <div>覆盖风险</div>
                           <div className="hotkey-card-override-detail">
                             默认占用: {b.defaultOccupier.command} — {b.defaultOccupier.description}
                           </div>
@@ -416,7 +415,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
 
                       {b.loadStatus === 'maybe_unloaded' && (
                         <div className="hotkey-card-warning-banner">
-                          ⚠️ 该命令可能来自 Skill，但未发现启动加载配置
+                          该命令可能来自 Skill，但未发现启动加载配置
                         </div>
                       )}
 
@@ -434,11 +433,11 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
                             style={{ marginLeft: 'auto', fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                             onClick={(e) => { e.stopPropagation(); onEdit(b); }}
                             title="编辑此快捷键"
-                          >✏️</button>
+                          >编辑</button>
                         )}
                         {isReadOnly && (
                           <span className="hotkey-card-readonly-badge" style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>
-                            🔒 只读
+                            只读
                           </span>
                         )}
                       </div>
@@ -479,7 +478,7 @@ const HotkeyMap: React.FC<HotkeyMapProps> = ({
       {contentViewMode === 'conflict' && (
         conflicts.length > 0
           ? <ConflictList conflicts={conflicts} />
-          : <div className="hotkey-map-empty">✅ 未检测到冲突</div>
+          : <div className="hotkey-map-empty">未检测到冲突</div>
       )}
     </div>
   );

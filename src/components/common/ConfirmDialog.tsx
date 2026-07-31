@@ -6,6 +6,7 @@
  * 深色主题，与应用风格一致。
  */
 import React from 'react';
+import { AlertTriangle, Info } from 'lucide-react';
 
 export type ConfirmVariant = 'danger' | 'warning' | 'info';
 
@@ -21,12 +22,6 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-const VARIANT_COLORS: Record<ConfirmVariant, { icon: string; accent: string }> = {
-  danger: { icon: '⚠️', accent: 'var(--accent-red, #e74c3c)' },
-  warning: { icon: '⚠️', accent: 'var(--accent-yellow, #f1c40f)' },
-  info: { icon: 'ℹ️', accent: 'var(--accent-blue, #3498db)' },
-};
-
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
@@ -40,77 +35,33 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   if (!open) return null;
 
-  const colors = VARIANT_COLORS[variant];
+  const Icon = variant === 'info' ? Info : AlertTriangle;
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0, 0, 0, 0.6)',
-      }}
+      className="confirm-dialog-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div
-        style={{
-          background: '#1e1e2e',
-          border: `1px solid #333`,
-          borderRadius: 12,
-          padding: 24,
-          maxWidth: 480,
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontSize: 24 }}>{colors.icon}</span>
-          <h3 style={{ margin: 0, color: '#eee', fontSize: 16 }}>{title}</h3>
+      <div className={`confirm-dialog confirm-dialog--${variant}`} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+        <div className="confirm-dialog-header">
+          <span className="confirm-dialog-icon"><Icon aria-hidden="true" /></span>
+          <h3 id="confirm-dialog-title">{title}</h3>
         </div>
-        <p style={{ color: '#ccc', fontSize: 14, lineHeight: 1.5, margin: '0 0 8px 0' }}>
+        <p className="confirm-dialog-message">
           {message}
         </p>
         {detail && (
-          <pre
-            style={{
-              background: '#151525',
-              color: '#aaa',
-              fontSize: 12,
-              padding: 10,
-              borderRadius: 6,
-              margin: '8px 0 16px',
-              maxHeight: 200,
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}
-          >
+          <pre className="confirm-dialog-detail">
             {detail}
           </pre>
         )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-          <button
-            className="btn"
-            onClick={onCancel}
-            style={{ background: '#333', color: '#ccc', border: '1px solid #555' }}
-          >
+        <div className="confirm-dialog-actions">
+          <button className="btn" onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button
-            className="btn"
-            onClick={onConfirm}
-            style={{
-              background: colors.accent,
-              color: '#fff',
-              border: 'none',
-              fontWeight: 600,
-            }}
-          >
+          <button className={`btn ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

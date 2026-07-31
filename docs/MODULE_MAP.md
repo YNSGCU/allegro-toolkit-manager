@@ -29,6 +29,10 @@
 
 `src/components/Layout.tsx` -> `src/shared/ui/{workspace,feedback,overlays}` -> routed pages. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.
 
+用户错误链：页面捕获异常 -> `src/shared/ui/feedback/formatUserError.ts` -> 中文可恢复提示。该层只处理展示文案，不吞掉日志，也不改变 IPC 响应协议。
+
+快捷键键盘由 `src/components/KeyboardVisualizer.tsx` 以固定字号渲染；空间不足时只滚动 `.keyboard-visualizer-wrapper`，不再经过独立的 viewport 缩放模块。
+
 ### Skill Management
 
 `src/pages/SkillPage.tsx` -> `SkillWorkspaceTable` / `SkillDetailSidebar` -> `window.atm.*skill methods*` -> `electron/preload.ts` -> `electron/ipc/skill.*.ipc.ts` -> `core/skill/*`, `core/generator/generateSkillLoader.ts`, `core/validator/*`

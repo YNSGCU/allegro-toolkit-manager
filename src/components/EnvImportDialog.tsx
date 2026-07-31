@@ -272,13 +272,13 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-dialog env-import-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h3 style={{ margin: 0, fontSize: 15 }}>📥 导入完成</h3>
-            <button className="btn btn-sm" onClick={onClose}>✕</button>
+            <h3 style={{ margin: 0, fontSize: 15 }}>导入完成</h3>
+            <button className="btn btn-sm" onClick={onClose}>关闭</button>
           </div>
           <div className="modal-body" style={{ padding: '16px 0' }}>
             <div className="card" style={{ padding: 16, marginBottom: 12 }}>
               <div style={{ fontSize: 24, textAlign: 'center', marginBottom: 12 }}>
-                {result.success ? '✅' : '❌'}
+                {result.success ? '成功' : '失败'}
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <tbody>
@@ -327,15 +327,15 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
       <div className="modal-overlay" onClick={() => setShowApplyPlan(false)}>
         <div className="modal-dialog env-import-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h3 style={{ margin: 0, fontSize: 15 }}>📝 Apply Plan 预览</h3>
-            <button className="btn btn-sm" onClick={() => setShowApplyPlan(false)}>✕</button>
+            <h3 style={{ margin: 0, fontSize: 15 }}>Apply Plan 预览</h3>
+            <button className="btn btn-sm" onClick={() => setShowApplyPlan(false)}>关闭</button>
           </div>
           <div className="modal-body" style={{ padding: '16px 0' }}>
             <div className="card" style={{ padding: 16, marginBottom: 12 }}>
               <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>{applyPlan.summary}</h4>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
                 ID: {applyPlan.id} | 创建时间: {applyPlan.createdAt}
-                {applyPlan.requiresRestart && <span style={{ color: 'var(--accent-yellow)', marginLeft: 8 }}>⚠️ 需要重启 Allegro</span>}
+                {applyPlan.requiresRestart && <span style={{ color: 'var(--accent-yellow)', marginLeft: 8 }}>需要重启 Allegro</span>}
               </p>
               <div style={{ fontSize: 13 }}>
                 {(applyPlan.steps || []).map((step: any, i: number) => (
@@ -367,13 +367,13 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
               </div>
             </div>
             <div style={{ padding: '8px 12px', background: 'var(--bg-warning-bg, #fff3cd)', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-warning, #856404)' }}>
-              ⚠️ 应用前已自动备份当前 env 文件。如需撤销，可在变更历史中操作。
+              应用前已自动备份当前 env 文件。如需撤销，可在变更历史中操作。
             </div>
           </div>
           <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
             <button className="btn" onClick={() => { setShowApplyPlan(false); setResult(null); }}>取消</button>
             <button className="btn btn-primary" onClick={handleConfirmApplyPlan} disabled={executing}>
-              {executing ? '⏳ 执行中...' : '✅ 确认应用'}
+              {executing ? '执行中...' : '确认应用'}
             </button>
           </div>
         </div>
@@ -387,8 +387,8 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
       <div className="modal-overlay" onClick={() => setShowRoleConfirm(false)}>
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
           <div className="modal-header">
-            <h3 style={{ margin: 0, fontSize: 15 }}>❓ 选择导入角色</h3>
-            <button className="btn btn-sm" onClick={() => setShowRoleConfirm(false)}>✕</button>
+            <h3 style={{ margin: 0, fontSize: 15 }}>选择导入角色</h3>
+            <button className="btn btn-sm" onClick={() => setShowRoleConfirm(false)}>关闭</button>
           </div>
           <div className="modal-body" style={{ padding: '12px 0' }}>
             <p style={{ fontSize: 13, margin: '0 0 12px', color: 'var(--text-muted)' }}>
@@ -454,12 +454,12 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
         {/* ── Header ── */}
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: 15 }}>
-            📥 从 env 文件导入快捷键
+            从 env 文件导入快捷键
             <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8, fontWeight: 400 }}>
               步骤 {step === 'mode' ? '1' : step === 'conflicts' ? '2' : '3'}/3
             </span>
           </h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
 
         {/* ── Body ── */}
@@ -494,7 +494,7 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
                       border: `1px solid ${ENV_ROLE_COLOR[preview.identifiedRole]}44`,
                     }}>
                       {ENV_ROLE_LABEL[preview.identifiedRole]}
-                      {preview.roleConfidence === 'high' ? ' ✓' : preview.roleConfidence === 'medium' ? ' ~' : ' ?'}
+                      {preview.roleConfidence === 'high' ? ' 高' : preview.roleConfidence === 'medium' ? ' 中' : ' 低'}
                     </span>
                   </td>
                 </tr>
@@ -558,7 +558,7 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
                   fontSize: 13, color: 'var(--text-warning, #856404)',
                   border: '1px solid #ffc10744',
                 }}>
-                  <strong>⚠️ 检测到该文件疑似安装默认 env。</strong>
+                  <strong>检测到该文件疑似安装默认 env。</strong>
                   <br />
                   默认 env 通常不应合并进用户 env，否则可能产生大量重复或覆盖。建议仅作为参考来源。
                 </div>
@@ -756,13 +756,13 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
 
               {selectedMode === 'merge_user_env' && (
                 <div style={{ padding: '8px 12px', marginBottom: 12, background: 'var(--bg-warning-bg, #fff3cd)', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-warning, #856404)' }}>
-                  ⚠️ 此操作将修改当前用户 env 文件。应用前会自动备份，支持撤销。
+                  此操作将修改当前用户 env 文件。应用前会自动备份，支持撤销。
                 </div>
               )}
 
               {selectedMode === 'as_reference' && (
                 <div style={{ padding: '8px 12px', marginBottom: 12, background: 'var(--bg-info-bg, #d1ecf1)', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-info, #0c5460)' }}>
-                  ℹ️ 导入为参考 env 后，该文件将显示在快捷键页的叠加视图中，不会被修改。
+                  导入为参考 env 后，该文件将显示在快捷键页的叠加视图中，不会被修改。
                 </div>
               )}
 
@@ -784,7 +784,7 @@ const EnvImportDialog: React.FC<EnvImportDialogProps> = ({
                   onClick={handleExecute}
                   disabled={executing}
                 >
-                  {executing ? '⏳ 执行中...' : `✅ 确认 ${MODE_LABEL[selectedMode]}`}
+                  {executing ? '执行中...' : `确认 ${MODE_LABEL[selectedMode]}`}
                 </button>
               </div>
             </div>
@@ -816,11 +816,11 @@ function getDefaultMode(role: EnvImportRole): ImportMode {
 /** 获取模式图标 */
 function getModeIcon(mode: ImportMode): string {
   switch (mode) {
-    case 'new_profile': return '📋';
-    case 'merge_profile': return '🔗';
-    case 'as_reference': return '🔍';
-    case 'merge_user_env': return '⚡';
-    default: return '📥';
+    case 'new_profile': return '新建';
+    case 'merge_profile': return '合并';
+    case 'as_reference': return '参考';
+    case 'merge_user_env': return '写入';
+    default: return '导入';
   }
 }
 

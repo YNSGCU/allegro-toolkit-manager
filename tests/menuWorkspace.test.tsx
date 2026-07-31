@@ -55,9 +55,9 @@ describe('菜单编辑工作区', () => {
     expect(pageSource).not.toContain('???');
     expect(pageSource).not.toContain('<MinimalSurface');
     expect(pageSource).toContain('className="menu-page-header"');
-    expect(pageSource).toContain('应用到 Allegro');
+    expect(pageSource).toContain('applyLabel="应用方案"');
     expect(pageSource).toContain('JSON.stringify(previewStore)');
-    expect(pageSource).toContain('showCompactManagementActions');
+    expect(pageSource).not.toContain('showCompactManagementActions');
     expect(pageSource).toContain('新建顶级菜单');
     expect(pageSource).toContain('<MoreActionsMenu');
     expect(pageSource).toContain('<WorkspaceHeader');
@@ -67,9 +67,8 @@ describe('菜单编辑工作区', () => {
     expect(pageSource).not.toContain('return true; // has menu items, needs restart');
     expect(pageSource).toContain('<MenuTreeAddBar');
     expect(pageSource).toContain('compact');
-    expect(cssSource).toContain('.menu-editor-content');
-    expect(cssSource).toMatch(/\.menu-editor-content\s*\{[^}]*min-height:\s*520px/s);
-    expect(workspaceCssSource).toMatch(/\.workspace-page-menu \.menu-editor-content\s*\{[^}]*min-height:\s*320px/s);
+    expect(cssSource).not.toMatch(/\.menu-editor-content\s*\{[^}]*min-height:\s*520px/s);
+    expect(workspaceCssSource).toMatch(/\.workspace-page-menu \.menu-editor-content\s*\{[^}]*min-height:\s*0/s);
     expect(hookSource).toContain('window.atm.menuExecuteApplyPlan');
     expect(preloadSource).toContain("ipcRenderer.invoke('menu:execute-apply-plan'");
   });

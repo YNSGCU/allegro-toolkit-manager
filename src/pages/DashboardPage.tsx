@@ -12,7 +12,7 @@ import {
 import type { EnvironmentInfo, HealthScore } from '../types/environment';
 import FileStatusCard from '../components/FileStatusCard';
 import VersionInfoPanel from '../components/common/VersionInfoPanel';
-import { PageState, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import { formatUserError, PageState, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 const workspaceEntries = [
   {
@@ -61,12 +61,12 @@ const DashboardPage: React.FC = () => {
         setEnvInfo(result.data.environment);
         setHealth(result.data.health);
       } else {
-        setError(result.error || '加载环境信息失败');
+        setError(formatUserError(result.error, '加载环境信息失败'));
         const envResult = await window.atm.locateEnvironment();
         if (envResult.success && envResult.data) setEnvInfo(envResult.data);
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : String(loadError));
+      setError(formatUserError(loadError, '加载环境信息失败'));
     } finally {
       setLoading(false);
     }

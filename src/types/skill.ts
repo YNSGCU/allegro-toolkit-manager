@@ -524,16 +524,16 @@ export function getLoadStatusDisplay(status: SkillLoadStatus): {
 } {
   switch (status) {
     case 'loaded_configured':
-      return { label: '已配置加载', cssClass: 'load-status-loaded', icon: '✓', color: 'var(--accent-green)' };
+      return { label: '已配置加载', cssClass: 'load-status-loaded', icon: '', color: 'var(--accent-green)' };
     case 'enabled_but_not_loaded':
-      return { label: '未配置启动加载', cssClass: 'load-status-maybe', icon: '⚠️', color: 'var(--accent-yellow)' };
+      return { label: '未配置启动加载', cssClass: 'load-status-maybe', icon: '', color: 'var(--accent-yellow)' };
     case 'disabled':
-      return { label: '已禁用', cssClass: 'load-status-unknown', icon: '⛔', color: 'var(--text-muted)' };
+      return { label: '已禁用', cssClass: 'load-status-unknown', icon: '', color: 'var(--text-muted)' };
     case 'readonly_reference':
-      return { label: '只读参考', cssClass: 'load-status-readonly', icon: '🔒', color: 'var(--accent-purple)' };
+      return { label: '只读参考', cssClass: 'load-status-readonly', icon: '', color: 'var(--accent-purple)' };
     case 'unknown':
     case 'maybe_unloaded':
-      return { label: '可能未加载', cssClass: 'load-status-maybe', icon: '⚠️', color: 'var(--accent-yellow)' };
+      return { label: '可能未加载', cssClass: 'load-status-maybe', icon: '', color: 'var(--accent-yellow)' };
   }
 }
 
@@ -616,14 +616,14 @@ export interface SkillUsageInfo {
 
 /** 使用状态显示的配置 */
 export const USAGE_STATUS_DISPLAY: Record<SkillUsageStatus, { label: string; icon: string; color: string }> = {
-  available: { label: '可用', icon: '✅', color: 'var(--accent-green)' },
-  available_unreferenced: { label: '可用（无引用）', icon: '🟢', color: 'var(--accent-cyan)' },
-  referenced_but_not_loaded: { label: '有引用未加载', icon: '⚠️', color: 'var(--accent-yellow)' },
-  command_conflict: { label: '命令冲突', icon: '🔴', color: 'var(--accent-red)' },
-  parse_error: { label: '解析失败', icon: '❌', color: 'var(--accent-red)' },
-  readonly_reference: { label: '只读参考', icon: '🔒', color: 'var(--accent-purple)' },
-  missing_file: { label: '文件缺失', icon: '💀', color: 'var(--accent-red)' },
-  disabled: { label: '已禁用', icon: '⛔', color: 'var(--text-muted)' },
+  available: { label: '可用', icon: '', color: 'var(--accent-green)' },
+  available_unreferenced: { label: '可用（无引用）', icon: '', color: 'var(--accent-cyan)' },
+  referenced_but_not_loaded: { label: '有引用未加载', icon: '', color: 'var(--accent-yellow)' },
+  command_conflict: { label: '命令冲突', icon: '', color: 'var(--accent-red)' },
+  parse_error: { label: '解析失败', icon: '', color: 'var(--accent-red)' },
+  readonly_reference: { label: '只读参考', icon: '', color: 'var(--accent-purple)' },
+  missing_file: { label: '文件缺失', icon: '', color: 'var(--accent-red)' },
+  disabled: { label: '已禁用', icon: '', color: 'var(--text-muted)' },
 };
 
 // ═══════════════════════════════════════════════════

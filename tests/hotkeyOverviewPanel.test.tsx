@@ -17,7 +17,6 @@ vi.mock('../src/components/KeyboardVisualizer', () => ({
 
 function createState(): HotkeyWorkspaceSharedState {
   return {
-    workspaceScale: 1,
     loading: false,
     error: null,
     envInfo: null,

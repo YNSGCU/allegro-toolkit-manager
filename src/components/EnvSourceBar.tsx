@@ -58,7 +58,7 @@ const EnvSourceBar: React.FC<EnvSourceBarProps> = ({ envSources, onOpenManagemen
           onClick={onOpenManagement}
           title="管理 env 来源"
         >
-          📂 管理 env 来源
+          管理 env 来源
         </button>
       </div>
     </div>

@@ -452,7 +452,7 @@ export const MENU_ISSUE_LABELS: Record<string, string> = {
 
 /** 问题严重程度样式 */
 export const ISSUE_SEVERITY_STYLES: Record<string, { icon: string; color: string; bg: string }> = {
-  error: { icon: '✕', color: '#f87171', bg: 'rgba(248, 113, 113, 0.1)' },
-  warning: { icon: '⚠', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.1)' },
-  info: { icon: 'ℹ', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.1)' },
+  error: { icon: '错误', color: '#b91c1c', bg: 'var(--ui-danger-soft)' },
+  warning: { icon: '警告', color: '#b45309', bg: 'var(--ui-warning-soft)' },
+  info: { icon: '信息', color: '#1d4ed8', bg: 'var(--ui-info-soft)' },
 };

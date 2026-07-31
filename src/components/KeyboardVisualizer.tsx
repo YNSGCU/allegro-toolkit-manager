@@ -6,7 +6,7 @@
  * - 褰撳墠灞傞珮浜搴斿揩鎹烽敭锛屽叾浣欓敭鍙樻殫
  * - 鍙犲姞妯″紡涓嬪吋瀹逛繚鐣欓敭鏄剧ず
  * - 閿洏鍝嶅簲寮忕瓑姣旂缉鏀? */
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import type { HotkeyBinding, Conflict } from '../types/hotkey';
 import type { KeyboardKeyDef, KeyStatus } from './Keycap';
 import KeyboardLayout, { KeyState } from './KeyboardLayout';
@@ -23,11 +23,6 @@ import {
   normalizeHotkeyKey,
   type ActiveLayer,
 } from '../utils/hotkeyItem';
-import {
-  computeKeyboardScale,
-  KEYBOARD_NATURAL_HEIGHT,
-  KEYBOARD_NATURAL_WIDTH,
-} from './hotkeys/keyboardViewport';
 
 export type KeyboardViewMode = 'my' | 'reserved' | 'overlay';
 type KeyboardSourceMode = 'all' | 'skill';
@@ -40,6 +35,7 @@ interface HoverCardState {
   }>;
   left: number;
   top: number;
+  placement: 'above' | 'below';
 }
 
 const RESERVED_OCCUPANCY_SOURCES = new Set<HotkeyBinding['bindingSource']>([
@@ -258,7 +254,6 @@ interface KeyboardOccupancyProps {
   conflicts: Conflict[];
   selectedKey: string | null;
   onSelectKey: (keyLabel: string | null) => void;
-  workspaceScale?: number;
   viewMode?: 'my' | 'reserved' | 'overlay';
   onViewModeChange?: (mode: KeyboardViewMode) => void;
   activeLayer?: ActiveLayer;
@@ -277,7 +272,6 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
   conflicts,
   selectedKey,
   onSelectKey,
-  workspaceScale = 1,
   viewMode = 'my',
   onViewModeChange,
   activeLayer = 'normal',
@@ -289,70 +283,8 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
   onOverrideSource: onOverrideSourceProp,
   onAddBinding,
 }) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const [viewportMetrics, setViewportMetrics] = useState({
-    containerWidth: KEYBOARD_NATURAL_WIDTH + 32,
-    containerHeight: KEYBOARD_NATURAL_HEIGHT,
-    boardWidth: KEYBOARD_NATURAL_WIDTH,
-    boardHeight: KEYBOARD_NATURAL_HEIGHT,
-  });
   const [hoverCard, setHoverCard] = useState<HoverCardState | null>(null);
   const [sourceMode, setSourceMode] = useState<KeyboardSourceMode>('all');
-
-  useEffect(() => {
-    const wrapperElement = wrapperRef.current;
-    if (!wrapperElement) {
-      return;
-    }
-
-    const updateMetrics = (nextWidth?: number) => {
-      const containerWidth = nextWidth ?? wrapperElement.clientWidth;
-      const containerHeight = wrapperElement.clientHeight;
-      const boardWidth = boardRef.current?.offsetWidth || KEYBOARD_NATURAL_WIDTH;
-      const boardHeight = boardRef.current?.offsetHeight || KEYBOARD_NATURAL_HEIGHT;
-
-      setViewportMetrics((current) => {
-        if (
-          current.containerWidth === containerWidth
-          && current.containerHeight === containerHeight
-          && current.boardWidth === boardWidth
-          && current.boardHeight === boardHeight
-        ) {
-          return current;
-        }
-
-        return { containerWidth, containerHeight, boardWidth, boardHeight };
-      });
-    };
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.target === wrapperElement) {
-          updateMetrics(entry.contentRect.width);
-          continue;
-        }
-
-        updateMetrics();
-      }
-    });
-
-    updateMetrics();
-    observer.observe(wrapperElement);
-    if (boardRef.current) {
-      observer.observe(boardRef.current);
-    }
-    return () => observer.disconnect();
-  }, [workspaceScale]);
-
-  const kbScale =
-    workspaceScale *
-    computeKeyboardScale(
-      viewportMetrics.containerWidth,
-      viewportMetrics.containerHeight,
-      viewportMetrics.boardWidth * workspaceScale,
-      viewportMetrics.boardHeight * workspaceScale,
-    );
 
   const mergedBindings = useMemo(() => {
     const seen = new Set<string>();
@@ -613,12 +545,14 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
         Math.max(rect.left + rect.width / 2, 24 + cardWidth / 2),
         window.innerWidth - 24 - cardWidth / 2,
       );
-      const nextTop = Math.max(rect.top - 12, 16);
+      const placement = rect.top < 190 ? 'below' : 'above';
+      const nextTop = placement === 'below' ? rect.bottom + 8 : Math.max(rect.top - 8, 16);
 
       setHoverCard({
         ...keyState.hoverCard,
         left: nextLeft,
         top: nextTop,
+        placement,
       });
     },
     [],
@@ -687,8 +621,7 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
 
   return (
     <div className="card keyboard-visualizer">
-      <div className="kv-header">
-        <span className="kv-header-title">键盘占用总览</span>
+      <div className="kv-toolbar">
         <div className="kv-view-tabs">
           {VIEW_OPTIONS.map((option) => (
             <button
@@ -703,9 +636,6 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="kv-layer-toolbar">
         <span className="kv-layer-label">
           当前层：<strong>{layerDisplayName}</strong>
         </span>
@@ -742,15 +672,8 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
         </div>
       </div>
 
-      <div
-        className="keyboard-wrapper"
-        ref={wrapperRef}
-      >
-        <div
-          className="keyboard-board keyboard-board--overflow-safe"
-          ref={boardRef}
-          style={{ transform: `scale(${kbScale})`, transformOrigin: 'top center' }}
-        >
+      <div className="keyboard-wrapper">
+        <div className="keyboard-board keyboard-board--overflow-safe">
           <KeyboardLayout
             rows={rows}
             dimFn={() => false}
@@ -763,7 +686,7 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
 
       {hoverCard ? (
         <div
-          className="kv-hover-card"
+          className={`kv-hover-card kv-hover-card--${hoverCard.placement}`}
           style={{ left: `${hoverCard.left}px`, top: `${hoverCard.top}px` }}
         >
           {hoverCard.items.map((item, index) => (

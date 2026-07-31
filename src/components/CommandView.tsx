@@ -46,17 +46,17 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 const CATEGORY_ICON: Record<string, string> = {
-  '编辑': '✂️',
-  '布线': '🔗',
-  '显示': '👁️',
-  '视图': '👁️',
-  '选择': '🎯',
-  '布局': '📐',
-  '约束': '📏',
-  '工具': '🔧',
-  '文件': '📁',
-  '分析': '📊',
-  '制造': '🏭',
+  '编辑': '',
+  '布线': '',
+  '显示': '',
+  '视图': '',
+  '选择': '',
+  '布局': '',
+  '约束': '',
+  '工具': '',
+  '文件': '',
+  '分析': '',
+  '制造': '',
 };
 
 interface CategoryGroup {
@@ -123,7 +123,7 @@ const CommandView: React.FC<CommandViewProps> = ({
       if (categoryGroups.has(key)) {
         result.push({
           label: label,
-          icon: CATEGORY_ICON[key] || '📌',
+          icon: CATEGORY_ICON[key] || '',
           entries: categoryGroups.get(key)!,
         });
         categoryGroups.delete(key);
@@ -135,25 +135,25 @@ const CommandView: React.FC<CommandViewProps> = ({
       .filter(([k]) => !['skill_custom', 'unrecognized', 'uncategorized'].includes(k))
       .sort(([a], [b]) => a.localeCompare(b, 'zh'));
     for (const [key, entries] of remainingDict) {
-      result.push({ label: key, icon: '📌', entries });
+      result.push({ label: key, icon: '', entries });
       categoryGroups.delete(key);
     }
 
     // 3) Skill/自定义类
     if (categoryGroups.has('skill_custom')) {
-      result.push({ label: 'Skill/自定义类', icon: '🤖', entries: categoryGroups.get('skill_custom')! });
+      result.push({ label: 'Skill/自定义类', icon: '', entries: categoryGroups.get('skill_custom')! });
       categoryGroups.delete('skill_custom');
     }
 
     // 4) 未识别命令
     if (categoryGroups.has('unrecognized')) {
-      result.push({ label: '未识别命令', icon: '❓', entries: categoryGroups.get('unrecognized')! });
+      result.push({ label: '未识别命令', icon: '', entries: categoryGroups.get('unrecognized')! });
       categoryGroups.delete('unrecognized');
     }
 
     // 5) 未分类
     if (categoryGroups.has('uncategorized')) {
-      result.push({ label: '未分类', icon: '📦', entries: categoryGroups.get('uncategorized')! });
+      result.push({ label: '未分类', icon: '', entries: categoryGroups.get('uncategorized')! });
       categoryGroups.delete('uncategorized');
     }
 
@@ -251,7 +251,7 @@ const CommandView: React.FC<CommandViewProps> = ({
                             style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                             onClick={(e) => { e.stopPropagation(); onEdit(entry.bindings[0]); }}
                             title="编辑"
-                          >✏️</button>
+                          >编辑</button>
                         )}
                         {onDelete && (
                           <button
@@ -259,7 +259,7 @@ const CommandView: React.FC<CommandViewProps> = ({
                             style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                             onClick={(e) => { e.stopPropagation(); onDelete(entry.bindings[0]); }}
                             title="删除"
-                          >🗑️</button>
+                          >删除</button>
                         )}
                         {onAdopt && (
                           <button
@@ -267,7 +267,7 @@ const CommandView: React.FC<CommandViewProps> = ({
                             style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                             onClick={(e) => { e.stopPropagation(); onAdopt(entry.bindings[0]); }}
                             title="接管"
-                          >📋</button>
+                          >接管</button>
                         )}
                         {onOverrideSource && entry.bindings[0].commandSource !== 'allegro_builtin' && (
                           <button
@@ -275,7 +275,7 @@ const CommandView: React.FC<CommandViewProps> = ({
                             style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                             onClick={(e) => { e.stopPropagation(); onOverrideSource(entry.bindings[0]); }}
                             title="修正来源"
-                          >🔧</button>
+                          >修正</button>
                         )}
                       </div>
                     )}
@@ -300,21 +300,21 @@ const CommandView: React.FC<CommandViewProps> = ({
                           {!isReadonlyBinding(b) && (
                             <div className="command-view-actions" style={{ marginLeft: 'auto' }}>
                               {onEdit && (
-                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onEdit(b); }} title="编辑">✏️</button>
+                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onEdit(b); }} title="编辑">编辑</button>
                               )}
                               {onDelete && (
-                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onDelete(b); }} title="删除">🗑️</button>
+                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onDelete(b); }} title="删除">删除</button>
                               )}
                               {onAdopt && (
-                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onAdopt(b); }} title="接管">📋</button>
+                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onAdopt(b); }} title="接管">接管</button>
                               )}
                               {onOverrideSource && b.commandSource !== 'allegro_builtin' && (
-                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onOverrideSource(b); }} title="修正来源">🔧</button>
+                                <button className="btn btn-sm" style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }} onClick={(e) => { e.stopPropagation(); onOverrideSource(b); }} title="修正来源">修正</button>
                               )}
                             </div>
                           )}
                           {isReadonlyBinding(b) && (
-                            <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>🔒 只读</span>
+                            <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>只读</span>
                           )}
                         </div>
                       ))}

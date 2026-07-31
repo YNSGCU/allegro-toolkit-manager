@@ -29,12 +29,12 @@ const SOURCE_ORDER: CommandSourceType[] = [
 ];
 
 const SOURCE_ICON: Record<string, string> = {
-  allegro_builtin: '⚡',
-  user_skill: '📦',
-  atm_managed_skill: '🤖',
-  company_skill: '🏢',
-  ambiguous: '⚠️',
-  unknown: '❓',
+  allegro_builtin: '',
+  user_skill: '',
+  atm_managed_skill: 'ATM',
+  company_skill: '公司',
+  ambiguous: '',
+  unknown: '',
 };
 
 interface SourceGroup {
@@ -73,7 +73,7 @@ const SourceView: React.FC<SourceViewProps> = ({
         return {
           source: src,
           label: config.label,
-          icon: SOURCE_ICON[src] || '❓',
+          icon: SOURCE_ICON[src] || '',
           className: config.className,
           bindings: map.get(src)!,
         } as SourceGroup;
@@ -144,7 +144,7 @@ const SourceView: React.FC<SourceViewProps> = ({
                           style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                           onClick={(e) => { e.stopPropagation(); onEdit(b); }}
                           title="编辑"
-                        >✏️</button>
+                        >编辑</button>
                       )}
                       {onDelete && (
                         <button
@@ -152,7 +152,7 @@ const SourceView: React.FC<SourceViewProps> = ({
                           style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                           onClick={(e) => { e.stopPropagation(); onDelete(b); }}
                           title="删除"
-                        >🗑️</button>
+                        >删除</button>
                       )}
                       {onAdopt && (
                         <button
@@ -160,7 +160,7 @@ const SourceView: React.FC<SourceViewProps> = ({
                           style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                           onClick={(e) => { e.stopPropagation(); onAdopt(b); }}
                           title="接管"
-                        >📋</button>
+                        >接管</button>
                       )}
                       {onOverrideSource && b.commandSource !== 'allegro_builtin' && (
                         <button
@@ -168,12 +168,12 @@ const SourceView: React.FC<SourceViewProps> = ({
                           style={{ fontSize: 10, padding: '1px 6px', background: 'transparent', border: '1px solid var(--border-color)' }}
                           onClick={(e) => { e.stopPropagation(); onOverrideSource(b); }}
                           title="修正来源"
-                        >🔧</button>
+                        >修正</button>
                       )}
                     </div>
                   )}
                   {readonly && (
-                    <span className="source-view-readonly" style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>🔒 只读</span>
+                    <span className="source-view-readonly" style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)' }}>只读</span>
                   )}
                 </div>
               );

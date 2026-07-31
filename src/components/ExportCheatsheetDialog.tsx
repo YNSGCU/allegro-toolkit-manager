@@ -125,7 +125,7 @@ export const ExportCheatsheetDialog: React.FC<ExportCheatsheetDialogProps> = ({
             aria-label="关闭导出弹窗"
             onClick={onClose}
           >
-            ✕
+            ×
           </button>
         </div>
 
@@ -145,7 +145,7 @@ export const ExportCheatsheetDialog: React.FC<ExportCheatsheetDialogProps> = ({
                     checked={format === 'markdown'}
                     onChange={() => setFormat('markdown')}
                   />
-                  <span className="format-icon" aria-hidden="true">📝</span>
+                  <span className="format-icon" aria-hidden="true">TXT</span>
                   <span>Markdown (.md)</span>
                 </label>
                 <label
@@ -159,7 +159,7 @@ export const ExportCheatsheetDialog: React.FC<ExportCheatsheetDialogProps> = ({
                     checked={format === 'html'}
                     onChange={() => setFormat('html')}
                   />
-                  <span className="format-icon" aria-hidden="true">🌐</span>
+                  <span className="format-icon" aria-hidden="true">HTML</span>
                   <span>HTML (.html)</span>
                 </label>
               </div>

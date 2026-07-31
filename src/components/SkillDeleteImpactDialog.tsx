@@ -25,9 +25,9 @@ const optionColors: Record<string, { border: string; bg: string; text: string }>
 };
 
 const optionRiskIcons: Record<string, string> = {
-  safe: '🟢',
-  warning: '🟡',
-  danger: '🔴',
+  safe: '安全',
+  warning: '警告',
+  danger: '高风险',
 };
 
 const SkillDeleteImpactDialog: React.FC<SkillDeleteImpactDialogProps> = ({
@@ -54,11 +54,11 @@ const SkillDeleteImpactDialog: React.FC<SkillDeleteImpactDialogProps> = ({
         {/* Header */}
         <div className="modal-header">
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            {isReadonly ? '🔒' : showRefs ? '⚠️' : '🗑️'}
+            {isReadonly ? '只读' : showRefs ? '警告' : '删除'}
             {isReadonly ? ' 只读 Skill 无法删除' : ` 删除/禁用影响分析 — ${impact.skillName}`}
           </h3>
           <button className="btn btn-sm" onClick={onCancel} title="关闭">
-            ✕
+            ×
           </button>
         </div>
 
@@ -139,7 +139,7 @@ const SkillDeleteImpactDialog: React.FC<SkillDeleteImpactDialogProps> = ({
                     borderRadius: 6, fontSize: 13,
                   }}
                 >
-                  <span style={{ color: 'var(--text-muted)' }}>📋</span>
+                  <span style={{ color: 'var(--text-muted)' }}>引用</span>
                   <span>{ref.path}</span>
                   <code style={{ marginLeft: 'auto', fontSize: 11 }}>{ref.command}</code>
                 </div>
@@ -188,7 +188,7 @@ const SkillDeleteImpactDialog: React.FC<SkillDeleteImpactDialogProps> = ({
                       }}
                     >
                       <div className="impact-option-label">
-                        {optionRiskIcons[opt.riskLevel] || '🟢'} {opt.label}
+                        {optionRiskIcons[opt.riskLevel] || '安全'} {opt.label}
                       </div>
                       <div className="impact-option-desc">{opt.description}</div>
                       {opt.steps.length > 0 && (

@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardCopy, FileText, ListOrdered } from 'lucide-react';
 import type {
   SkillFileItem,
   SkillCommandItem,
@@ -30,7 +31,7 @@ import SkillDeleteImpactDialog from '../components/SkillDeleteImpactDialog';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
-import { ApplyPlanDialog, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import { ApplyPlanDialog, formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'list' | 'registry' | 'refs';
 
@@ -226,7 +227,7 @@ const SkillPage: React.FC = () => {
         }
       } catch { /* non-critical */ }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserError(err, '扫描 Skill 失败'));
     } finally {
       setLoading(false);
     }
@@ -274,7 +275,7 @@ const SkillPage: React.FC = () => {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserError(err, '加载 Skill 命令失败'));
     } finally {
       setRegistryLoading(false);
     }
@@ -895,7 +896,7 @@ const SkillPage: React.FC = () => {
       if (result.success && result.data) {
         const preview = result.data;
         setApplyResult(
-          `📦 导出预览: ${preview.name}\n` +
+          `导出预览：${preview.name}\n` +
           `入口命令: ${preview.entryCommands.join(', ')}\n` +
           `快捷键: ${preview.hotkeyCount} 个\n` +
           `配置: ${preview.configFiles?.length || 0} 个\n` +
@@ -1165,17 +1166,17 @@ const SkillPage: React.FC = () => {
         description="扫描、检查并安全应用 Allegro Skill 配置。"
         actions={(
           <>
-          <button className="btn btn-primary" onClick={loadEnhancedSkills} disabled={loading}>
-            {loading ? '扫描中...' : '重新扫描'}
-          </button>
-          <MoreActionsMenu
-            actions={[
-              { label: '管理 Skill 来源', onClick: () => setShowSourceManager((value) => !value) },
-              { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
-              { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
-              { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
-            ]}
-          />
+            <button className="btn btn-primary" onClick={loadEnhancedSkills} disabled={loading}>
+              {loading ? '扫描中...' : '重新扫描'}
+            </button>
+            <MoreActionsMenu
+              actions={[
+                { label: '管理 Skill 来源', onClick: () => setShowSourceManager((value) => !value) },
+                { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
+                { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
+                { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
+              ]}
+            />
           </>
         )}
       />
@@ -1257,9 +1258,9 @@ const SkillPage: React.FC = () => {
       />
 
       {error && (
-        <div className="message message-error">
-          {error}
-          <button className="btn btn-sm" style={{ marginLeft: 12 }} onClick={() => { setError(null); loadEnhancedSkills(); }}>
+        <div className="message message-error message-with-action">
+          <span>{error}</span>
+          <button className="btn btn-sm" onClick={() => { setError(null); loadEnhancedSkills(); }}>
             重试
           </button>
         </div>
@@ -1431,21 +1432,12 @@ const SkillPage: React.FC = () => {
 
       {/* Loader 预览 */}
       {loaderPreview && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="card-header">📄 generated_skill_loader.il 预览</div>
-          <pre style={{
-            background: 'var(--bg-secondary)',
-            padding: 16,
-            borderRadius: 'var(--radius)',
-            fontSize: 12,
-            lineHeight: 1.6,
-            overflowX: 'auto',
-            maxHeight: 300,
-            overflowY: 'auto',
-          }}>
+        <div className="card skill-preview-card">
+          <div className="card-header skill-preview-heading"><FileText aria-hidden="true" />generated_skill_loader.il 预览</div>
+          <pre className="skill-code-preview">
             {loaderPreview}
           </pre>
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setLoaderPreview(null)}>
+          <button className="btn btn-sm skill-preview-close" onClick={() => setLoaderPreview(null)}>
             关闭预览
           </button>
         </div>
@@ -1453,15 +1445,15 @@ const SkillPage: React.FC = () => {
 
       {/* Loader 加载顺序 */}
       {loaderOrder && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="card-header">📋 Loader 加载顺序分析</div>
-          <div style={{ fontSize: 12, marginBottom: 12 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <div className="card skill-preview-card">
+          <div className="card-header skill-preview-heading"><ListOrdered aria-hidden="true" />Loader 加载顺序分析</div>
+          <div className="skill-loader-order">
+            <div className="skill-loader-order-summary">
               <span>加载顺序（{loaderOrder.order.length} 个 Skill）</span>
               <span className="skill-loader-ok">{loaderOrder.order.filter(o => o.fileExists).length} 正常</span>
               <span className="skill-loader-missing">{loaderOrder.order.filter(o => !o.fileExists).length} 缺失</span>
             </div>
-            <table className="data-table" style={{ fontSize: 11 }}>
+            <table className="data-table skill-loader-order-table">
               <thead>
                 <tr>
                   <th>#</th>
@@ -1473,7 +1465,7 @@ const SkillPage: React.FC = () => {
               </thead>
               <tbody>
                 {loaderOrder.order.map((item: any) => (
-                  <tr key={item.index} style={{ opacity: item.fileExists ? 1 : 0.5 }}>
+                  <tr key={item.index} className={item.fileExists ? '' : 'is-missing'}>
                     <td>{item.index}</td>
                     <td><code>{item.name}</code></td>
                     <td>{item.isEnabled ? (item.loadStatus === 'loaded_configured' ? '已加载' : '需检查') : '已禁用'} · {item.loadStatus}</td>
@@ -1485,16 +1477,16 @@ const SkillPage: React.FC = () => {
             </table>
           </div>
           {loaderOrder.issues.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-yellow)', marginBottom: 4 }}>检测问题</div>
+            <div className="skill-loader-issues">
+              <div className="skill-loader-issues-title">检测问题</div>
               {loaderOrder.issues.map((issue: any, i: number) => (
-                <div key={i} className={`message message-${issue.severity === 'error' ? 'error' : 'warning'}`} style={{ fontSize: 11, padding: '6px 10px', marginBottom: 4 }}>
+                <div key={i} className={`message message-${issue.severity === 'error' ? 'error' : 'warning'} skill-loader-issue`}>
                   {issue.severity === 'error' ? '错误：' : '警告：'}{issue.message}
                 </div>
               ))}
             </div>
           )}
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={handleCloseLoaderOrder}>
+          <button className="btn btn-sm skill-preview-close" onClick={handleCloseLoaderOrder}>
             关闭
           </button>
         </div>
@@ -1630,7 +1622,7 @@ const SkillPage: React.FC = () => {
       {/* ===== 小屏详情弹窗 ===== */}
       {showDetailModal && (
         <div className="modal-overlay" onClick={handleCloseDetail}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+          <div className="modal-content skill-detail-modal" onClick={(e) => e.stopPropagation()}>
             <SkillDetailSidebar
               skill={detailSkill}
               loading={detailLoading}
@@ -1686,30 +1678,19 @@ const SkillPage: React.FC = () => {
       {/* V5.2 README 使用说明弹窗 */}
       {readmeContent && (
         <div className="modal-overlay" onClick={handleCloseReadme}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: '80vh', overflow: 'auto' }}>
+          <div className="modal-dialog skill-readme-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>📝 Skill 使用说明</h3>
+              <h3 className="skill-preview-heading"><FileText aria-hidden="true" />Skill 使用说明</h3>
               <button className="btn btn-sm" onClick={handleCloseReadme} aria-label="关闭 README 预览">关闭</button>
             </div>
-            <div style={{ padding: '16px 20px' }}>
-              <pre style={{
-                background: 'var(--bg-primary)',
-                padding: 16,
-                borderRadius: 'var(--radius)',
-                fontSize: 12,
-                lineHeight: 1.6,
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                maxHeight: '50vh',
-                overflowY: 'auto',
-              }}>
+            <div className="skill-readme-body">
+              <pre className="skill-code-preview skill-code-preview--wrapped">
                 {readmeContent}
               </pre>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--border-color)' }}>
+            <div className="modal-footer skill-readme-footer">
               <button className="btn" onClick={handleCloseReadme}>关闭</button>
-              <button className="btn btn-primary" onClick={handleCopyReadme}>📋 复制说明</button>
+              <button className="btn btn-primary" onClick={handleCopyReadme}><ClipboardCopy aria-hidden="true" />复制说明</button>
             </div>
           </div>
         </div>

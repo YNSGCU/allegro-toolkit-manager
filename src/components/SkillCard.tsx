@@ -28,9 +28,9 @@ interface SkillCardProps {
 }
 
 const tierIcons: Record<string, string> = {
-  company: '🏢',
-  user: '👤',
-  atm: '🤖',
+  company: '公司',
+  user: '用户',
+  atm: 'ATM',
 };
 
 const tierColors: Record<string, string> = {
@@ -123,9 +123,9 @@ const SkillCard: React.FC<SkillCardProps> = ({
   const statusTags: Array<{ label: string; color: string; bg: string; title?: string }> = [];
 
   if (pendingAction === 'pending_disable') {
-    statusTags.push({ label: '⏳ 待禁用', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.2)' });
+    statusTags.push({ label: '待禁用', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.2)' });
   } else if (pendingAction === 'pending_enable') {
-    statusTags.push({ label: '⏳ 待启用', color: 'var(--accent-blue)', bg: 'rgba(122, 162, 247, 0.2)' });
+    statusTags.push({ label: '待启用', color: 'var(--accent-blue)', bg: 'rgba(122, 162, 247, 0.2)' });
   } else if (skill.enabled) {
     statusTags.push({ label: '已启用', color: 'var(--accent-green)', bg: 'rgba(158, 206, 106, 0.15)', title: 'ATM 当前方案中允许加载该 Skill' });
   } else {
@@ -142,9 +142,9 @@ const SkillCard: React.FC<SkillCardProps> = ({
 
   // 组合状态警告提示
   if (skill.enabled && skill.loadStatus !== 'loaded_configured' && !skill.readonly) {
-    statusTags.push({ label: '⚠️ 启用未加载', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.15)', title: 'Skill 已启用但未在 loader 中发现加载配置，快捷键可能无效' });
+    statusTags.push({ label: '启用未加载', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.15)', title: 'Skill 已启用但未在 loader 中发现加载配置，快捷键可能无效' });
   } else if (!skill.enabled && skill.loadStatus === 'loaded_configured') {
-    statusTags.push({ label: '⚠️ 禁用仍在加载', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.15)', title: 'Skill 已禁用但 loader 中仍有加载配置' });
+    statusTags.push({ label: '禁用仍在加载', color: 'var(--accent-orange)', bg: 'rgba(255, 158, 100, 0.15)', title: 'Skill 已禁用但 loader 中仍有加载配置' });
   }
 
   if (skill.hotkeyRefs.length > 0) {
@@ -222,19 +222,19 @@ const SkillCard: React.FC<SkillCardProps> = ({
                 : '健康度: ' + healthScore + '/100')
             }
           >
-            {healthScore >= 90 ? '🟢' : healthScore >= 70 ? '🔵' : healthScore >= 50 ? '🟡' : '🔴'}
+            {healthScore >= 90 ? '优' : healthScore >= 70 ? '良' : healthScore >= 50 ? '中' : '差'}
             {healthScore}
           </span>
           <div className="skill-card-toggle">
             {isCompany ? (
-              <span className="badge badge-info" style={{ fontSize: 11 }}>🔒 只读</span>
+              <span className="badge badge-info" style={{ fontSize: 11 }}>只读</span>
             ) : pendingAction ? (
               <span className="badge badge-warning" style={{
                 fontSize: 11,
                 background: pendingAction === 'pending_disable' ? 'rgba(255, 158, 100, 0.2)' : 'rgba(122, 162, 247, 0.2)',
                 color: pendingAction === 'pending_disable' ? 'var(--accent-orange)' : 'var(--accent-blue)',
               }}>
-                ⏳ {pendingAction === 'pending_disable' ? '待禁用' : '待启用'}
+                {pendingAction === 'pending_disable' ? '待禁用' : '待启用'}
               </span>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -253,7 +253,7 @@ const SkillCard: React.FC<SkillCardProps> = ({
                     title="删除"
                     style={{ color: 'var(--accent-red)', fontSize: 10, padding: '2px 6px', opacity: 0.7 }}
                   >
-                    🗑️
+                    删除
                   </button>
                 )}
               </div>
@@ -326,7 +326,7 @@ const SkillCard: React.FC<SkillCardProps> = ({
             }}
             title={`分析可信度: ${meta.confidence === 'high' ? '高' : meta.confidence === 'medium' ? '中' : '低'}`}
           >
-            {meta.confidence === 'high' ? '✓ 高' : meta.confidence === 'medium' ? '~ 中' : '! 低'}
+            {meta.confidence === 'high' ? '高' : meta.confidence === 'medium' ? '中' : '低'}
           </span>
         )}
       </div>
@@ -355,12 +355,12 @@ const SkillCard: React.FC<SkillCardProps> = ({
         </button>
         {onEditNote && (
           <button className="btn btn-sm" onClick={() => onEditNote(skill)} title="编辑中文备注">
-            📝
+            备注
           </button>
         )}
         {onReAnalyze && (
           <button className="btn btn-sm" onClick={() => onReAnalyze(skill)} title="重新自动分析">
-            🔄
+            分析
           </button>
         )}
         {entryNames.length > 0 && (

@@ -281,7 +281,7 @@ Key components: `ProfileBar.tsx` (V5.6 unified profile bar — merged ProfileSel
 
 ## Testing
 
-- **203 tests** across 36 test files — Vitest 3.2
+- **199 tests** across 35 test files — Vitest 3.2
 - **Only `core/` code is testable** — `electron/` requires Electron runtime
 - Test fixtures in `test-fixtures/` directory
 - Single file: `npx.cmd vitest run tests/parseEnv.test.ts`

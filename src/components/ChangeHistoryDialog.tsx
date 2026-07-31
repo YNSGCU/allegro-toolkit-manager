@@ -120,7 +120,7 @@ export const ChangeHistoryDialog: React.FC<ChangeHistoryDialogProps> = ({
             aria-label="关闭变更历史弹窗"
             onClick={onClose}
           >
-            ✕
+            ×
           </button>
         </div>
 

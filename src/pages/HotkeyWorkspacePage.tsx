@@ -26,7 +26,7 @@ import type { EnvImportPreview, ImportResult } from '../types/importEnv';
 import type { ActiveLayer } from '../utils/hotkeyItem';
 import { enrichWithPhysicalKey, filterHotkeysByKeyboardLayer } from '../utils/hotkeyItem';
 import { loadHotkeyWorkspaceData } from '../services/loadHotkeyWorkspaceData';
-import { StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import { formatUserError, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type ImportedProfileHotkey = {
   type?: string;
@@ -117,7 +117,6 @@ function buildImportPreview(
 
 export default function HotkeyWorkspacePage() {
   const navigate = useNavigate();
-  const workspaceScale = 1;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
@@ -194,7 +193,7 @@ export default function HotkeyWorkspacePage() {
     } catch (loadError) {
       if (canSafelySetState()) {
         flushSync(() => {
-          setError(loadError instanceof Error ? loadError.message : String(loadError));
+          setError(formatUserError(loadError, '加载快捷键工作区失败'));
           setLoading(false);
         });
         settled = true;
@@ -246,7 +245,7 @@ export default function HotkeyWorkspacePage() {
     } catch (err) {
       if (canSafelySetState()) {
         flushSync(() => {
-          setError(err instanceof Error ? err.message : String(err));
+          setError(formatUserError(err, '切换快捷键方案失败'));
           setLoading(false);
         });
       }
@@ -324,7 +323,6 @@ export default function HotkeyWorkspacePage() {
   );
 
   const sharedState: HotkeyWorkspaceSharedState = {
-    workspaceScale,
     loading,
     error,
     envInfo,
@@ -705,16 +703,6 @@ export default function HotkeyWorkspacePage() {
         <StatusStrip
           label="快捷键当前状态"
           items={[
-            {
-              label: '方案',
-              value: profiles.find((profile) => profile.id === activeProfileId)?.name || '未选择',
-              tone: activeProfileId ? 'info' : 'muted',
-            },
-            {
-              label: '应用状态',
-              value: activeProfileId && activeProfileId === appliedProfileId ? '已应用' : '尚未应用',
-              tone: activeProfileId && activeProfileId === appliedProfileId ? 'ok' : 'warning',
-            },
             {
               label: '键位',
               value: `${bindings.length} 条`,

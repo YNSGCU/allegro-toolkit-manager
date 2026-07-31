@@ -64,8 +64,8 @@ const SkillMetaDialog: React.FC<SkillMetaDialogProps> = ({
         style={{ maxWidth: 480 }}
       >
         <div className="modal-header">
-          <h3>📝 编辑备注 — {skillName}</h3>
-          <button className="btn btn-sm" onClick={onClose}>✕</button>
+          <h3>编辑备注 — {skillName}</h3>
+          <button className="btn btn-sm" onClick={onClose}>关闭</button>
         </div>
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 20 }}>
@@ -180,7 +180,7 @@ const SkillMetaDialog: React.FC<SkillMetaDialogProps> = ({
             取消
           </button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '💾 保存'}
+            {saving ? '保存中...' : '保存'}
           </button>
         </div>
       </div>

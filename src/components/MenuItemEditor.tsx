@@ -7,6 +7,7 @@
  * - menu 类型：显示完整编辑面板
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Save, Trash2, XCircle } from 'lucide-react';
 import type { MenuItemConfig, MenuItemType, MenuSource, MenuCommandSource, MenuIssue } from '../types/menu';
 import { getMenuSourceLabel, getMenuSourceBadge, isMenuSourceReadOnly, ISSUE_SEVERITY_STYLES } from '../types/menu';
 
@@ -105,16 +106,10 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
 
   if (!item) {
     return (
-      <div style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-      }}>
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
-        <div>选择一个菜单项进行编辑</div>
-        <div style={{ fontSize: '12px', marginTop: '8px' }}>
-          点击左侧菜单树中的项目查看详情
-        </div>
+      <div className="menu-item-empty">
+        <FileText aria-hidden="true" />
+        <strong>选择一个菜单项进行编辑</strong>
+        <span>点击左侧菜单树中的项目查看详情。</span>
       </div>
     );
   }
@@ -122,7 +117,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
   const isSeparator = item.type === 'separator';
 
   return (
-    <div style={{ padding: '16px 20px', overflow: 'auto', height: '100%', boxSizing: 'border-box' }}>
+    <div className="menu-item-editor">
       {/* 标题区域 */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -159,7 +154,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
           color: '#f87171',
         }}>
           <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-            ✕ {item.type === 'separator' ? '分隔线不能作为顶级节点' : '命令不能作为顶级节点'}
+            {item.type === 'separator' ? '分隔线不能作为顶级节点' : '命令不能作为顶级节点'}
           </div>
           <div style={{ fontSize: '12px' }}>
             {item.type === 'separator'
@@ -312,20 +307,20 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
           const skillDisabledIssue = hasIssue && item.issues!.some(i => i.type === 'disabled_skill');
           const skillNotLoadedIssue = hasIssue && item.issues!.some(i => i.type === 'skill_not_loaded');
 
-          let statusIcon = '✅';
+          let StatusIcon = CheckCircle2;
           let statusText = '可用';
           let statusColor = '#34d399';
 
           if (cmdMissingIssue) {
-            statusIcon = '✕';
+            StatusIcon = XCircle;
             statusText = 'CommandIndex 中未找到该命令';
             statusColor = '#f87171';
           } else if (skillDisabledIssue) {
-            statusIcon = '⚠';
+            StatusIcon = AlertTriangle;
             statusText = 'Skill 已禁用，菜单可能无法使用';
             statusColor = '#fbbf24';
           } else if (skillNotLoadedIssue) {
-            statusIcon = '⚠';
+            StatusIcon = AlertTriangle;
             statusText = 'Skill 未配置加载，菜单可能无法使用';
             statusColor = '#fbbf24';
           }
@@ -347,7 +342,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
                   alignItems: 'center',
                   gap: '3px',
                 }}>
-                  {statusIcon} {statusText}
+                  <StatusIcon aria-hidden="true" /> {statusText}
                 </span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>
@@ -435,7 +430,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
             fontSize: '12px',
           }}
         >
-          {hasChanges ? '💾 保存修改' : '已保存'}
+          {hasChanges ? <><Save aria-hidden="true" />保存修改</> : '已保存'}
         </button>
 
         <button
@@ -496,7 +491,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
             fontSize: '12px',
           }}
         >
-          🗑 删除
+          <Trash2 aria-hidden="true" />删除
         </button>
       </div>
 
@@ -527,7 +522,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
                 fontSize: '11px',
               }}
             >
-              🔗 查看 Skill
+              <ExternalLink aria-hidden="true" />查看 Skill
             </button>
           )}
           {item.command && onNavigateHotkey && (
@@ -544,7 +539,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
                 fontSize: '11px',
               }}
             >
-              🔗 查看快捷键
+              <ExternalLink aria-hidden="true" />查看快捷键
             </button>
           )}
         </div>
@@ -558,6 +553,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
           </div>
           {item.issues.map((issue) => {
             const style = ISSUE_SEVERITY_STYLES[issue.severity] || ISSUE_SEVERITY_STYLES.info;
+            const IssueIcon = issue.severity === 'error' ? XCircle : issue.severity === 'warning' ? AlertTriangle : CheckCircle2;
             return (
               <div
                 key={issue.id}
@@ -571,7 +567,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: style.color, fontWeight: 600 }}>
-                  <span>{style.icon}</span>
+                  <IssueIcon aria-hidden="true" />
                   <span>{issue.title}</span>
                 </div>
                 <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>{issue.description}</div>

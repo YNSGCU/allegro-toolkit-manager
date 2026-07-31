@@ -838,7 +838,8 @@ describe('hotkey workspace shared data', () => {
     renderHotkeyWorkspace('/hotkeys/overview');
 
     expect(await screen.findByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
-    expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('已应用');
+    expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('键位2 条');
+    expect(screen.getByLabelText('快捷键当前状态')).not.toHaveTextContent('应用状态');
     expect(screen.getByText(/条快捷键/)).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({

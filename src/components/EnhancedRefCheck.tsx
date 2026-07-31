@@ -41,7 +41,7 @@ const EnhancedRefCheck: React.FC<EnhancedRefCheckProps> = ({
   if (!issues || issues.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: 32 }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+        <div className="ref-check-success-mark" aria-hidden="true" />
         <p style={{ color: 'var(--accent-green)', fontWeight: 600 }}>所有引用检查通过</p>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>未发现问题</p>
       </div>
@@ -74,10 +74,10 @@ const EnhancedRefCheck: React.FC<EnhancedRefCheckProps> = ({
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
-      case 'error': return '❌';
-      case 'warning': return '⚠️';
-      case 'info': return 'ℹ️';
-      default: return '❓';
+      case 'error': return '错误';
+      case 'warning': return '警告';
+      case 'info': return '信息';
+      default: return '未知';
     }
   };
 
@@ -236,27 +236,27 @@ const EnhancedRefCheck: React.FC<EnhancedRefCheckProps> = ({
                 <div className="ref-issue-actions">
                   {issue.type === 'skill_not_loaded' && onAddToLoader && issue.skillId && (
                     <button className="btn btn-sm" onClick={() => onAddToLoader(issue.skillId!)}>
-                      📄 加入 Loader
+                      加入 Loader
                     </button>
                   )}
                   {issue.type === 'skill_unreferenced' && onBindHotkey && issue.commandName && (
                     <button className="btn btn-sm" onClick={() => onBindHotkey(issue.commandName!)}>
-                      ⌨️ 绑定快捷键
+                      绑定快捷键
                     </button>
                   )}
                   {issue.type === 'skill_unreferenced' && onAddMenu && issue.commandName && (
                     <button className="btn btn-sm" onClick={() => onAddMenu(issue.commandName!)}>
-                      📋 添加菜单
+                      添加菜单
                     </button>
                   )}
                   {onViewSkill && issue.skillId && (
                     <button className="btn btn-sm" onClick={() => onViewSkill(issue.skillId!)}>
-                      👁️ 查看详情
+                      查看详情
                     </button>
                   )}
                   {onIgnoreIssue && !issue.ignored && (
                     <button className="btn btn-sm" onClick={() => onIgnoreIssue(issue.id)}>
-                      🙈 忽略
+                      忽略
                     </button>
                   )}
                 </div>
