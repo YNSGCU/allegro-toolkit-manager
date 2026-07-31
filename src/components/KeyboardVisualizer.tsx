@@ -747,7 +747,7 @@ const KeyboardOccupancy: React.FC<KeyboardOccupancyProps> = ({
         ref={wrapperRef}
       >
         <div
-          className="keyboard-board"
+          className="keyboard-board keyboard-board--overflow-safe"
           ref={boardRef}
           style={{ transform: `scale(${kbScale})`, transformOrigin: 'top center' }}
         >

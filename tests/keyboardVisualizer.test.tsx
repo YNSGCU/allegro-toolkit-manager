@@ -8,6 +8,28 @@ afterEach(() => {
 });
 
 describe('keyboard visualizer scaling', () => {
+  it('reserves an overflow-safe area for edge binding badges', () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class ResizeObserver {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    );
+
+    const { container } = render(
+      <KeyboardVisualizer
+        bindings={[]}
+        conflicts={[]}
+        selectedKey={null}
+        onSelectKey={() => {}}
+      />,
+    );
+
+    expect(container.querySelector('.keyboard-board')).toHaveClass('keyboard-board--overflow-safe');
+  });
+
   it('uses the measured keyboard height instead of a guessed constant when fitting vertically', async () => {
     const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
     const originalClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');

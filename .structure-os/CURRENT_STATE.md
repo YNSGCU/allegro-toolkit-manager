@@ -2,10 +2,10 @@
 
 ## Snapshot
 
-- Last updated: 2026-07-31
+- Last updated: 2026-08-01
 - Current branch: Git repository initialized; UI reset baseline commit `c95a222`
 - App status: five routed pages use the shared workspace UI contract; write safety and IPC boundaries are unchanged
-- Test status: 36 files / 202 tests pass after obsolete MinimalSurface and responsive-scale tests were removed
+- Test status: 36 files / 203 tests pass；键盘边缘角标安全区已有回归覆盖
 - Validation status: frontend TypeScript, Electron TypeScript and renderer production build pass
 
 ## Implemented Behavior

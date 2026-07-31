@@ -859,6 +859,14 @@ body {
   will-change: transform;
 }
 
+/*
+ * 键位数量角标会向按键外侧伸出 4px。画板四周保留安全区，避免第一排
+ * 及左右边缘角标被 keyboard-wrapper 的 overflow: hidden 裁切。
+ */
+.keyboard-board--overflow-safe {
+  padding: 6px;
+}
+
 .kv-hover-card {
   position: fixed;
   z-index: 40;
