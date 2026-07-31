@@ -30,15 +30,9 @@ import SkillDeleteImpactDialog from '../components/SkillDeleteImpactDialog';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
+import { ApplyPlanDialog, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'list' | 'registry' | 'refs';
-
-/** Apply Plan action 类型 → 中文映射 */
-import { getStepLabel } from '../utils/stepLabels';
-function getStepTypeLabel(type: string): string {
-  const info = getStepLabel(type);
-  return `${info.icon} ${info.label}`;
-}
 
 /** 筛选选项 */
 interface SkillFilters {
@@ -421,16 +415,16 @@ const SkillPage: React.FC = () => {
         ? await window.atm.skillProfileExecuteApplyPlan(JSON.stringify(pendingPlan))
         : await window.atm.applySkillChanges(JSON.stringify(pendingPlan));
       if (result.success) {
-        setApplyResult('✅ Apply 成功！请重启 Allegro 生效。');
+        setApplyResult('Apply 成功，请重启 Allegro 生效。');
         setPendingPlan(null);
         setPendingPlanExecutor('skill');
         setPendingSkills({}); // 清除所有待应用标记
         loadEnhancedSkills();
       } else {
-        setApplyResult(`❌ Apply 失败: ${result.error}`);
+        setApplyResult(`Apply 失败：${result.error}`);
       }
     } catch (err) {
-      setApplyResult(`❌ Apply 失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`Apply 失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setApplying(false);
     }
@@ -537,8 +531,8 @@ const SkillPage: React.FC = () => {
         ...updatedData,
       },
     }));
-    setApplyResult(`✅ 备注保存成功`);
-    setTimeout(() => setApplyResult(prev => prev?.startsWith('✅') ? null : prev), 3000);
+    setApplyResult('备注保存成功');
+    setTimeout(() => setApplyResult(prev => prev === '备注保存成功' ? null : prev), 3000);
   };
 
   /** 打开编辑备注弹窗 */
@@ -554,7 +548,7 @@ const SkillPage: React.FC = () => {
   /** 重新自动分析单个 Skill */
   const handleReAnalyze = async (skill: SkillFileItem) => {
     // 用 applyResult 显示分析状态
-    setApplyResult(`🔄 正在分析 ${skill.name}...`);
+    setApplyResult(`正在分析 ${skill.name}…`);
     try {
       const result = await window.atm.skillMetaAnalyze(JSON.stringify(skill));
       if (result.success && result.data) {
@@ -562,15 +556,15 @@ const SkillPage: React.FC = () => {
           ...prev,
           [skill.id]: result.data,
         }));
-        setApplyResult(`✅ ${skill.name} 分析完成！`);
+        setApplyResult(`${skill.name} 分析完成`);
         // 3秒后自动清除提示
-        setTimeout(() => setApplyResult(prev => prev?.startsWith('✅') ? null : prev), 3000);
+        setTimeout(() => setApplyResult(prev => prev?.includes('分析完成') ? null : prev), 3000);
       } else {
-        setApplyResult(`❌ 分析失败: ${result.error || '未知错误'}`);
+        setApplyResult(`分析失败：${result.error || '未知错误'}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setApplyResult(`❌ 分析出错: ${msg}`);
+      setApplyResult(`分析出错：${msg}`);
       console.error('重分析失败:', err);
     }
   };
@@ -636,10 +630,10 @@ const SkillPage: React.FC = () => {
         setDeleteTarget(skill);
         setDeleteImpact(result.data);
       } else {
-        setApplyResult(`❌ 影响分析失败: ${result.error}`);
+        setApplyResult(`影响分析失败：${result.error}`);
       }
     } catch (err) {
-      setApplyResult(`❌ 影响分析失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`影响分析失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImpactLoading(false);
     }
@@ -656,10 +650,10 @@ const SkillPage: React.FC = () => {
         setDeleteImpact(null);
         setDeleteTarget(null);
       } else {
-        setApplyResult(`❌ 创建删除计划失败: ${result.error}`);
+        setApplyResult(`创建删除计划失败：${result.error}`);
       }
     } catch (err) {
-      setApplyResult(`❌ 创建删除计划失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`创建删除计划失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImpactLoading(false);
     }
@@ -682,15 +676,15 @@ const SkillPage: React.FC = () => {
   };
 
   const handleDeleteHotkeyBinding = (_ref: HotkeyReference) => {
-    setApplyResult('ℹ️ 请切换到快捷键管理页进行删除操作。');
+    setApplyResult('请切换到快捷键管理页进行删除操作。');
   };
 
   const handleViewEnvRawLine = (_source: string, _lineNumber: number) => {
-    setApplyResult('ℹ️ 原始行查看功能请使用快捷键页的原始行查看器。');
+    setApplyResult('原始行查看功能请使用快捷键页的原始行查看器。');
   };
 
   const handleAddMenu = (_commandName: string) => {
-    setApplyResult('ℹ️ 菜单管理模块未完成，请期待后续版本。');
+    setApplyResult('请前往菜单页处理菜单引用。');
   };
 
   const handleAddReadonlyDir = async () => {
@@ -725,7 +719,7 @@ const SkillPage: React.FC = () => {
   };
 
   const handleOpenDir = (_dirPath: string) => {
-    setApplyResult('ℹ️ 请手动打开文件管理器浏览目录。');
+    setApplyResult('请手动打开文件管理器浏览目录。');
   };
 
   const handleIgnoreIssue = (issueId: string) => {
@@ -849,10 +843,10 @@ const SkillPage: React.FC = () => {
       if (result.success && result.data) {
         setReadmeContent(result.data);
       } else {
-        setApplyResult('❌ 生成 README 失败');
+        setApplyResult('生成 README 失败');
       }
     } catch (err) {
-      setApplyResult(`❌ 生成 README 失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`生成 README 失败：${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -860,7 +854,7 @@ const SkillPage: React.FC = () => {
   const handleCopyReadme = () => {
     if (readmeContent) {
       navigator.clipboard?.writeText(readmeContent).catch(() => {});
-      setApplyResult('✅ README 已复制到剪贴板');
+      setApplyResult('README 已复制到剪贴板');
     }
   };
 
@@ -877,10 +871,10 @@ const SkillPage: React.FC = () => {
       if (result.success && result.data) {
         setLoaderOrder(result.data);
       } else {
-        setApplyResult('❌ 获取加载顺序失败');
+        setApplyResult('获取加载顺序失败');
       }
     } catch (err) {
-      setApplyResult(`❌ 获取加载顺序失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`获取加载顺序失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoaderOrderLoading(false);
     }
@@ -905,11 +899,11 @@ const SkillPage: React.FC = () => {
           `入口命令: ${preview.entryCommands.join(', ')}\n` +
           `快捷键: ${preview.hotkeyCount} 个\n` +
           `配置: ${preview.configFiles?.length || 0} 个\n` +
-          (preview.warning ? `\n⚠️ ${preview.warning}` : '')
+          (preview.warning ? `\n警告：${preview.warning}` : '')
         );
       }
     } catch (err) {
-      setApplyResult(`❌ 导出预览失败: ${err instanceof Error ? err.message : String(err)}`);
+      setApplyResult(`导出预览失败：${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -1164,13 +1158,13 @@ const SkillPage: React.FC = () => {
   /** 顶栏 — 各 Tab 共用 */
   const renderPageHeader = () => (
     <>
-      <header className="skill-workspace-header">
-        <div>
-          <p className="skill-workspace-eyebrow">能力管理</p>
-          <h1>Skill 管理</h1>
-          <p>扫描、检查并安全应用 Allegro Skill 配置。</p>
-        </div>
-        <div className="skill-workspace-header-actions">
+      <WorkspaceHeader
+        className="skill-workspace-header"
+        eyebrow="能力管理"
+        title="Skill 管理"
+        description="扫描、检查并安全应用 Allegro Skill 配置。"
+        actions={(
+          <>
           <button className="btn btn-primary" onClick={loadEnhancedSkills} disabled={loading}>
             {loading ? '扫描中...' : '重新扫描'}
           </button>
@@ -1182,8 +1176,9 @@ const SkillPage: React.FC = () => {
               { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
             ]}
           />
-        </div>
-      </header>
+          </>
+        )}
+      />
 
       {/* Skill 方案栏 */}
       {skillProfileStore && (
@@ -1223,7 +1218,7 @@ const SkillPage: React.FC = () => {
                 setPendingPlanExecutor('skill-profile');
                 setApplyResult(null);
               } else {
-                setApplyResult(`❌ 生成 Skill 方案应用计划失败: ${res.error || '未知错误'}`);
+                setApplyResult(`生成 Skill 方案应用计划失败：${res.error || '未知错误'}`);
               }
             }
           }}
@@ -1291,86 +1286,19 @@ const SkillPage: React.FC = () => {
         ))}
       </div>
 
-      {pendingPlan && (
-        <div className="card" style={{ borderLeft: '3px solid var(--accent-yellow)', marginBottom: 20 }}>
-          <div className="card-header">
-            <span>📋 应用计划预览</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 'normal' }}>
-              {pendingPlan.requiresRestart ? ' ⚠️ 需重启' : ''}
-            </span>
-          </div>
-          <div style={{ fontSize: 13, marginBottom: 8 }}>
-            <strong>{pendingPlan.title || pendingPlan.summary || '应用计划'}</strong>
-            {pendingPlan.description && (
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{pendingPlan.description}</p>
-            )}
-          </div>
-          {/* 步骤列表 */}
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
-              执行步骤（{pendingPlan.steps.length} 步）
-            </div>
-            {pendingPlan.steps.map((step, i) => (
-              <div key={step.id || i} style={{
-                padding: '5px 8px', marginBottom: 2,
-                background: 'rgba(125, 207, 255, 0.04)',
-                borderRadius: 4,
-                display: 'flex', alignItems: 'flex-start', gap: 6,
-              }}>
-                <span style={{ color: 'var(--text-muted)', minWidth: 20 }}>{i + 1}.</span>
-                <span style={{ color: 'var(--accent-blue)', minWidth: 80, flexShrink: 0 }}>{getStepTypeLabel(step.type)}</span>
-                <span style={{ flex: 1 }}>{step.description || step.title}</span>
-              </div>
-            ))}
-          </div>
-          {/* 风险提示 */}
-          {pendingPlan.risks && pendingPlan.risks.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontWeight: 600, fontSize: 11, color: 'var(--accent-red)', marginBottom: 4 }}>
-                风险提示（{pendingPlan.risks.length}）
-              </div>
-              {pendingPlan.risks.map((risk) => (
-                <div key={risk.id} className={`message message-${risk.severity === 'error' ? 'error' : risk.severity === 'warning' ? 'warning' : 'info'}`} style={{ fontSize: 11, padding: '6px 10px', marginBottom: 4 }}>
-                  {risk.severity === 'error' ? '❌' : risk.severity === 'warning' ? '⚠️' : 'ℹ️'} {risk.title}
-                  {risk.description && <div style={{ marginTop: 2 }}>{risk.description}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-          {/* 兼容旧版 warnings */}
-          {(!pendingPlan.risks || pendingPlan.risks.length === 0) && pendingPlan.warnings && pendingPlan.warnings.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              {pendingPlan.warnings.map((w, i) => (
-                <div key={i} className={`message message-${w.level === 'danger' ? 'error' : w.level}`} style={{ fontSize: 11, padding: '6px 10px', marginBottom: 4 }}>
-                  {w.level === 'danger' ? '❌' : '⚠️'} {w.message}
-                </div>
-              ))}
-            </div>
-          )}
-          {/* 备份信息 */}
-          {pendingPlan.backups && pendingPlan.backups.length > 0 && (
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, padding: '6px 8px', background: 'rgba(108, 108, 138, 0.08)', borderRadius: 4 }}>
-              📦 将备份 {pendingPlan.backups.length} 个文件
-            </div>
-          )}
-          {pendingPlan.requiresRestart && (
-            <div className="message message-warning" style={{ marginBottom: 12 }}>
-              ⚠️ 此操作需要重启 Allegro 才能生效
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-primary" onClick={handleApplyPlan} disabled={applying}>
-              {applying ? '执行中...' : '✅ 确认执行'}
-            </button>
-            <button className="btn" onClick={handleCancelPlan} disabled={applying}>
-              取消
-            </button>
-          </div>
-        </div>
-      )}
+      <ApplyPlanDialog
+        open={!!pendingPlan}
+        plan={pendingPlan}
+        applying={applying}
+        title="确认应用 Skill 配置"
+        intro="确认后将按计划更新 Skill 方案、加载器和启动配置，并在写入前创建必要备份。"
+        confirmLabel="确认执行计划"
+        onConfirm={handleApplyPlan}
+        onCancel={handleCancelPlan}
+      />
 
       {applyResult && (
-        <div className={`message ${applyResult.startsWith('✅') || applyResult.startsWith('ℹ️') ? 'message-info' : 'message-error'}`} style={{ marginBottom: 20 }}>
+        <div className={`message ${/失败|出错/.test(applyResult) ? 'message-error' : 'message-info'} skill-operation-message`}>
           {applyResult}
         </div>
       )}
@@ -1530,8 +1458,8 @@ const SkillPage: React.FC = () => {
           <div style={{ fontSize: 12, marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
               <span>加载顺序（{loaderOrder.order.length} 个 Skill）</span>
-              <span style={{ color: 'var(--accent-green)' }}>✅ {loaderOrder.order.filter(o => o.fileExists).length} 正常</span>
-              <span style={{ color: 'var(--accent-red)' }}>❌ {loaderOrder.order.filter(o => !o.fileExists).length} 缺失</span>
+              <span className="skill-loader-ok">{loaderOrder.order.filter(o => o.fileExists).length} 正常</span>
+              <span className="skill-loader-missing">{loaderOrder.order.filter(o => !o.fileExists).length} 缺失</span>
             </div>
             <table className="data-table" style={{ fontSize: 11 }}>
               <thead>
@@ -1548,9 +1476,9 @@ const SkillPage: React.FC = () => {
                   <tr key={item.index} style={{ opacity: item.fileExists ? 1 : 0.5 }}>
                     <td>{item.index}</td>
                     <td><code>{item.name}</code></td>
-                    <td>{item.isEnabled ? (item.loadStatus === 'loaded_configured' ? '✅' : '⚠️') : '⛔'} {item.loadStatus}</td>
+                    <td>{item.isEnabled ? (item.loadStatus === 'loaded_configured' ? '已加载' : '需检查') : '已禁用'} · {item.loadStatus}</td>
                     <td>{item.hasDependencies ? item.dependencies.join(', ') : '无'}</td>
-                    <td>{item.fileExists ? '✅' : '❌'}</td>
+                    <td>{item.fileExists ? '存在' : '缺失'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1561,7 +1489,7 @@ const SkillPage: React.FC = () => {
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-yellow)', marginBottom: 4 }}>检测问题</div>
               {loaderOrder.issues.map((issue: any, i: number) => (
                 <div key={i} className={`message message-${issue.severity === 'error' ? 'error' : 'warning'}`} style={{ fontSize: 11, padding: '6px 10px', marginBottom: 4 }}>
-                  {issue.severity === 'error' ? '❌' : '⚠️'} {issue.message}
+                  {issue.severity === 'error' ? '错误：' : '警告：'}{issue.message}
                 </div>
               ))}
             </div>
@@ -1600,7 +1528,9 @@ const SkillPage: React.FC = () => {
   );
 
   return (
-    <div
+    <WorkspacePage
+      density="compact"
+      scroll="contained"
       className={`workspace-page workspace-page-skills skill-page-layout ${
         showSplitLayout ? 'skill-page-split' : ''
       }`}
@@ -1759,7 +1689,7 @@ const SkillPage: React.FC = () => {
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: '80vh', overflow: 'auto' }}>
             <div className="modal-header">
               <h3>📝 Skill 使用说明</h3>
-              <button className="btn btn-sm" onClick={handleCloseReadme}>✕</button>
+              <button className="btn btn-sm" onClick={handleCloseReadme} aria-label="关闭 README 预览">关闭</button>
             </div>
             <div style={{ padding: '16px 20px' }}>
               <pre style={{
@@ -1784,7 +1714,7 @@ const SkillPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </WorkspacePage>
   );
 };
 

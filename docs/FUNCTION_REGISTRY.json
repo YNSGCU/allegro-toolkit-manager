@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02",
+  "generatedAt": "2026-07-31",
   "features": [
     {
       "id": "environment-detection",
@@ -24,7 +24,8 @@
       "id": "hotkey-management",
       "status": "complete",
       "ui": [
-        "src/pages/HotkeyPage.tsx"
+        "src/pages/HotkeyWorkspacePage.tsx",
+        "src/services/loadHotkeyWorkspaceData.ts"
       ],
       "ipc": [
         "hotkey:parse-env",
@@ -93,6 +94,20 @@
       "ipc": [
         "app:getRuntimeInfo"
       ],
+      "core": []
+    },
+    {
+      "id": "workspace-ui",
+      "status": "complete",
+      "ui": [
+        "src/components/Layout.tsx",
+        "src/shared/ui/workspace/WorkspacePage.tsx",
+        "src/shared/ui/workspace/WorkspaceHeader.tsx",
+        "src/shared/ui/workspace/StatusStrip.tsx",
+        "src/shared/ui/feedback/PageState.tsx",
+        "src/shared/ui/overlays/ApplyPlanDialog.tsx"
+      ],
+      "ipc": [],
       "core": []
     }
   ]

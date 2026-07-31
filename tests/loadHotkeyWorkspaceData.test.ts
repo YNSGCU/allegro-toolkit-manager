@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { loadHotkeyWorkspaceData } from '../src/pages/HotkeyPage';
+import { loadHotkeyWorkspaceData } from '../src/services/loadHotkeyWorkspaceData';
 
 afterEach(() => {
   vi.restoreAllMocks();

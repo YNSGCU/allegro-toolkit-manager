@@ -64,7 +64,7 @@ function createState(): HotkeyWorkspaceSharedState {
 }
 
 describe('hotkey overview panel', () => {
-  it('hides the large title block but keeps summary chips and passes reserved bindings to the keyboard view', () => {
+  it('renders a compact overview header and passes reserved bindings to the keyboard view', () => {
     keyboardVisualizerSpy.mockReset();
 
     const { container } = render(
@@ -102,11 +102,11 @@ describe('hotkey overview panel', () => {
       </MemoryRouter>,
     );
 
-    expect(container.querySelector('.minimal-surface-copy')).toBeNull();
-    expect(screen.getByText('97 条快捷键')).toBeInTheDocument();
-    expect(screen.getByText('0 个问题')).toBeInTheDocument();
-    expect(screen.getByText('已应用方案')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /编辑键位/ })).toHaveAttribute('href', '/hotkeys/editor');
+    expect(container.querySelector('.minimal-surface')).toBeNull();
+    expect(screen.getByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
+    expect(screen.getByText(/97 条快捷键/)).toBeInTheDocument();
+    expect(screen.getByText(/当前未发现冲突问题/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '编辑键位' })).toHaveAttribute('href', '/hotkeys/editor');
     expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({

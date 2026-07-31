@@ -26,7 +26,7 @@ function mockAtm() {
 }
 
 describe('hotkey workspace routing', () => {
-  it('redirects /hotkeys to overview, keeps balanced subnav, and does not render page scaler wrappers', async () => {
+  it('redirects /hotkeys to overview, renders compact tabs, and does not render page scaler wrappers', async () => {
     mockAtm();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -43,9 +43,10 @@ describe('hotkey workspace routing', () => {
         expect(container.querySelector('.hotkey-subnav-link.active')).not.toBeNull(),
       );
 
-      expect(container.querySelector('.hotkey-subnav')).toHaveClass('hotkey-subnav--balanced');
+      expect(container.querySelector('.hotkey-subnav-track')).not.toBeNull();
       expect(container.querySelectorAll('.hotkey-subnav-link')).toHaveLength(4);
       expect(container.querySelector('.hotkey-workspace-stage')).toBeNull();
+      expect(container.querySelector('.hotkey-workspace-page')).not.toHaveAttribute('style');
       expect(consoleErrorSpy).not.toHaveBeenCalled();
     } finally {
       consoleErrorSpy.mockRestore();

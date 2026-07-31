@@ -8,12 +8,22 @@
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  FileDown,
+  FolderPlus,
+  Info,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
 import type { MenuItemConfig, MenuProfile, MenuProfileStore, MenuIssue, MenuTreeValidationIssue } from '../types/menu';
 import { generateMenuId, validateMenuTree } from '../types/menu';
 import { showToast } from '../components/common/Toast';
-import ErrorPanel from '../components/common/ErrorPanel';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
+import MoreActionsMenu from '../components/MoreActionsMenu';
 import MenuTree from '../components/MenuTree';
 import MenuTreeAddBar from '../components/MenuTreeAddBar';
 import MenuItemEditor from '../components/MenuItemEditor';
@@ -21,6 +31,7 @@ import CommandSelector from '../components/CommandSelector';
 import MenuPreviewDialog from '../components/MenuPreviewDialog';
 import MenuApplyPlanDialog from '../components/MenuApplyPlanDialog';
 import { useMenuApplyPlan } from '../hooks/useMenuApplyPlan';
+import { PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'tree' | 'commands' | 'refs';
 
@@ -44,19 +55,6 @@ interface LinkedSkill {
   isEnabled: boolean;
   isLoaded: boolean;
 }
-
-/** 底部 Toast 样式 */
-const toastStyle: React.CSSProperties = {
-  position: 'fixed',
-  bottom: '20px',
-  right: '20px',
-  padding: '12px 20px',
-  borderRadius: '8px',
-  fontSize: '13px',
-  zIndex: 2000,
-  boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-  maxWidth: '400px',
-};
 
 const MenuPage: React.FC = () => {
   const navigate = useNavigate();
@@ -871,64 +869,62 @@ const MenuPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="page-container" style={{ padding: '20px' }}>
-        <div className="loading" style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-          ⏳ 加载菜单配置...
-        </div>
-      </div>
+      <WorkspacePage className="workspace-page-menu page-container">
+        <WorkspaceHeader eyebrow="界面配置" title="菜单" description="正在读取菜单方案与 Allegro 加载状态。" />
+        <PageState kind="loading" title="正在加载菜单配置" description="正在合并方案、命令索引与生成文件状态。" />
+      </WorkspacePage>
     );
   }
 
   if (error) {
     return (
-      <div className="page-container" style={{ padding: '20px' }}>
-        <ErrorPanel message={error} onRetry={loadData} />
-      </div>
+      <WorkspacePage className="workspace-page-menu page-container">
+        <WorkspaceHeader eyebrow="界面配置" title="菜单" description="编辑菜单树，并安全写入 Allegro 启动配置。" />
+        <PageState
+          kind="error"
+          title="菜单数据加载失败"
+          description={error}
+          action={<button className="btn btn-primary" onClick={() => void loadData()}>重新加载</button>}
+        />
+      </WorkspacePage>
     );
   }
 
   return (
-    <div
-      className="workspace-page workspace-page-menu page-container"
-    >
-      <header className="menu-page-header">
-        <div className="menu-page-heading">
-          <h1>菜单</h1>
-          <p>编辑菜单树，并安全写入 Allegro 启动配置。</p>
-        </div>
-
-        <div className="menu-page-actions">
-        <button onClick={handleSaveDraft} className="btn btn-sm">
-          保存草稿
-        </button>
-        <button
-          onClick={handleGeneratePlan}
-          className="btn btn-sm btn-primary"
-          title="打开写入确认；确认后生成菜单脚本并配置 Allegro 启动加载。"
-        >
-          应用到 Allegro
-        </button>
-
-        <button onClick={handlePreview} className="btn btn-sm">
-          预览 IL
-        </button>
-
-        <button onClick={handleRescan} className="btn btn-sm">
-          重新扫描
-        </button>
-        <button onClick={handleAddRootMenu} className="btn btn-sm">
-          新建顶级菜单
-        </button>
-        <input
-          type="text"
-          placeholder="搜索菜单..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="menu-page-search"
-          aria-label="搜索菜单"
-        />
-        </div>
-      </header>
+    <WorkspacePage className="workspace-page-menu page-container" density="compact" scroll="contained">
+      <WorkspaceHeader
+        className="menu-page-header"
+        eyebrow="界面配置"
+        title="菜单"
+        description="维护 ATM 管理的菜单覆盖层，并在写入前预览生成结果与影响范围。"
+        actions={(
+          <div className="menu-page-actions">
+            <button onClick={handleSaveDraft} className="btn btn-sm">保存草稿</button>
+            <button
+              onClick={handleGeneratePlan}
+              className="btn btn-sm btn-primary"
+              title="打开写入确认；确认后生成菜单脚本并配置 Allegro 启动加载。"
+            >
+              应用到 Allegro
+            </button>
+            <MoreActionsMenu
+              actions={[
+                { label: '预览 IL', onClick: handlePreview },
+                { label: '重新扫描', onClick: handleRescan },
+                { label: '新建顶级菜单', onClick: handleAddRootMenu },
+              ]}
+            />
+            <input
+              type="search"
+              placeholder="搜索菜单…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="menu-page-search"
+              aria-label="搜索菜单"
+            />
+          </div>
+        )}
+      />
 
       {/* 菜单方案栏 */}
       {store && (
@@ -1042,32 +1038,30 @@ const MenuPage: React.FC = () => {
             <div className={`menu-tree-pane${items.length === 0 ? ' is-empty' : ''}`}>
               {items.length === 0 ? (
                 /* 空菜单引导 */
-                <div style={{ padding: '32px 24px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px', color: 'var(--text-primary)' }}>
-                    暂无菜单配置
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                <div className="menu-empty-guide">
+                  <h2>暂无菜单配置</h2>
+                  <p>
                     当前没有菜单项。你可以通过以下方式快速开始：
-                  </div>
+                  </p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="menu-guide-list">
                     {/* 创建默认菜单 */}
                     <GuideCard
-                      icon="📁"
+                      icon={FolderPlus}
                       title="创建默认 ATM Tools 菜单"
                       desc="创建一个名为 ATM Tools 的顶级菜单，后续可添加子菜单和菜单项"
                       onClick={handleCreateDefaultMenu}
                     />
                     {/* 从 Skill 命令生成 */}
                     <GuideCard
-                      icon="⚡"
+                      icon={Sparkles}
                       title="从 Skill 命令生成推荐菜单"
                       desc={`根据 CommandIndex 中 ${commands.length} 个命令自动分类生成推荐菜单草稿`}
                       onClick={handleRecommendFromCommands}
                     />
                     {/* 导入菜单方案 */}
                     <GuideCard
-                      icon="📥"
+                      icon={FileDown}
                       title="导入菜单方案"
                       desc="从已有的 menu_profile.json 或其他格式导入菜单配置"
                       onClick={() => showToast('info', '导入功能将在后续版本中提供')}
@@ -1110,65 +1104,51 @@ const MenuPage: React.FC = () => {
 
         {/* 命令视图 */}
         {tab === 'commands' && (
-          <div style={{ flex: 1, padding: '16px 20px', overflow: 'auto' }}>
-            <div style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div className="menu-command-view">
+            <div className="menu-command-toolbar">
               显示 {commandViewData.filter(c => !c.hasMenu).length} 个尚无菜单的命令
               <button
                 onClick={() => setFilterSource(f => f === 'all' ? 'nomenu' : 'all')}
-                style={{
-                  marginLeft: '8px',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                }}
+                className="btn btn-sm"
               >
                 {filterSource === 'nomenu' ? '显示全部' : '仅无菜单'}
               </button>
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <table className="data-table menu-command-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={thStyle}>命令名</th>
-                  <th style={thStyle}>来源</th>
-                  <th style={thStyle}>快捷键</th>
-                  <th style={thStyle}>菜单路径</th>
-                  <th style={thStyle}>操作</th>
+                <tr>
+                  <th>命令名</th>
+                  <th>来源</th>
+                  <th>快捷键</th>
+                  <th>菜单路径</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {(filterSource === 'nomenu' ? commandViewData.filter(c => !c.hasMenu) : commandViewData).map(cmd => (
                   <tr
                     key={cmd.commandName}
-                    style={{
-                      borderBottom: '1px solid var(--border-color)',
-                      opacity: cmd.hasMenu ? 0.6 : 1,
-                    }}
+                    className={cmd.hasMenu ? 'is-linked' : ''}
                   >
-                    <td style={tdStyle}>
-                      <code style={{ background: 'var(--bg-hover)', padding: '1px 4px', borderRadius: '2px' }}>
-                        {cmd.commandName}
-                      </code>
+                    <td>
+                      <code>{cmd.commandName}</code>
                     </td>
-                    <td style={tdStyle}>
-                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                    <td>
+                      <span className="menu-command-source">
                         {cmd.sourceSkillName || cmd.sourceType || '-'}
                       </span>
                     </td>
-                    <td style={tdStyle}>
+                    <td>
                       {cmd.hotkeys?.length ? cmd.hotkeys.join(', ') : '-'}
                     </td>
-                    <td style={tdStyle}>
+                    <td>
                       {cmd.hasMenu
-                        ? <span style={{ color: '#34d399' }}>✅ {cmd.menuPaths?.join(', ')}</span>
-                        : <span style={{ color: '#9ca3af' }}>— 无菜单</span>
+                        ? <span className="menu-link-state is-linked"><CheckCircle2 aria-hidden="true" />{cmd.menuPaths?.join(', ')}</span>
+                        : <span className="menu-link-state">无菜单</span>
                       }
                     </td>
-                    <td style={tdStyle}>
+                    <td>
                       <button
                         onClick={() => {
                           // 找到第一个顶级菜单作为父级，如果没有则创建一个
@@ -1214,17 +1194,9 @@ const MenuPage: React.FC = () => {
                           });
                           showToast('success', `已将命令 "${cmd.commandName}" 添加到 "${firstMenu.label}" 下`);
                         }}
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid var(--accent-blue)',
-                          background: 'transparent',
-                          color: 'var(--accent-blue)',
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                        }}
+                        className="btn btn-sm"
                       >
-                        + 添加菜单
+                        添加菜单
                       </button>
                     </td>
                   </tr>
@@ -1236,47 +1208,41 @@ const MenuPage: React.FC = () => {
 
         {/* 引用检查视图 */}
         {tab === 'refs' && (
-          <div style={{ flex: 1, padding: '16px 20px', overflow: 'auto' }}>
+          <div className="menu-reference-view">
             {refIssues.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
-                <div>未发现菜单引用问题</div>
+              <div className="menu-reference-empty">
+                <CheckCircle2 aria-hidden="true" />
+                <strong>未发现菜单引用问题</strong>
+                <span>当前菜单命令均能在已扫描的命令索引中找到。</span>
               </div>
             ) : (
               <div>
-                <div style={{ marginBottom: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <div className="menu-reference-summary">
                   发现 {refIssues.length} 个问题
                   （{refIssues.filter(i => i.severity === 'error').length} 个错误，
                   {refIssues.filter(i => i.severity === 'warning').length} 个警告，
                   {refIssues.filter(i => i.severity === 'info').length} 个信息）
                 </div>
                 {refIssues.map(issue => {
-                  const sevStyle = issue.severity === 'error'
-                    ? { bg: 'rgba(248,113,113,0.1)', color: '#f87171', border: 'rgba(248,113,113,0.3)' }
+                  const IssueIcon = issue.severity === 'error'
+                    ? AlertCircle
                     : issue.severity === 'warning'
-                    ? { bg: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: 'rgba(251,191,36,0.3)' }
-                    : { bg: 'rgba(96,165,250,0.1)', color: '#60a5fa', border: 'rgba(96,165,250,0.3)' };
+                    ? AlertTriangle
+                    : Info;
                   return (
                     <div
                       key={issue.id}
-                      style={{
-                        padding: '10px 14px',
-                        marginBottom: '6px',
-                        borderRadius: '6px',
-                        background: sevStyle.bg,
-                        border: `1px solid ${sevStyle.border}`,
-                        fontSize: '13px',
-                      }}
+                      className={`menu-reference-issue menu-reference-issue--${issue.severity}`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: sevStyle.color, fontWeight: 600 }}>
-                        <span>{issue.severity === 'error' ? '✕' : issue.severity === 'warning' ? '⚠' : 'ℹ'}</span>
+                      <div className="menu-reference-issue-title">
+                        <IssueIcon aria-hidden="true" />
                         <span>{issue.title}</span>
                       </div>
-                      <div style={{ color: 'var(--text-secondary)', marginTop: '4px', marginLeft: '18px' }}>
+                      <div className="menu-reference-issue-description">
                         {issue.description}
                       </div>
                       {issue.suggestedAction && (
-                        <div style={{ color: 'var(--text-secondary)', marginTop: '2px', marginLeft: '18px', fontStyle: 'italic', fontSize: '12px' }}>
+                        <div className="menu-reference-issue-action">
                           建议：{issue.suggestedAction}
                         </div>
                       )}
@@ -1293,13 +1259,15 @@ const MenuPage: React.FC = () => {
       {/* Apply Plan 结果 */}
       {/* ════════════════════════════════════════ */}
       {applyResult && (
-        <div style={{ ...toastStyle, background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399' }}>
-          ✅ {applyResult}
+        <div className="menu-operation-toast menu-operation-toast--success" role="status">
+          <CheckCircle2 aria-hidden="true" />
+          {applyResult}
         </div>
       )}
       {applyError && (
-        <div style={{ ...toastStyle, background: 'rgba(248, 113, 113, 0.15)', border: '1px solid rgba(248, 113, 113, 0.3)', color: '#f87171' }}>
-          ✕ {applyError}
+        <div className="menu-operation-toast menu-operation-toast--error" role="alert">
+          <AlertCircle aria-hidden="true" />
+          {applyError}
         </div>
       )}
 
@@ -1334,7 +1302,7 @@ const MenuPage: React.FC = () => {
         onConfirm={handleExecutePlan}
         onCancel={clearPlan}
       />
-    </div>
+    </WorkspacePage>
   );
 };
 
@@ -1348,63 +1316,28 @@ const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void 
 }) => (
   <button
     onClick={onClick}
-    style={{
-      padding: '10px 16px',
-      border: 'none',
-      borderBottom: active ? '2px solid var(--accent-blue)' : '2px solid transparent',
-      background: 'transparent',
-      color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
-      cursor: 'pointer',
-      fontSize: '13px',
-      fontWeight: active ? 600 : 400,
-      transition: 'all 0.15s',
-    }}
+    className={`menu-editor-tab${active ? ' is-active' : ''}`}
+    aria-current={active ? 'page' : undefined}
   >
     {label}
   </button>
 );
 
 /** 引导卡片 */
-const GuideCard: React.FC<{ icon: string; title: string; desc: string; onClick: () => void }> = ({
-  icon, title, desc, onClick,
+const GuideCard: React.FC<{ icon: LucideIcon; title: string; desc: string; onClick: () => void }> = ({
+  icon: Icon, title, desc, onClick,
 }) => (
-  <div
+  <button
+    type="button"
+    className="menu-guide-card"
     onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '12px',
-      padding: '14px 16px',
-      borderRadius: '8px',
-      border: '1px solid var(--border-color)',
-      cursor: 'pointer',
-      transition: 'all 0.15s',
-      background: 'var(--bg-surface)',
-    }}
-    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-blue)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-color)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)'; }}
   >
-    <span style={{ fontSize: '24px', lineHeight: '1' }}>{icon}</span>
-    <div>
-      <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>{title}</div>
-      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{desc}</div>
+    <Icon aria-hidden="true" />
+    <div className="menu-guide-card-copy">
+      <strong>{title}</strong>
+      <span>{desc}</span>
     </div>
-  </div>
+  </button>
 );
-
-/** 表格头样式 */
-const thStyle: React.CSSProperties = {
-  textAlign: 'left',
-  padding: '8px 12px',
-  fontWeight: 600,
-  fontSize: '12px',
-  color: 'var(--text-secondary)',
-};
-
-/** 表格单元格样式 */
-const tdStyle: React.CSSProperties = {
-  padding: '6px 12px',
-  verticalAlign: 'middle',
-};
 
 export default MenuPage;

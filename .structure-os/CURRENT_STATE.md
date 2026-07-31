@@ -2,11 +2,11 @@
 
 ## Snapshot
 
-- Last updated: 2026-07-13
-- Current branch: no git repository
-- App status: source tree is readable and Electron package is present with restored binary/runtime files
-- Test status: Skill workspace/profile/package targeted tests pass; full suite currently has 212 passing and 2 unrelated keyboard UI failures
-- Validation status: renderer and Electron builds pass; frontend TypeScript check is blocked by the existing `MenuPage.tsx:711` nullable-store error
+- Last updated: 2026-07-31
+- Current branch: Git repository initialized; UI reset baseline commit `c95a222`
+- App status: five routed pages use the shared workspace UI contract; write safety and IPC boundaries are unchanged
+- Test status: 36 files / 202 tests pass after obsolete MinimalSurface and responsive-scale tests were removed
+- Validation status: frontend TypeScript, Electron TypeScript and renderer production build pass
 
 ## Implemented Behavior
 
@@ -16,22 +16,23 @@
 - Skill page now uses a compact workspace with a dense independently scrollable table, command/diagnostic views, a proportional detail inspector without decorative avatars, truthful diagnostic state and an in-page profile Apply Plan confirmation chain.
 - Multi-file Skill subdirectories are now represented as one directory package; loader/main entry selection, aggregate command parsing and recursive static load-chain detection prevent internal modules from appearing as separate unloaded Skills.
 - Menu page supports tree editing, validation, preview generation, linked command selection, and Apply Plan.
+- Shared UI foundations now provide tokens, shell, workspace header, status strip, page states and a unified Apply Plan dialog.
+- Hotkey data loading is isolated in `src/services/loadHotkeyWorkspaceData.ts`; the obsolete `HotkeyPage.tsx` UI was removed.
+- Overview and Environment are operating dashboards with explicit loading/error states instead of MinimalSurface landing cards.
 
 ## Partial or Broken Behavior
 
 - Structure OS CLI is not installed locally, so governance validation is file-based only.
-- Recommended Structure OS source boundaries are documented but not yet implemented in `src/`.
+- Route-level code splitting remains pending; Vite reports a non-blocking main-chunk size warning above 500kB.
 
 ## Recently Changed Areas
 
-- `src/pages/SkillPage.tsx`, `src/components/SkillWorkspaceTable.tsx`, `src/components/SkillDetailSidebar.tsx`, `src/App.css`: Skill workspace redesign and fixed-height split-layout correction
-- `tests/skillWorkspaceTable.test.tsx`: row selection and toggle isolation coverage
-- `node_modules/electron/`: restored bundled type declarations and runtime binary layout for local verification
-- `.structure-os/`, `.agents/`, `docs/`: initialized minimal governance and handoff memory
+- `src/shared/ui/`, `src/components/Layout.tsx`: design tokens, app shell and shared workspace contract
+- `src/pages/{DashboardPage,EnvironmentPage,HotkeyWorkspacePage,SkillPage,MenuPage}.tsx`: five-page UI reset
+- `src/services/loadHotkeyWorkspaceData.ts`: hotkey read orchestration extracted from the deleted legacy page
+- `docs/dev/features/workspace-ui-architecture.md`, `docs/user/features/workspace-ui.md`: developer and user documentation
 
 ## Open Questions
 
-- Should the repo adopt git before more structural work?
-- Should the current Chinese manuals be migrated into `docs/dev/features` and `docs/user/features`, or remain as high-level manuals alongside them?
-- Should the later source-tree refactor preserve current naming or move fully to a `modules/shared/infra` split?
-- Should the existing unused Skill hooks be adopted in a later dedicated container refactor after Electron behavior is revalidated?
+- Should route-level dynamic imports be introduced to remove the current Vite chunk-size warning?
+- Should remaining large feature dialogs be migrated from inline styles into domain CSS modules in a dedicated cleanup?

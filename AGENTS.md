@@ -59,7 +59,7 @@ npm run preview
 
 ### Project Status
 
-> **⚠️ Not a git repository.** No `.git` directory. Initialize with `git init` when ready.
+> Git 已初始化。UI 重置基线提交为 `c95a222`；后续修改应在保留用户改动的前提下增量提交。
 
 ### Process Separation
 
@@ -86,7 +86,7 @@ HashRouter in `src/App.tsx`:
 |------|-----------|---------|
 | `/` | `DashboardPage` | 概览 / 健康评分 |
 | `/environment` | `EnvironmentPage` | 环境检测 / 多 env 来源管理 |
-| `/hotkeys` | `HotkeyPage` | 快捷键管理（3层架构 + 多方案） |
+| `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（总览/编辑/冲突/导入导出） |
 | `/skills` | `SkillPage` | Skill 管理（3 Tab + 方案栏） |
 | `/menu` | `MenuPage` | 可视化菜单编辑（3视图 + 方案栏） |
 
@@ -139,7 +139,7 @@ core/ filesystem operations → IPC handler → preload.ts contextBridge
 App → Layout (sidebar NavLink)
   ├── DashboardPage
   ├── EnvironmentPage
-  ├── HotkeyPage
+  ├── HotkeyWorkspacePage
   │     ├── ProfileBar (V5.6: unified profile bar with applied state)
   │     ├── GlobalStatusBar (V5.6: status pills)
   │     ├── EnvSourceBar
@@ -209,7 +209,7 @@ Workspace Profile (预留)
 └── menuProfileId   → Menu Profile (菜单方案, V5.5 增强)
 ```
 
-- **统一 ProfileBar**: V5.6 三页共用同一 `ProfileBar` 组件（快捷键/Skill/菜单），HotkeyPage 原 `ProfileSelector` 已合并
+- **统一 ProfileBar**: 三页共用同一 `ProfileBar` 组件（快捷键/Skill/菜单）；旧 `ProfileSelector` 已删除
 - **切换预览**: 切换方案只预览，不写文件
 - **应用确认**: 必须点击"应用此方案"生成 Apply Plan 确认后才写入
 - **已应用状态**: ProfileBar 右侧显示 ✅ 已应用 / ⚠ 尚未应用 状态
@@ -281,7 +281,7 @@ Key components: `ProfileBar.tsx` (V5.6 unified profile bar — merged ProfileSel
 
 ## Testing
 
-- **117+ tests** across 10+ test files — Vitest 3.2
+- **202 tests** across 36 test files — Vitest 3.2
 - **Only `core/` code is testable** — `electron/` requires Electron runtime
 - Test fixtures in `test-fixtures/` directory
 - Single file: `npx.cmd vitest run tests/parseEnv.test.ts`

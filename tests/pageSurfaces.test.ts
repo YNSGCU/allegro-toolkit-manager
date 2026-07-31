@@ -1,185 +1,78 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import {
-  APP_NAV_ITEMS,
-  PRIMARY_WORKSPACES,
-  getDefaultWorkspaceRoute,
-} from '../src/config/appShell';
-import {
-  PAGE_SURFACES,
-  getPageSurface,
-  getPrimaryWorkspaceSurfaces,
-} from '../src/config/pageSurfaces';
+import { APP_NAV_ITEMS, PRIMARY_WORKSPACES, getDefaultWorkspaceRoute } from '../src/config/appShell';
 
 function readPageSource(page: string): string {
   return readFileSync(new URL(page, import.meta.url), 'utf8');
 }
 
-describe('page surfaces', () => {
-  it('keeps hotkeys as the default route', () => {
+describe('页面工作区契约', () => {
+  it('保留快捷键为默认入口并维持五个导航项', () => {
     expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
-  });
-
-  it('defines the minimal surface copy for hotkeys', () => {
-    expect(getPageSurface('hotkeys').title).toBe('快捷键工作台');
-    expect(getPageSurface('hotkeys').actions.map((item) => item.id)).toEqual([
-      'editor',
-      'conflicts',
-      'import-export',
+    expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual([
+      'hotkeys', 'skills', 'menu', 'overview', 'environment',
     ]);
+    expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual(['hotkeys', 'skills', 'menu']);
   });
 
-  it('defines all five page surface entries in nav order', () => {
-    expect(Object.keys(PAGE_SURFACES)).toEqual([
-      'hotkeys',
-      'skills',
-      'menu',
-      'overview',
-      'environment',
-    ]);
-  });
-
-  it('keeps every navigation item backed by a surface config', () => {
-    expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual(Object.keys(PAGE_SURFACES));
-  });
-
-  it('binds the core workspace surfaces to PRIMARY_WORKSPACES', () => {
-    expect(getPrimaryWorkspaceSurfaces().map((surface) => surface.key)).toEqual(
-      PRIMARY_WORKSPACES.map((item) => item.key),
-    );
-    expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual([
-      'hotkeys',
-      'skills',
-      'menu',
-    ]);
-  });
-
-  it('marks hotkeys as the default entry in the overview surface actions', () => {
-    const action = getPageSurface('overview').actions.find(
-      (item) => item.id === 'hotkeys',
-    );
-
-    expect(action?.meta).toContain('默认');
-  });
-  it('keeps quick-entry cards for skills and menu pages', () => {
-    expect(getPageSurface('skills').actions.map((item) => item.id)).toEqual([
-      'scan',
-      'refs',
-      'registry',
-    ]);
-    expect(getPageSurface('menu').actions.map((item) => item.id)).toEqual([
-      'tree',
-      'commands',
-      'preview',
-    ]);
-  });
-
-  it('uses prompt-first action ids for overview and environment helper pages', () => {
-    expect(getPageSurface('overview').actions.map((item) => item.id)).toEqual([
-      'health',
-      'hotkeys',
-      'skills',
-    ]);
-    expect(getPageSurface('environment').actions.map((item) => item.id)).toEqual([
-      'pcbenv',
-      'scan',
-      'vars',
-    ]);
-  });
-
-  it('keeps helper pages on MinimalSurface while dense workspaces use compact headers', () => {
+  it('所有路由页使用共享工作区骨架，不再引用旧 Hero', () => {
     const pages = [
       '../src/pages/DashboardPage.tsx',
       '../src/pages/EnvironmentPage.tsx',
+      '../src/pages/HotkeyWorkspacePage.tsx',
+      '../src/pages/SkillPage.tsx',
+      '../src/pages/MenuPage.tsx',
     ];
 
     for (const page of pages) {
       const source = readPageSource(page);
-      expect(source).toContain('MinimalSurface');
+      expect(source).toContain('<WorkspacePage');
+      expect(source).toContain('<WorkspaceHeader');
+      expect(source).not.toContain('MinimalSurface');
       expect(source).not.toContain('CoreWorkspaceHero');
     }
-
-    const menuSource = readPageSource('../src/pages/MenuPage.tsx');
-    const skillSource = readPageSource('../src/pages/SkillPage.tsx');
-    expect(menuSource).toContain('className="menu-page-header"');
-    expect(menuSource).not.toContain('<MinimalSurface');
-    expect(skillSource).toContain('className="skill-workspace-header"');
-    expect(skillSource).not.toContain('<MinimalSurface');
   });
 
-  it('keeps shared surface data while allowing the dense menu editor to omit duplicate cards', () => {
-    const skillSource = readPageSource('../src/pages/SkillPage.tsx');
-    const menuSource = readPageSource('../src/pages/MenuPage.tsx');
-    const dashboardSource = readPageSource('../src/pages/DashboardPage.tsx');
-    const environmentSource = readPageSource('../src/pages/EnvironmentPage.tsx');
-
-    for (const source of [dashboardSource, environmentSource]) {
-      expect(source).toContain('const ');
-      expect(source).toContain('Surface = getPageSurface(');
-      expect(source).toContain('SummaryLine = [');
-      expect(source).toContain('title={');
-      expect(source).toContain('subtitle={');
-      expect(source).toContain('prompt={');
-      expect(source).toContain('summaryLine={');
-      expect(source).toContain('cards={');
-      expect(source).toContain('.actions.map((action) => ({');
-    }
-
-    expect(skillSource).toContain('className="skill-workspace-header"');
-    expect(skillSource).toContain('<GlobalStatusBar');
-    expect(skillSource).toContain('<SkillWorkspaceTable');
-    expect(skillSource).toContain("label: '引用检查'");
-
-    expect(menuSource).toContain('className="menu-page-header"');
-    expect(menuSource).toContain('应用到 Allegro');
-    expect(menuSource).toContain('<GlobalStatusBar');
-    expect(menuSource).not.toContain('<MinimalSurface');
+  it('概览展示健康、工作区和关键文件三层信息', () => {
+    const source = readPageSource('../src/pages/DashboardPage.tsx');
+    expect(source).toContain('workspaceEntries');
+    expect(source).toContain('overview-primary-grid');
+    expect(source).toContain('关键文件状态');
+    expect(source).toContain('<StatusStrip');
   });
 
-  it('keeps the Skill workspace compact, scrollable, and free of decorative avatars', () => {
-    const pageSource = readPageSource('../src/pages/SkillPage.tsx');
-    const detailSource = readPageSource('../src/components/SkillDetailSidebar.tsx');
-
-    expect(pageSource).toContain('<ProfileBar\n          compact');
-    expect(pageSource).toContain('className="skill-list-area"');
-    expect(detailSource).not.toContain('🤖');
-    expect(detailSource).not.toContain('skill-card-icon');
+  it('环境页展示检测优先级、活动路径和变量表', () => {
+    const source = readPageSource('../src/pages/EnvironmentPage.tsx');
+    expect(source).toContain('environment-priority-list');
+    expect(source).toContain('environment-active-list');
+    expect(source).toContain('environment-var-table');
+    expect(source).toContain('<PageState');
   });
 
-  it('keeps menu operating signals visible in the compact status bar', () => {
+  it('Skill 页保留方案、引用和列表三类操作信号', () => {
+    const source = readPageSource('../src/pages/SkillPage.tsx');
+    expect(source).toContain('allSkills.length');
+    expect(source).toContain('userSkills.length');
+    expect(source).toContain('refsChecked');
+    expect(source).toContain('<GlobalStatusBar');
+    expect(source).toContain('<SkillWorkspaceTable');
+  });
+
+  it('菜单页保留草稿、生成文件和 bootstrap 状态', () => {
     const source = readPageSource('../src/pages/MenuPage.tsx');
-
     expect(source).toContain("label: '草稿'");
     expect(source).toContain("label: 'menu_profile'");
     expect(source).toContain("label: 'generated_menu.il'");
     expect(source).toContain("label: 'bootstrap'");
     expect(source).toContain('treeValidation.hasError');
-    expect(source).toContain("severity === 'warning'");
-    expect(source).toContain('fileStatus?.ilExists');
+    expect(source).toContain('<MoreActionsMenu');
   });
 
-  it('keeps page-specific operating signals visible in headers and status surfaces', () => {
-    const skillSource = readPageSource('../src/pages/SkillPage.tsx');
-    const menuSource = readPageSource('../src/pages/MenuPage.tsx');
-    const dashboardSource = readPageSource('../src/pages/DashboardPage.tsx');
-    const environmentSource = readPageSource('../src/pages/EnvironmentPage.tsx');
-
-    expect(skillSource).toContain('allSkills.length');
-    expect(skillSource).toContain('userSkills.length');
-    expect(skillSource).toContain('refsChecked');
-    expect(skillSource).toContain("'尚未检查'");
-    expect(skillSource).toContain("'检查通过'");
-    expect(skillSource).not.toContain('activeSkillProfile?.name ||');
-
-    expect(menuSource).toContain('items.length');
-    expect(menuSource).toContain('hasUnsavedChanges');
-
-    expect(dashboardSource).toContain('health ?');
-    expect(dashboardSource).toContain('envInfo?.envExists');
-    expect(dashboardSource).toContain('envInfo?.pcbenvPath');
-
-    expect(environmentSource).toContain('getDetectionModeText(envInfo.detectedMode)');
-    expect(environmentSource).toContain('envInfo?.envExists');
-    expect(environmentSource).toContain('envInfo?.pcbenvExists');
+  it('快捷键读取逻辑已从页面中抽离为独立服务', () => {
+    const pageSource = readPageSource('../src/pages/HotkeyWorkspacePage.tsx');
+    const serviceSource = readPageSource('../src/services/loadHotkeyWorkspaceData.ts');
+    expect(pageSource).toContain("../services/loadHotkeyWorkspaceData");
+    expect(serviceSource).toContain('export async function loadHotkeyWorkspaceData');
+    expect(serviceSource).not.toContain('React.FC');
   });
 });

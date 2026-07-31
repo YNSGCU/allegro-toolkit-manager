@@ -1,0 +1,6 @@
+@import './foundations/tokens.css';
+@import './foundations/base.css';
+@import './foundations/controls.css';
+@import './foundations/dialogs.css';
+@import './foundations/shell.css';
+@import './foundations/workspace.css';

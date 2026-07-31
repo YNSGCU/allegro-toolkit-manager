@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "iconv-lite": "^0.7.3",
+    "lucide-react": "^1.28.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.5.0"

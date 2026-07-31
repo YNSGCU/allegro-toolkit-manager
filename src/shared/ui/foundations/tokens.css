@@ -1,0 +1,78 @@
+:root {
+  color-scheme: light;
+
+  --ui-canvas: #f4f6f8;
+  --ui-sidebar: #f8f9fa;
+  --ui-surface: #ffffff;
+  --ui-surface-subtle: #eef2f4;
+  --ui-surface-hover: #e8edef;
+  --ui-surface-selected: #e7f4f2;
+
+  --ui-text: #17202a;
+  --ui-text-secondary: #55616d;
+  --ui-text-muted: #707c88;
+  --ui-text-inverse: #ffffff;
+
+  --ui-border: #dce2e7;
+  --ui-border-strong: #c3ccd4;
+  --ui-accent: #0f766e;
+  --ui-accent-hover: #115e59;
+  --ui-accent-soft: #e7f4f2;
+  --ui-success: #15803d;
+  --ui-success-soft: #eaf6ee;
+  --ui-warning: #b45309;
+  --ui-warning-soft: #fff4e5;
+  --ui-danger: #b91c1c;
+  --ui-danger-soft: #fdecec;
+  --ui-info: #1d4ed8;
+  --ui-info-soft: #eaf0ff;
+
+  --ui-font-sans: 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
+  --ui-font-mono: 'Cascadia Mono', 'Consolas', monospace;
+  --ui-font-size-xs: 11px;
+  --ui-font-size-sm: 12px;
+  --ui-font-size-md: 13px;
+  --ui-font-size-lg: 15px;
+  --ui-font-size-xl: 18px;
+  --ui-font-size-2xl: 24px;
+
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-shadow-overlay: 0 16px 40px rgba(23, 32, 42, 0.16);
+  --ui-focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.22);
+  --ui-transition: 160ms ease;
+
+  --ui-sidebar-width: 216px;
+  --ui-page-padding-x: 28px;
+  --ui-page-padding-y: 24px;
+
+  /* 兼容旧组件；迁移完成后移除。 */
+  --bg-primary: var(--ui-canvas);
+  --bg-secondary: var(--ui-surface-subtle);
+  --bg-surface: var(--ui-surface);
+  --bg-hover: var(--ui-surface-hover);
+  --bg-input: var(--ui-surface);
+  --text-primary: var(--ui-text);
+  --text-secondary: var(--ui-text-secondary);
+  --text-muted: var(--ui-text-muted);
+  --accent-blue: var(--ui-accent);
+  --accent-green: var(--ui-success);
+  --accent-yellow: var(--ui-warning);
+  --accent-orange: #c2410c;
+  --accent-red: var(--ui-danger);
+  --accent-purple: #6d5bd0;
+  --accent-cyan: var(--ui-info);
+  --accent-teal: var(--ui-accent);
+  --border-color: var(--ui-border);
+  --radius: var(--ui-radius-lg);
+  --radius-sm: var(--ui-radius-md);
+  --shadow: 0 1px 2px rgba(23, 32, 42, 0.06);
+}

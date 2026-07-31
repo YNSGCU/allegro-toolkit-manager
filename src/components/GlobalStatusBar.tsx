@@ -1,4 +1,4 @@
-import React from 'react';
+import StatusStrip, { type StatusStripItem } from '../shared/ui/workspace/StatusStrip';
 
 export interface StatusItem {
   label: string;
@@ -13,44 +13,34 @@ interface GlobalStatusBarProps {
   needsRestart?: boolean;
 }
 
-const GlobalStatusBar: React.FC<GlobalStatusBarProps> = ({
+export default function GlobalStatusBar({
   items,
   envPath,
   needsRestart,
-}) => {
-  return (
-    <section className="global-status-bar">
-      <div className="global-status-bar-pills">
-        {items.map((item) => (
-          <span
-            key={`${item.label}-${item.value}`}
-            className={`status-pill status-pill-${item.status}`}
-            title={item.tooltip || `${item.label}: ${item.value}`}
-          >
-            <span className={`status-pill-dot ${item.status}`} />
-            {item.label}: {item.value}
-          </span>
-        ))}
-      </div>
+}: GlobalStatusBarProps) {
+  const statusItems: StatusStripItem[] = items.map((item) => ({
+    label: item.label,
+    value: item.value,
+    tone: item.status,
+    tooltip: item.tooltip,
+  }));
 
-      <div className="global-status-bar-meta">
-        {envPath && (
-          <span className="global-status-bar-path" title={envPath}>
-            {envPath}
-          </span>
-        )}
+  if (envPath) {
+    statusItems.push({
+      label: '环境',
+      value: envPath,
+      tone: 'info',
+      tooltip: envPath,
+    });
+  }
 
-        {needsRestart !== undefined && (
-          <span
-            className={`status-pill ${needsRestart ? 'status-pill-warning' : 'status-pill-muted'}`}
-          >
-            <span className={`status-pill-dot ${needsRestart ? 'warning' : 'muted'}`} />
-            {needsRestart ? '需要重启 Allegro' : '无需重启'}
-          </span>
-        )}
-      </div>
-    </section>
-  );
-};
+  if (needsRestart !== undefined) {
+    statusItems.push({
+      label: 'Allegro',
+      value: needsRestart ? '需要重启' : '无需重启',
+      tone: needsRestart ? 'warning' : 'muted',
+    });
+  }
 
-export default GlobalStatusBar;
+  return <StatusStrip items={statusItems} label="工作区状态" />;
+}

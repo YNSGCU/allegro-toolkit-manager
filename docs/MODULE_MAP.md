@@ -6,13 +6,13 @@
 |---|---|---|
 | `core/` | Pure business logic, parsing, validation, generation, backups, profiles, menu management | Testable with Vitest |
 | `electron/` | Electron main process, preload bridge, IPC registration and orchestration | Imports `core/` and shared `src/types/` |
-| `src/` | Renderer pages, UI components, hooks, utilities, and shared renderer types | Uses `window.atm.*` bridge |
+| `src/` | Renderer pages, UI components, services, shared UI foundations, hooks, utilities, and shared renderer types | Uses `window.atm.*` bridge |
 | `docs/` | Product manuals and governance docs | Chinese manuals plus Structure OS docs |
 
 ## Current Boundary Notes
 
-- Current project shape is functional but not yet migrated to the recommended `pages/modules/shared/infra` split.
-- Renderer pages import directly from `components/`, `hooks/`, `utils/`, and `types/`.
+- Renderer now has a stable `src/shared/ui/` foundation and `src/services/` read-orchestration layer; feature components remain in `components/` pending later module-domain migration.
+- Routed pages import shared workspace primitives from `src/shared/ui/index.ts`.
 - Electron main/preload own the bridge layer; renderer does not access Node APIs directly.
 
 ## Feature Chains
@@ -23,7 +23,11 @@
 
 ### Hotkey Management
 
-`src/pages/HotkeyPage.tsx` -> `window.atm.*hotkey/profile/history methods*` -> `electron/preload.ts` -> `electron/ipc/hotkey.ipc.ts` / `history.ipc.ts` -> `core/parser/*`, `core/validator/*`, `core/apply/*`, `core/profile/*`
+`src/pages/HotkeyWorkspacePage.tsx` -> `src/services/loadHotkeyWorkspaceData.ts` -> `window.atm.*hotkey/profile/history methods*` -> `electron/preload.ts` -> `electron/ipc/hotkey.ipc.ts` / `history.ipc.ts` -> `core/parser/*`, `core/validator/*`, `core/apply/*`, `core/profile/*`
+
+### Shared Workspace UI
+
+`src/components/Layout.tsx` -> `src/shared/ui/{workspace,feedback,overlays}` -> routed pages. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.
 
 ### Skill Management
 

@@ -25,9 +25,8 @@ import type { AtmSettings, EnvironmentInfo, EnvSourceList } from '../types/envir
 import type { EnvImportPreview, ImportResult } from '../types/importEnv';
 import type { ActiveLayer } from '../utils/hotkeyItem';
 import { enrichWithPhysicalKey, filterHotkeysByKeyboardLayer } from '../utils/hotkeyItem';
-import { HOTKEY_WORKSPACE_SCALE_CONFIG } from '../layout/responsiveScale';
-import { useResponsiveScale } from '../layout/useResponsiveScale';
-import { loadHotkeyWorkspaceData } from './HotkeyPage';
+import { loadHotkeyWorkspaceData } from '../services/loadHotkeyWorkspaceData';
+import { StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type ImportedProfileHotkey = {
   type?: string;
@@ -118,8 +117,7 @@ function buildImportPreview(
 
 export default function HotkeyWorkspacePage() {
   const navigate = useNavigate();
-  const { elementRef, scale: workspaceScale } =
-    useResponsiveScale<HTMLDivElement>(HOTKEY_WORKSPACE_SCALE_CONFIG);
+  const workspaceScale = 1;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
@@ -653,11 +651,7 @@ export default function HotkeyWorkspacePage() {
   }, []);
 
   return (
-    <div
-      ref={elementRef}
-      className="hotkey-workspace-page"
-      style={{ '--hotkey-scale': String(workspaceScale) } as React.CSSProperties}
-    >
+    <WorkspacePage className="hotkey-workspace-page" density="compact" scroll="contained">
       <input
         ref={fileInputRef}
         type="file"
@@ -666,6 +660,16 @@ export default function HotkeyWorkspacePage() {
         style={{ display: 'none' }}
       />
       <div className="hotkey-workspace-content">
+        <WorkspaceHeader
+          eyebrow="键位配置"
+          title="快捷键"
+          description="在同一工作区检查键盘占用、编辑映射并处理跨 env 冲突。所有写入仍需经过 Apply Plan。"
+          actions={(
+            <button className="btn" onClick={() => void loadAll()} disabled={loading}>
+              {loading ? '刷新中…' : '刷新数据'}
+            </button>
+          )}
+        />
         <ProfileBar
           title="快捷键方案"
           compact
@@ -697,6 +701,37 @@ export default function HotkeyWorkspacePage() {
             void actions.handleExportProfile();
           }}
           applyLabel="应用此方案"
+        />
+        <StatusStrip
+          label="快捷键当前状态"
+          items={[
+            {
+              label: '方案',
+              value: profiles.find((profile) => profile.id === activeProfileId)?.name || '未选择',
+              tone: activeProfileId ? 'info' : 'muted',
+            },
+            {
+              label: '应用状态',
+              value: activeProfileId && activeProfileId === appliedProfileId ? '已应用' : '尚未应用',
+              tone: activeProfileId && activeProfileId === appliedProfileId ? 'ok' : 'warning',
+            },
+            {
+              label: '键位',
+              value: `${bindings.length} 条`,
+              tone: bindings.length > 0 ? 'ok' : 'muted',
+            },
+            {
+              label: '问题',
+              value: `${stats.errorCount + stats.warningCount} 个`,
+              tone: stats.errorCount > 0 ? 'error' : stats.warningCount > 0 ? 'warning' : 'ok',
+            },
+            {
+              label: 'env',
+              value: envInfo?.envFilePath ? '已连接' : '未检测到',
+              tone: envInfo?.envFilePath ? 'ok' : 'warning',
+              tooltip: envInfo?.envFilePath || '未检测到活动 env 文件',
+            },
+          ]}
         />
         <HotkeySubnav />
         <Routes>
@@ -784,6 +819,6 @@ export default function HotkeyWorkspacePage() {
           }}
         />
       ) : null}
-    </div>
+    </WorkspacePage>
   );
 }

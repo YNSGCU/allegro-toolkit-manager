@@ -1,60 +1,90 @@
-import React from 'react';
+import type { ComponentType, ReactNode } from 'react';
+import {
+  Blocks,
+  CircuitBoard,
+  FolderCog,
+  Gauge,
+  Keyboard,
+  Menu,
+  ShieldCheck,
+} from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { APP_NAV_ITEMS } from '../config/appShell';
-import { SHELL_SCALE_CONFIG } from '../layout/responsiveScale';
-import { useResponsiveScale } from '../layout/useResponsiveScale';
+import { APP_NAV_ITEMS, type AppNavItem } from '../config/appShell';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { elementRef, scale } = useResponsiveScale<HTMLDivElement>(SHELL_SCALE_CONFIG);
+const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'aria-hidden'?: boolean }>> = {
+  hotkeys: Keyboard,
+  skills: Blocks,
+  menu: Menu,
+  overview: Gauge,
+  environment: FolderCog,
+};
+
+export default function Layout({ children }: LayoutProps) {
   const primaryItems = APP_NAV_ITEMS.filter((item) => item.group === 'primary');
   const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
 
   const renderNavGroup = (
     title: string,
-    items: typeof APP_NAV_ITEMS,
+    items: AppNavItem[],
+    variant: 'primary' | 'utility',
   ) => (
-    <section className="marvis-nav-group" aria-label={title}>
-      <div className="marvis-nav-group-label">{title}</div>
-      <nav className="marvis-nav">
-        {items.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/overview'}
-            className={({ isActive }) =>
-              `marvis-nav-item${isActive ? ' active' : ''}`
-            }
-          >
-            <span className="marvis-nav-item-label">{item.label}</span>
-          </NavLink>
-        ))}
+    <section
+      className={`atm-nav-group atm-nav-group--${variant}`}
+      aria-label={title}
+    >
+      <div className="atm-nav-group-label">{title}</div>
+      <nav className="atm-nav">
+        {items.map((item) => {
+          const Icon = navIcons[item.key];
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === '/overview'}
+              title={item.summary}
+              className={({ isActive }) => `atm-nav-item${isActive ? ' active' : ''}`}
+            >
+              <Icon className="atm-nav-item-icon" aria-hidden />
+              <span className="atm-nav-item-label">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </section>
   );
 
   return (
-    <div
-      ref={elementRef}
-      className="marvis-shell"
-      style={{ '--shell-scale': String(scale) } as React.CSSProperties}
-    >
-      <aside className="marvis-sidebar">
-        <div className="marvis-brand-block">
-          <div className="marvis-brand">ATM</div>
-          <div className="marvis-brand-subtitle">Allegro DevOps Tool</div>
+    <div className="atm-shell">
+      <a className="atm-skip-link" href="#main-content">跳到主要内容</a>
+      <aside className="atm-sidebar">
+        <div className="atm-brand">
+          <div className="atm-brand-mark" aria-hidden="true">
+            <CircuitBoard size={19} />
+          </div>
+          <div className="atm-brand-copy">
+            <div className="atm-brand-name">ATM</div>
+            <div className="atm-brand-subtitle">Allegro DevOps Tool</div>
+          </div>
         </div>
 
-        {renderNavGroup('核心模块', primaryItems)}
-        {renderNavGroup('辅助模块', utilityItems)}
+        <div className="atm-sidebar-sections">
+          {renderNavGroup('核心工作区', primaryItems, 'primary')}
+          {renderNavGroup('系统', utilityItems, 'utility')}
+        </div>
+
+        <div className="atm-sidebar-footer">
+          <ShieldCheck aria-hidden="true" />
+          <span>安全配置工作台</span>
+        </div>
       </aside>
 
-      <main className="marvis-main">{children}</main>
+      <main id="main-content" className="atm-main" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
-};
-
-export default Layout;
+}

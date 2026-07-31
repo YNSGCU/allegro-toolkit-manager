@@ -1,206 +1,105 @@
-# Design System Master File
+# Allegro DevOps Tool 设计系统
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+> 页面专属规则放在 `pages/<page>.md`；页面文件只记录偏差，其余规则继承本文件。
 
----
+## 设计定位
 
-**Project:** Allegro DevOps Tool
-**Generated:** 2026-07-31 23:50:40
-**Category:** Analytics Dashboard
+- 类型：Windows 桌面工程工作台
+- 风格：Swiss Technical Workspace（理性网格、低装饰、局部高密度）
+- 主题：第一阶段仅提供浅色主题
+- 目标窗口：1220×820 最小、1360×920 默认、1600×1000 与 1920×1080 宽屏
+- 业务底线：任何写入仍必须经过 Apply Plan，不因 UI 重置而弱化风险说明
 
----
+## 设计原则
 
-## Global Rules
+1. 页面按“标题 → 上下文 → 状态 → 工具栏 → 内容”组织。
+2. 一个上下文只突出一个主操作，其他动作降级为次级按钮或更多菜单。
+3. 说明区宽松，树、表格、键盘和诊断区紧凑但必须可读。
+4. 状态必须同时使用图标、文字和颜色，不得只依赖颜色。
+5. 不使用 emoji 充当图标；统一使用 Lucide SVG 图标。
+6. Hover 不缩放，不制造布局位移；交互过渡保持 150–200ms。
+7. 路径、命令和代码使用系统等宽字体，不加载在线字体。
 
-### Color Palette
+## 颜色
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#1E40AF` | `--color-primary` |
-| Secondary | `#3B82F6` | `--color-secondary` |
-| CTA/Accent | `#F59E0B` | `--color-cta` |
-| Background | `#F8FAFC` | `--color-background` |
-| Text | `#1E3A8A` | `--color-text` |
+| 角色 | 值 |
+|---|---|
+| Canvas | `#F4F6F8` |
+| Sidebar | `#F8F9FA` |
+| Surface | `#FFFFFF` |
+| Subtle surface | `#EEF2F4` |
+| Primary text | `#17202A` |
+| Secondary text | `#55616D` |
+| Muted text | `#707C88` |
+| Border | `#DCE2E7` |
+| Accent | `#0F766E` |
+| Accent hover | `#115E59` |
+| Accent soft | `#E7F4F2` |
+| Success | `#15803D` |
+| Warning | `#B45309` |
+| Danger | `#B91C1C` |
+| Info | `#1D4ED8` |
 
-**Color Notes:** Blue data + amber highlights
+品牌强调色与成功色必须分开，不能把“当前选中”和“操作成功”显示成同一种语义。
 
-### Typography
+## 字体与密度
 
-- **Heading Font:** Fira Code
-- **Body Font:** Fira Sans
-- **Mood:** dashboard, data, analytics, code, technical, precise
-- **Google Fonts:** [Fira Code + Fira Sans](https://fonts.google.com/share?selection.family=Fira+Code:wght@400;500;600;700|Fira+Sans:wght@300;400;500;600;700)
+- UI：`Segoe UI`, `Microsoft YaHei UI`, `Microsoft YaHei`, sans-serif
+- 代码：`Cascadia Mono`, `Consolas`, monospace
+- 页面标题：24px / 700
+- 区域标题：15px / 650
+- 正文：13px / 400
+- 辅助文字：12px / 400
+- 表格：12px；紧凑行 36px，标准行 44px
 
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+## 空间与形态
+
+- 基础单位：4px
+- 常用间距：4 / 8 / 12 / 16 / 24 / 32px
+- 圆角：6 / 8 / 12px
+- 普通表面不用阴影，只使用边框
+- 浮层：`0 16px 40px rgba(23, 32, 42, 0.16)`
+- 焦点环：2px accent，外扩 2px
+
+## 页面骨架
+
+```text
+AppShell
+└── WorkspacePage
+    ├── WorkspaceHeader
+    ├── ContextBar / ProfileSwitcher
+    ├── StatusStrip
+    ├── WorkspaceTabs
+    ├── FilterToolbar
+    ├── WorkspaceContent
+    └── Dialog / Drawer / Toast / ApplyPlan
 ```
 
-### Spacing Variables
+页面根到内部滚动容器必须保持连续的 `min-height: 0`，避免固定高度工作区失去滚动能力。
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
+## 可访问性
 
-### Shadow Depths
+- 所有主要流程可用键盘完成。
+- 页面提供“跳到主要内容”入口。
+- 所有焦点状态清晰可见。
+- 错误使用 `role="alert"`，异步状态使用 `aria-live`。
+- 对话框打开后聚焦首个有效控件，关闭后将焦点还给触发元素。
+- 尊重 `prefers-reduced-motion`。
 
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+## 禁止模式
 
----
+- 落地页式大 Hero、横向滚动叙事、无业务意义的 KPI 卡片。
+- 大圆角卡片套卡片。
+- 继续在 `App.css` 尾部堆叠覆盖规则。
+- 普通视觉属性使用 TSX 内联样式。
+- 仅显示“成功/失败”而不给恢复路径。
+- 把“尚未检查”显示为“检查通过”。
 
-## Component Specs
+## 交付检查
 
-### Buttons
-
-```css
-/* Primary Button */
-.btn-primary {
-  background: #F59E0B;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #1E40AF;
-  border: 2px solid #1E40AF;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
-
-### Cards
-
-```css
-.card {
-  background: #F8FAFC;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
-
-### Inputs
-
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
-
-.input:focus {
-  border-color: #1E40AF;
-  outline: none;
-  box-shadow: 0 0 0 3px #1E40AF20;
-}
-```
-
-### Modals
-
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
-
----
-
-## Style Guidelines
-
-**Style:** Data-Dense Dashboard
-
-**Keywords:** Multiple charts/widgets, data tables, KPI cards, minimal padding, grid layout, space-efficient, maximum data visibility
-
-**Best For:** Business intelligence dashboards, financial analytics, enterprise reporting, operational dashboards, data warehousing
-
-**Key Effects:** Hover tooltips, chart zoom on click, row highlighting on hover, smooth filter animations, data loading spinners
-
-### Page Pattern
-
-**Pattern Name:** Horizontal Scroll Journey
-
-- **Conversion Strategy:** Immersive product discovery. High engagement. Keep navigation visible.
-28,Bento Grid Showcase,bento,  grid,  features,  modular,  apple-style,  showcase", 1. Hero, 2. Bento Grid (Key Features), 3. Detail Cards, 4. Tech Specs, 5. CTA, Floating Action Button or Bottom of Grid, Card backgrounds: #F5F5F7 or Glass. Icons: Vibrant brand colors. Text: Dark., Hover card scale (1.02), video inside cards, tilt effect, staggered reveal, Scannable value props. High information density without clutter. Mobile stack.
-29,Interactive 3D Configurator,3d,  configurator,  customizer,  interactive,  product", 1. Hero (Configurator), 2. Feature Highlight (synced), 3. Price/Specs, 4. Purchase, Inside Configurator UI + Sticky Bottom Bar, Neutral studio background. Product: Realistic materials. UI: Minimal overlay., Real-time rendering, material swap animation, camera rotate/zoom, light reflection, Increases ownership feeling. 360 view reduces return rates. Direct add-to-cart.
-30,AI-Driven Dynamic Landing,ai,  dynamic,  personalized,  adaptive,  generative", 1. Prompt/Input Hero, 2. Generated Result Preview, 3. How it Works, 4. Value Prop, Input Field (Hero) + 'Try it' Buttons, Adaptive to user input. Dark mode for compute feel. Neon accents., Typing text effects, shimmering generation loaders, morphing layouts, Immediate value demonstration. 'Show, don't tell'. Low friction start.
-- **CTA Placement:** Floating Sticky CTA or End of Horizontal Track
-- **Section Order:** 1. Intro (Vertical), 2. The Journey (Horizontal Track), 3. Detail Reveal, 4. Vertical Footer
-
----
-
-## Anti-Patterns (Do NOT Use)
-
-- ❌ Ornate design
-- ❌ No filtering
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+- [ ] 1220×820、1360×920、1600×1000 无页面级横向滚动
+- [ ] 主操作、状态和当前路由一眼可辨
+- [ ] 无 emoji 图标和无替代焦点的 `outline: none`
+- [ ] loading、empty、error、ready、dirty、applying 状态齐全
+- [ ] Renderer/Electron 类型检查、Vitest、构建全部通过
+- [ ] 真实 Electron/Allegro 环境验证写入前后状态刷新

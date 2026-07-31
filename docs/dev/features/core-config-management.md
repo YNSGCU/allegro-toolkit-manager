@@ -18,7 +18,7 @@ UI -> preload bridge -> IPC handler -> core logic -> filesystem -> UI refresh an
 
 ## Entry Points
 
-- UI: `src/pages/EnvironmentPage.tsx`, `HotkeyPage.tsx`, `SkillPage.tsx`, `MenuPage.tsx`
+- UI: `src/pages/EnvironmentPage.tsx`, `src/pages/HotkeyWorkspacePage.tsx`, `src/pages/SkillPage.tsx`, `src/pages/MenuPage.tsx`
 - API/routes/IPC: `electron/preload.ts`, `electron/ipc/*.ipc.ts`
 - Services: `core/*`
 - Storage: Allegro config files and ATM-managed JSON/IL output under `pcbenv`

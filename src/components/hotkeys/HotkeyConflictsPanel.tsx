@@ -1,5 +1,5 @@
-import ApplyPlanPreview from '../ApplyPlanPreview';
 import EnhancedConflictList from '../EnhancedConflictList';
+import { ApplyPlanDialog } from '../../shared/ui';
 import type { HotkeyWorkspaceActions, HotkeyWorkspaceSharedState } from './types';
 
 type RawLineTarget = {
@@ -142,16 +142,15 @@ export default function HotkeyConflictsPanel({
         />
       </section>
 
-      {actions.plan ? (
-        <section className="hotkey-conflicts-plan" aria-label="Apply Plan">
-          <ApplyPlanPreview
-            plan={actions.plan}
-            onConfirm={() => void actions.handleApplyPlan()}
-            onCancel={actions.clearPlan}
-            isApplying={state.loading}
-          />
-        </section>
-      ) : null}
+      <ApplyPlanDialog
+        open={Boolean(actions.plan)}
+        plan={actions.plan}
+        applying={state.loading}
+        title="应用快捷键变更"
+        intro="确认目标文件、备份与执行步骤后再写入 env。"
+        onConfirm={() => void actions.handleApplyPlan()}
+        onCancel={actions.clearPlan}
+      />
     </section>
   );
 }

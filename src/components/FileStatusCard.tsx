@@ -2,6 +2,7 @@
  * ATM - 文件状态卡片组件
  */
 import React from 'react';
+import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export interface FileStatusCardProps {
   title: string;
@@ -18,11 +19,7 @@ const FileStatusCard: React.FC<FileStatusCardProps> = ({
   readable,
   writable,
 }) => {
-  const getStatusIcon = () => {
-    if (!exists) return <span className="status-dot error" />;
-    if (!writable) return <span className="status-dot warning" />;
-    return <span className="status-dot ok" />;
-  };
+  const StatusIcon = !exists ? AlertCircle : writable === false ? AlertTriangle : CheckCircle2;
 
   const getStatusText = () => {
     if (!path) return '未检测';
@@ -39,24 +36,24 @@ const FileStatusCard: React.FC<FileStatusCardProps> = ({
   };
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-            {getStatusIcon()}
-            {title}
+    <article className={`ui-file-status ui-file-status--${!exists ? 'error' : writable === false ? 'warning' : 'ok'}`}>
+      <div className="ui-file-status-main">
+        <div className="ui-file-status-copy">
+          <div className="ui-file-status-title">
+            <StatusIcon aria-hidden="true" />
+            <span>{title}</span>
           </div>
-          <div className="path-display">{path || '—'}</div>
+          <div className="path-display" title={path || undefined}>{path || '—'}</div>
         </div>
         <span className={`badge ${getStatusClass()}`}>{getStatusText()}</span>
       </div>
       {exists && (
-        <div style={{ marginTop: 8, display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)' }}>
-          <span>可读: {readable ? '✓' : '✗'}</span>
-          <span>可写: {writable ? '✓' : '✗'}</span>
+        <div className="ui-file-status-access">
+          <span>可读：{readable === undefined ? '未检查' : readable ? '是' : '否'}</span>
+          <span>可写：{writable === undefined ? '未检查' : writable ? '是' : '否'}</span>
         </div>
       )}
-    </div>
+    </article>
   );
 };
 

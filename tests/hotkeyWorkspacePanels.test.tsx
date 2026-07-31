@@ -560,7 +560,7 @@ describe('hotkey workspace shared data', () => {
     expect(await screen.findByText(/物理键 F2/)).toBeInTheDocument();
   });
 
-  it('renders overview with three navigation cards and keyboard summary', async () => {
+  it('renders overview with compact workspace tabs and keyboard summary', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -652,10 +652,10 @@ describe('hotkey workspace shared data', () => {
 
     renderHotkeyWorkspace('/hotkeys/overview');
 
-    expect(await screen.findByText('快捷键总览')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /编辑键位.*进入主编辑工作区/ })).toHaveAttribute('href', '/hotkeys/editor');
-    expect(screen.getByRole('link', { name: /处理冲突.*集中处理覆盖与冲突/ })).toHaveAttribute('href', '/hotkeys/conflicts');
-    expect(screen.getByRole('link', { name: /导入导出.*管理 env、方案与速查表/ })).toHaveAttribute('href', '/hotkeys/import-export');
+    expect(await screen.findByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '编辑键位' })).toHaveAttribute('href', '/hotkeys/editor');
+    expect(screen.getByRole('link', { name: '检查冲突' })).toHaveAttribute('href', '/hotkeys/conflicts');
+    expect(screen.getByRole('link', { name: '导入导出' })).toHaveAttribute('href', '/hotkeys/import-export');
     expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -837,8 +837,8 @@ describe('hotkey workspace shared data', () => {
 
     renderHotkeyWorkspace('/hotkeys/overview');
 
-    expect(await screen.findByText('快捷键总览')).toBeInTheDocument();
-    expect(screen.getByText('已应用方案')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
+    expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('已应用');
     expect(screen.getByText(/条快捷键/)).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
