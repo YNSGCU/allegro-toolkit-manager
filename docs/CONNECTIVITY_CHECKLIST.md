@@ -15,6 +15,7 @@
 - No project-local Structure OS CLI to automate governance validation.
 - Source layout has not yet been migrated to the recommended module-boundary structure.
 - Electron production runtime has verified renderer chunks, preload injection, IPC environment reads and real Hotkey data loading; Skill/Menu write-plan execution still requires a user-approved manual smoke test because it can affect local Allegro configuration.
+- Hotkey Key/List/Conflict child routes share the same renderer data owner; route switches do not add IPC calls or bypass Apply Plan.
 
 ## Verification Commands
 

@@ -87,7 +87,7 @@ HashRouter in `src/App.tsx`:
 | `/` | `Navigate` | 跳转到默认快捷键工作区 |
 | `/overview` | `DashboardPage` | 系统状态 / 健康评分 |
 | `/environment` | `EnvironmentPage` | 环境检测 / 多 env 来源管理 |
-| `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（键位 / 冲突，工具弹窗承载导入导出） |
+| `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（键位 / 列表 / 冲突，工具弹窗承载导入导出） |
 | `/skills` | `SkillPage` | Skill 管理（表格 + 三类详情 + 方案栏） |
 | `/menu` | `MenuPage` | 菜单树编辑 + 方案栏 |
 

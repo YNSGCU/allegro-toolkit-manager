@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Keyboard, ShieldAlert } from 'lucide-react';
+import { Keyboard, List, ShieldAlert } from 'lucide-react';
 import { HOTKEY_WORKSPACE_SECTIONS } from './hotkeyWorkspaceSections';
 
 const sectionIcons = {
   keys: Keyboard,
+  list: List,
   conflicts: ShieldAlert,
 };
 

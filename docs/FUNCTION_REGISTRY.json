@@ -25,6 +25,9 @@
       "status": "complete",
       "ui": [
         "src/pages/HotkeyWorkspacePage.tsx",
+        "src/components/hotkeys/HotkeySubnav.tsx",
+        "src/components/hotkeys/HotkeyEditorPanel.tsx",
+        "src/components/HotkeyList.tsx",
         "src/services/loadHotkeyWorkspaceData.ts"
       ],
       "ipc": [

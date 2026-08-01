@@ -4,7 +4,7 @@
 
 - Last updated: 2026-08-01
 - Current branch: Git repository initialized; UI reset baseline commit `c95a222`
-- App status: 四个侧栏入口使用共享工作区 UI；五个业务页面支持拆包、预加载和错误恢复；五个高频深层业务弹窗已迁移到统一 BusinessDialog 与紧凑表单契约；写入安全和 IPC 边界不变
+- App status: 四个侧栏入口使用共享工作区 UI；快捷键工作区按“键位 / 列表 / 冲突”拆分任务页；五个业务页面支持拆包、预加载和错误恢复；写入安全和 IPC 边界不变
 - Test status: 40 files / 216 tests pass；包含页面加载恢复、业务弹窗表单/键盘交互、方案栏、快捷键双视图、Skill 三类详情和菜单单一树工作台契约覆盖
 - Validation status: frontend TypeScript, Electron TypeScript and renderer production build pass
 
@@ -12,7 +12,7 @@
 
 - Environment page locates and inspects Allegro config paths.
 - Hotkey page supports layered visualization, conflict checks, profile preview/application, import/export, and change history.
-- Hotkey navigation is reduced to Key/Conflict; keyboard, search/list and detail share one task page, while import/export/history/env tools open from a workspace utility dialog. Legacy subroutes redirect safely.
+- Hotkey navigation uses three focused tasks: Key shows the keyboard only, List owns search/table/selection details, and Conflict handles diagnostics. Import/export/history/env tools open from a workspace utility dialog; legacy subroutes redirect safely.
 - Skill page supports scanning, metadata inspection, impact analysis, loader/order checks, and skill profiles.
 - Skill page now uses a compact workspace with a dense independently scrollable table, command/diagnostic views, a proportional detail inspector without decorative avatars, truthful diagnostic state and an in-page profile Apply Plan confirmation chain.
 - Multi-file Skill subdirectories are now represented as one directory package; loader/main entry selection, aggregate command parsing and recursive static load-chain detection prevent internal modules from appearing as separate unloaded Skills.
@@ -45,6 +45,7 @@
 - `src/shared/ui/{feedback/RouteErrorBoundary,overlays/useDialogFocus}.tsx`: route recovery and dialog keyboard contract
 - `src/shared/ui/overlays/BusinessDialog.tsx`, `src/shared/ui/foundations/dialogs.css`: shared business dialog and compact form contract
 - `src/components/{AddHotkeyDialog,HotkeyEditor,SkillMetaDialog,SkillDeleteImpactDialog,CommandSelector}.tsx`: first cross-domain dialog migration
+- `src/components/hotkeys/{HotkeyEditorPanel,HotkeySubnav,hotkeyWorkspaceSections}.tsx`: standalone Hotkey list route and three-task navigation
 - `tests/{rendererAssetPath,routeExperience,layoutPrefetch,dialogAccessibility}.test.tsx`: route/build/focus regression coverage
 - `tests/businessDialogs.test.tsx`: labelled forms, error announcement, risk options, command search and initial-focus coverage
 - `docs/dev/features/workspace-ui-architecture.md`, `docs/user/features/workspace-ui.md`: developer and user documentation

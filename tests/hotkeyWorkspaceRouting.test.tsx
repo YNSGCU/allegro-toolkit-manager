@@ -30,7 +30,7 @@ describe('hotkey workspace routing', () => {
     cleanup();
   });
 
-  it('redirects /hotkeys to the key workspace, renders two task tabs, and does not render page scaler wrappers', async () => {
+  it('redirects /hotkeys to the key workspace, renders three task tabs, and does not render page scaler wrappers', async () => {
     mockAtm();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -48,8 +48,10 @@ describe('hotkey workspace routing', () => {
       );
 
       expect(container.querySelector('.hotkey-subnav-track')).not.toBeNull();
-      expect(container.querySelectorAll('.hotkey-subnav-link')).toHaveLength(2);
+      expect(container.querySelectorAll('.hotkey-subnav-link')).toHaveLength(3);
       expect(screen.getByRole('link', { name: '键位' })).toHaveClass('active');
+      expect(screen.getByRole('link', { name: '列表' })).toHaveAttribute('href', '/hotkeys/list');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
       expect(container.querySelector('.hotkey-workspace-stage')).toBeNull();
       expect(container.querySelector('.hotkey-workspace-page')).not.toHaveAttribute('style');
       expect(consoleErrorSpy).not.toHaveBeenCalled();

@@ -760,9 +760,10 @@ export default function HotkeyWorkspacePage() {
         <HotkeySubnav />
         <Routes>
           <Route index element={<Navigate to="keys" replace />} />
-          <Route path="keys" element={<HotkeyEditorPanel state={sharedState} actions={actions} />} />
+          <Route path="keys" element={<HotkeyEditorPanel state={sharedState} actions={actions} mode="keys" />} />
+          <Route path="list" element={<HotkeyEditorPanel state={sharedState} actions={actions} mode="list" />} />
           <Route path="overview" element={<Navigate to="/hotkeys/keys" replace />} />
-          <Route path="editor" element={<Navigate to="/hotkeys/keys" replace />} />
+          <Route path="editor" element={<Navigate to="/hotkeys/list" replace />} />
           <Route path="conflicts" element={<HotkeyConflictsPanel state={sharedState} actions={actions} />} />
           <Route path="import-export" element={<Navigate to="/hotkeys/keys" replace />} />
         </Routes>

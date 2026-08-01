@@ -287,7 +287,7 @@ describe('hotkey workspace shared data', () => {
     expect(document.querySelector('.raw-line-view .atm-btn')).toBeNull();
   });
 
-  it('renders editor route with shared binding data and opens editor from selection', async () => {
+  it('renders the standalone list route with shared binding data and opens editor from selection', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -418,12 +418,12 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/keys');
+    renderHotkeyWorkspace('/hotkeys/list');
 
-    expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '快捷键列表' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('搜索键位、命令或来源')).toBeInTheDocument();
-    expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
-    expect(screen.getByText('快捷键列表')).toBeInTheDocument();
+    expect(screen.queryByTestId('keyboard-visualizer-stub')).not.toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
     const keyMatches = await screen.findAllByText('a');
     expect(keyMatches.length).toBeGreaterThan(0);
     expect(await screen.findAllByText('user.command')).not.toHaveLength(0);
@@ -659,7 +659,7 @@ describe('hotkey workspace shared data', () => {
     renderHotkeyWorkspace('/hotkeys/overview');
 
     expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(screen.getAllByRole('link')).toHaveLength(3);
     expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -844,7 +844,7 @@ describe('hotkey workspace shared data', () => {
     expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
     expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('配置2 条');
     expect(screen.getByLabelText('快捷键当前状态')).not.toHaveTextContent('应用状态');
-    expect(screen.getByText('快捷键列表')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('搜索键位、命令或来源')).not.toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         viewMode: 'my',

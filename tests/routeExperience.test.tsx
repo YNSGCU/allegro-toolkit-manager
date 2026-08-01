@@ -16,9 +16,11 @@ afterEach(() => {
 describe('route experience', () => {
   it('maps nested routes to the same page loader and deduplicates preload requests', async () => {
     expect(getRoutePageLoader('/hotkeys/keys')).toBe(routePageLoaders.hotkeys);
+    expect(getRoutePageLoader('/hotkeys/list')).toBe(routePageLoaders.hotkeys);
     expect(getRoutePageLoader('/skills')).toBe(routePageLoaders.skills);
     expect(getRoutePageLoader('/unknown')).toBeUndefined();
     expect(getRouteBoundaryKey('/hotkeys/keys')).toBe('/hotkeys');
+    expect(getRouteBoundaryKey('/hotkeys/list')).toBe('/hotkeys');
     expect(getRouteBoundaryKey('/hotkeys/conflicts')).toBe('/hotkeys');
 
     const firstRequest = preloadWorkspaceRoute('/overview');

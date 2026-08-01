@@ -5280,18 +5280,6 @@ textarea.atm-input:focus {
   border-radius: 14px;
 }
 
-@media (max-width: 900px) {
-  .hotkey-subnav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .hotkey-subnav {
-    grid-template-columns: 1fr;
-  }
-}
-
 .hotkey-overview-panel {
   display: flex;
   flex-direction: column;
@@ -5349,6 +5337,8 @@ textarea.atm-input:focus {
 .hotkey-editor-panel {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 16px;
 }
 
@@ -5642,20 +5632,27 @@ textarea.atm-input:focus {
 .hotkey-editor-panel-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.72fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+  overflow: hidden;
 }
 
-.hotkey-editor-panel-main {
-  display: contents;
+.hotkey-editor-keyboard-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   min-width: 0;
 }
 
 .hotkey-editor-map-section {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 8px;
-  grid-column: 1 / -1;
+  min-height: 0;
   min-width: 0;
 }
 
@@ -5673,6 +5670,17 @@ textarea.atm-input:focus {
 .hotkey-editor-list-card,
 .hotkey-editor-detail-card {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hotkey-editor-list-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.hotkey-editor-detail-card {
+  overflow-y: auto;
 }
 
 .hotkey-editor-list-header {
@@ -5692,6 +5700,17 @@ textarea.atm-input:focus {
 
 .hotkey-editor-list-tools select {
   min-width: 0;
+}
+
+.hotkey-editor-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.hotkey-editor-list-scroll .data-table {
+  min-width: 1080px;
 }
 
 .hotkey-tools-dialog {
@@ -5763,13 +5782,26 @@ textarea.atm-input:focus {
 }
 
 @media (max-width: 1080px) {
-  .hotkey-conflicts-summary-grid,
+  .hotkey-conflicts-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hotkey-editor-panel-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(360px, 1fr) auto;
+    overflow-y: auto;
+  }
+
+  .hotkey-editor-detail-card {
+    overflow: visible;
   }
 }
 
 @media (max-width: 640px) {
+  .hotkey-editor-list-tools {
+    grid-template-columns: 1fr;
+  }
+
   .hotkey-io-inline-status span {
     min-width: 0;
   }

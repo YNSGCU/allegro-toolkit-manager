@@ -27,6 +27,8 @@
 
 `src/pages/HotkeyWorkspacePage.tsx` -> `src/services/loadHotkeyWorkspaceData.ts` -> `window.atm.*hotkey/profile/history methods*` -> `electron/preload.ts` -> `electron/ipc/hotkey.ipc.ts` / `history.ipc.ts` -> `core/parser/*`, `core/validator/*`, `core/apply/*`, `core/profile/*`
 
+`HotkeyWorkspacePage` 保持数据与选中状态所有权；`/hotkeys/keys` 和 `/hotkeys/list` 复用 `HotkeyEditorPanel` 的编辑/接管/修正逻辑，仅切换键盘或列表详情布局，`/hotkeys/conflicts` 继续使用独立诊断面板。三个子路由共享一级错误边界，不触发父工作区重载。
+
 ### Shared Workspace UI
 
 `src/main.tsx` -> `src/App.tsx` (`Layout` + `Suspense` + `RouteErrorBoundary`) -> `src/config/routePageLoaders.ts` -> route-specific page chunk -> `src/shared/ui/{workspace,feedback,overlays}`. `Layout` preloads the same route loader on link hover/focus. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.

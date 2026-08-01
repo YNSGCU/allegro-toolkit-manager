@@ -80,9 +80,11 @@ function matchesFilter(binding: HotkeyBinding, state: HotkeyWorkspaceSharedState
 export default function HotkeyEditorPanel({
   state,
   actions,
+  mode = 'keys',
 }: {
   state: HotkeyWorkspaceSharedState;
   actions: HotkeyWorkspaceActions;
+  mode?: 'keys' | 'list';
 }) {
   const [editingBinding, setEditingBinding] = useState<HotkeyBinding | null>(null);
   const [sourceOverrideBinding, setSourceOverrideBinding] = useState<HotkeyBinding | null>(null);
@@ -253,11 +255,18 @@ export default function HotkeyEditorPanel({
   };
 
   return (
-    <section className="hotkey-editor-panel" aria-label="键位编辑">
+    <section
+      className={`hotkey-editor-panel hotkey-editor-panel--${mode}`}
+      aria-label={mode === 'keys' ? '键位编辑' : '快捷键列表'}
+    >
       <header className="hotkey-editor-panel-header">
         <div>
-          <h2>键位</h2>
-          <p>从键盘定位占用，再在列表中搜索、选择和编辑绑定。</p>
+          <h2>{mode === 'keys' ? '键位' : '快捷键列表'}</h2>
+          <p>
+            {mode === 'keys'
+              ? '查看键盘占用，点击键位可直接编辑、接管或新增绑定。'
+              : '搜索、筛选并集中查看全部绑定，选中后在右侧处理。'}
+          </p>
         </div>
         <div className="hotkey-editor-panel-actions">
           <button
@@ -286,8 +295,8 @@ export default function HotkeyEditorPanel({
       {localError ? <div className="message message-error" role="alert">{localError}</div> : null}
       {successMessage ? <div className="message message-info">{successMessage}</div> : null}
 
-      <div className="hotkey-editor-panel-layout">
-        <div className="hotkey-editor-panel-main">
+      {mode === 'keys' ? (
+        <div className="hotkey-editor-keyboard-layout">
           <section className="hotkey-editor-map-section" aria-label="键盘占用">
             <KeyboardVisualizer
               bindings={state.bindings}
@@ -305,7 +314,9 @@ export default function HotkeyEditorPanel({
               onAddBinding={openAddBindingForPhysicalKey}
             />
           </section>
-
+        </div>
+      ) : (
+        <div className="hotkey-editor-panel-layout">
           <section className="card hotkey-editor-list-card" aria-label="快捷键列表">
             <div className="card-header hotkey-editor-list-header">
               <span className="hotkey-editor-section-title hotkey-editor-section-title-inline">快捷键列表</span>
@@ -334,65 +345,67 @@ export default function HotkeyEditorPanel({
                 <option value="user_original">用户原始配置</option>
               </select>
             </div>
-            <HotkeyList
-              bindings={tableBindings}
-              highlightId={actions.selectedBindingId || undefined}
-              onBindingClick={(binding) => actions.setSelectedBindingId(binding.id)}
-              onEdit={openEditor}
-              onAdopt={actions.handleAdoptBinding}
-              onOverrideSource={openSourceOverride}
-            />
+            <div className="hotkey-editor-list-scroll">
+              <HotkeyList
+                bindings={tableBindings}
+                highlightId={actions.selectedBindingId || undefined}
+                onBindingClick={(binding) => actions.setSelectedBindingId(binding.id)}
+                onEdit={openEditor}
+                onAdopt={actions.handleAdoptBinding}
+                onOverrideSource={openSourceOverride}
+              />
+            </div>
           </section>
+
+          <aside className="card hotkey-editor-detail-card" aria-label="当前选择">
+            <div className="card-header">当前选择</div>
+            {selectedBinding ? (
+              <div className="hotkey-editor-detail">
+                <div className="hotkey-editor-detail-key">{selectedBinding.key}</div>
+                <div className="hotkey-editor-detail-command">{selectedBinding.command}</div>
+                <div className="hotkey-editor-detail-meta">
+                  <span>{selectedBinding.type}</span>
+                  <span>{selectedBinding.bindingSource}</span>
+                  {selectedBinding.lineNumber ? <span>第 {selectedBinding.lineNumber} 行</span> : null}
+                </div>
+                <p className="hotkey-editor-detail-note">
+                  {selectedBinding.chineseName || '可以从这里进入编辑、修正来源或查看原始行。'}
+                </p>
+
+                <div className="hotkey-editor-detail-actions">
+                  <button className="btn btn-primary" onClick={() => openEditor(selectedBinding)}>
+                    编辑此绑定
+                  </button>
+                  <button className="btn" onClick={() => void actions.handleAdoptBinding(selectedBinding)}>
+                    接管到当前方案
+                  </button>
+                  <button className="btn" onClick={() => openSourceOverride(selectedBinding)}>
+                    修正命令来源
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() =>
+                      selectedBinding.lineNumber && state.envInfo?.envFilePath
+                        ? setRawLineModal({
+                            filePath: state.envInfo.envFilePath,
+                            lineNumber: selectedBinding.lineNumber,
+                          })
+                        : undefined
+                    }
+                    disabled={!selectedBinding.lineNumber || !state.envInfo?.envFilePath}
+                  >
+                    查看原始行
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="detail-empty-state">
+                先在列表里选中一个快捷键，这里就会显示可编辑详情。
+              </div>
+            )}
+          </aside>
         </div>
-
-        <aside className="card hotkey-editor-detail-card" aria-label="当前选择">
-          <div className="card-header">当前选择</div>
-          {selectedBinding ? (
-            <div className="hotkey-editor-detail">
-              <div className="hotkey-editor-detail-key">{selectedBinding.key}</div>
-              <div className="hotkey-editor-detail-command">{selectedBinding.command}</div>
-              <div className="hotkey-editor-detail-meta">
-                <span>{selectedBinding.type}</span>
-                <span>{selectedBinding.bindingSource}</span>
-                {selectedBinding.lineNumber ? <span>第 {selectedBinding.lineNumber} 行</span> : null}
-              </div>
-              <p className="hotkey-editor-detail-note">
-                {selectedBinding.chineseName || '可以从这里进入编辑、修正来源或查看原始行。'}
-              </p>
-
-              <div className="hotkey-editor-detail-actions">
-                <button className="btn btn-primary" onClick={() => openEditor(selectedBinding)}>
-                  编辑此绑定
-                </button>
-                <button className="btn" onClick={() => void actions.handleAdoptBinding(selectedBinding)}>
-                  接管到当前方案
-                </button>
-                <button className="btn" onClick={() => openSourceOverride(selectedBinding)}>
-                  修正命令来源
-                </button>
-                <button
-                  className="btn"
-                  onClick={() =>
-                    selectedBinding.lineNumber && state.envInfo?.envFilePath
-                      ? setRawLineModal({
-                          filePath: state.envInfo.envFilePath,
-                          lineNumber: selectedBinding.lineNumber,
-                        })
-                      : undefined
-                  }
-                  disabled={!selectedBinding.lineNumber || !state.envInfo?.envFilePath}
-                >
-                  查看原始行
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="detail-empty-state">
-              先在地图或列表里选中一个快捷键，这里就会显示可编辑详情。
-            </div>
-          )}
-        </aside>
-      </div>
+      )}
 
       {pendingEditPlan ? (
         <section className="hotkey-editor-plan-preview">
