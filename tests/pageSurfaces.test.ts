@@ -86,7 +86,11 @@ describe('页面工作区契约', () => {
     expect(workspaceCss).toMatch(
       /\.hotkey-workspace-content\s*\{[^}]*height:\s*100%;[^}]*overflow-y:\s*auto;/s,
     );
+    expect(workspaceCss).toMatch(
+      /\.hotkey-workspace-context\s*\{[^}]*grid-template-columns:\s*minmax\(390px, 1fr\) max-content;/s,
+    );
     expect(editorSource).toContain("mode?: 'keys' | 'list'");
+    expect(editorSource).toContain('className="hotkey-editor-panel-heading"');
     expect(editorSource).toContain("mode === 'keys' ? '键位' : '快捷键列表'");
     expect(editorSource).toContain('<KeyboardVisualizer');
     expect(editorSource).toContain('className="hotkey-editor-list-scroll"');

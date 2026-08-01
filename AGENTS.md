@@ -232,6 +232,7 @@ GlobalStatusBar（胶囊状态条）
 - 普通操作：收进"更多操作"下拉（MoreActionsMenu）
 - 删除类操作：下拉中红色标记（.danger）
 - GlobalStatusBar 状态颜色：绿色=正常，黄色=警告，红色=错误，灰色=未涉及
+- 快捷键工作区在宽窗口中将 ProfileBar 与 GlobalStatusBar 合并为同一上下文行；子页标题、说明与主操作保持单行紧凑布局，避免重复标题层级挤压主工作区
 
 ### Menu Tree Validation (10 rules in `src/types/menu.ts`)
 

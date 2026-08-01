@@ -5339,7 +5339,7 @@ textarea.atm-input:focus {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 16px;
+  gap: 10px;
 }
 
 .hotkey-conflicts-panel {
@@ -5610,16 +5610,24 @@ textarea.atm-input:focus {
 
 .hotkey-editor-panel-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hotkey-editor-panel-heading {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .hotkey-editor-panel-header p {
-  margin-top: 6px;
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .hotkey-editor-panel-actions {

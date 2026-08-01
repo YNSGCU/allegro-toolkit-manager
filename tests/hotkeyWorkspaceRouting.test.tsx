@@ -52,6 +52,9 @@ describe('hotkey workspace routing', () => {
       expect(screen.getByRole('link', { name: '键位' })).toHaveClass('active');
       expect(screen.getByRole('link', { name: '列表' })).toHaveAttribute('href', '/hotkeys/list');
       expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(container.querySelector('.hotkey-workspace-header .ui-workspace-eyebrow')).toBeNull();
+      expect(container.querySelector('.hotkey-workspace-context .profile-bar--compact')).not.toBeNull();
+      expect(container.querySelector('.hotkey-workspace-context .ui-status-strip')).not.toBeNull();
       expect(container.querySelector('.hotkey-workspace-stage')).toBeNull();
       expect(container.querySelector('.hotkey-workspace-page')).not.toHaveAttribute('style');
       expect(consoleErrorSpy).not.toHaveBeenCalled();

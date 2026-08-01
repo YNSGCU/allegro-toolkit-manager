@@ -13,6 +13,7 @@
 - Environment page locates and inspects Allegro config paths.
 - Hotkey page supports layered visualization, conflict checks, profile preview/application, import/export, and change history.
 - Hotkey navigation uses three focused tasks: Key shows the keyboard only, List owns search/table/selection details, and Conflict handles diagnostics. Import/export/history/env tools open from a workspace utility dialog; legacy subroutes redirect safely.
+- Hotkey uses a compact top stack: the redundant eyebrow is removed, profile and runtime status share one row on wide windows, and each task title/description/action stays on one toolbar line.
 - Skill page supports scanning, metadata inspection, impact analysis, loader/order checks, and skill profiles.
 - Skill page now uses a compact workspace with a dense independently scrollable table, command/diagnostic views, a proportional detail inspector without decorative avatars, truthful diagnostic state and an in-page profile Apply Plan confirmation chain.
 - Multi-file Skill subdirectories are now represented as one directory package; loader/main entry selection, aggregate command parsing and recursive static load-chain detection prevent internal modules from appearing as separate unloaded Skills.

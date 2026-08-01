@@ -708,9 +708,9 @@ export default function HotkeyWorkspacePage() {
       />
       <div className="hotkey-workspace-content">
         <WorkspaceHeader
-          eyebrow="键位配置"
+          className="hotkey-workspace-header"
           title="快捷键"
-          description="在同一工作区检查键盘占用、编辑映射并处理跨 env 冲突。写入前会先展示更改供你审阅。"
+          description="查看键位、管理绑定并处理冲突；写入前仍会先展示更改供你审阅。"
           actions={(
             <MoreActionsMenu
               label="工作区工具"
@@ -721,42 +721,44 @@ export default function HotkeyWorkspacePage() {
             />
           )}
         />
-        <ProfileBar
-          title="快捷键方案"
-          compact
-          profiles={profiles}
-          activeProfileId={activeProfileId}
-          appliedProfileId={appliedProfileId}
-          onCreate={(name) => {
-            void handleCreateProfile(name);
-          }}
-          onCopy={(profileId) => {
-            void handleCopyProfile(profileId);
-          }}
-          onRename={(profileId, newName) => {
-            void handleRenameProfile(profileId, newName);
-          }}
-          onDelete={(profileId) => {
-            void handleDeleteProfile(profileId);
-          }}
-          onSwitch={(profileId) => {
-            void handleSwitchProfile(profileId);
-          }}
-          onApply={() => {
-            void handleApplyActiveProfile();
-          }}
-          onImport={() => {
-            fileInputRef.current?.click();
-          }}
-          onExport={() => {
-            void actions.handleExportProfile();
-          }}
-          applyLabel="审阅更改"
-        />
-        <StatusStrip
-          label="快捷键当前状态"
-          items={statusItems}
-        />
+        <div className="hotkey-workspace-context">
+          <ProfileBar
+            title="快捷键方案"
+            compact
+            profiles={profiles}
+            activeProfileId={activeProfileId}
+            appliedProfileId={appliedProfileId}
+            onCreate={(name) => {
+              void handleCreateProfile(name);
+            }}
+            onCopy={(profileId) => {
+              void handleCopyProfile(profileId);
+            }}
+            onRename={(profileId, newName) => {
+              void handleRenameProfile(profileId, newName);
+            }}
+            onDelete={(profileId) => {
+              void handleDeleteProfile(profileId);
+            }}
+            onSwitch={(profileId) => {
+              void handleSwitchProfile(profileId);
+            }}
+            onApply={() => {
+              void handleApplyActiveProfile();
+            }}
+            onImport={() => {
+              fileInputRef.current?.click();
+            }}
+            onExport={() => {
+              void actions.handleExportProfile();
+            }}
+            applyLabel="审阅更改"
+          />
+          <StatusStrip
+            label="快捷键当前状态"
+            items={statusItems}
+          />
+        </div>
         <HotkeySubnav />
         <Routes>
           <Route index element={<Navigate to="keys" replace />} />

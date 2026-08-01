@@ -260,7 +260,7 @@ export default function HotkeyEditorPanel({
       aria-label={mode === 'keys' ? '键位编辑' : '快捷键列表'}
     >
       <header className="hotkey-editor-panel-header">
-        <div>
+        <div className="hotkey-editor-panel-heading">
           <h2>{mode === 'keys' ? '键位' : '快捷键列表'}</h2>
           <p>
             {mode === 'keys'
