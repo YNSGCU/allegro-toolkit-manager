@@ -5679,9 +5679,7 @@ textarea.atm-input:focus {
 }
 
 .hotkey-editor-panel-main {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: contents;
   min-width: 0;
 }
 
@@ -5689,6 +5687,8 @@ textarea.atm-input:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .hotkey-editor-section-title {
@@ -5712,6 +5712,28 @@ textarea.atm-input:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.hotkey-editor-list-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 190px);
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hotkey-editor-list-tools select {
+  min-width: 0;
+}
+
+.hotkey-tools-dialog {
+  width: min(920px, calc(100vw - 32px));
+  max-width: 920px;
+  max-height: calc(100vh - 48px);
+}
+
+.hotkey-tools-dialog .modal-body {
+  overflow: auto;
 }
 
 .hotkey-editor-detail {

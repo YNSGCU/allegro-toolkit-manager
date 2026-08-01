@@ -11,11 +11,13 @@ export interface ActionItem {
 interface MoreActionsMenuProps {
   actions: ActionItem[];
   label?: string;
+  buttonClassName?: string;
 }
 
 const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   actions,
   label = '更多操作',
+  buttonClassName = 'more-actions-btn',
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,7 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   return (
     <div className="more-actions-wrapper" ref={wrapperRef}>
       <button
-        className="more-actions-btn"
+        className={buttonClassName}
         onClick={() => setOpen((current) => !current)}
         disabled={!hasEnabled}
         title={label}

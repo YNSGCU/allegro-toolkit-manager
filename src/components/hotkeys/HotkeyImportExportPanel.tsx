@@ -238,9 +238,6 @@ export default function HotkeyImportExportPanel({
         <div className="message message-error">{openFolderError}</div>
       ) : null}
 
-      {sharedState.error ? (
-        <div className="message message-error">{sharedState.error}</div>
-      ) : null}
     </section>
   );
 }

@@ -79,7 +79,7 @@ const DashboardPage: React.FC = () => {
   if (loading && !envInfo) {
     return (
       <WorkspacePage className="overview-page">
-        <WorkspaceHeader eyebrow="系统状态" title="概览" description="正在检查 Allegro 配置与 ATM 运行状态。" />
+        <WorkspaceHeader eyebrow="运行基础" title="系统状态" description="正在检查 Allegro 配置与 ATM 运行状态。" />
         <PageState kind="loading" title="正在检测工作区" description="正在读取路径、权限和运行健康度。" />
       </WorkspacePage>
     );
@@ -88,7 +88,7 @@ const DashboardPage: React.FC = () => {
   if (error && !envInfo) {
     return (
       <WorkspacePage className="overview-page">
-        <WorkspaceHeader eyebrow="系统状态" title="概览" description="集中确认环境健康度并进入核心工作区。" />
+        <WorkspaceHeader eyebrow="运行基础" title="系统状态" description="集中确认环境健康度并进入核心工作区。" />
         <PageState
           kind="error"
           title="无法读取系统状态"
@@ -104,8 +104,8 @@ const DashboardPage: React.FC = () => {
   return (
     <WorkspacePage className="overview-page">
       <WorkspaceHeader
-        eyebrow="系统状态"
-        title="概览"
+        eyebrow="运行基础"
+        title="系统状态"
         description="集中确认环境健康度、关键文件和三个核心工作区的入口。"
         actions={(
           <>

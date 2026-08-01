@@ -2,7 +2,6 @@ import type { ComponentType, ReactNode } from 'react';
 import {
   Blocks,
   CircuitBoard,
-  FolderCog,
   Gauge,
   Keyboard,
   Menu,
@@ -20,7 +19,6 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   skills: Blocks,
   menu: Menu,
   overview: Gauge,
-  environment: FolderCog,
 };
 
 export default function Layout({ children }: LayoutProps) {

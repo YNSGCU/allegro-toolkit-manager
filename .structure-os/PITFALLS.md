@@ -115,3 +115,23 @@
 - Avoid:
   - 以文件数代替 Skill 数。
   - 把“扫描到文件”等同于“已在 Allegro 启动时配置加载”。
+
+## PIT-2026-08-01-06: Grid 子项的固有宽度会绕过外层响应式收缩
+
+- Area: 快捷键键盘、CSS Grid、窄窗口布局
+- Symptom:
+  - 页面没有水平滚动条，但键盘卡片向右越过主内容区，右侧“Skill”筛选或 F12/Bksp 被裁切。
+  - 外层 Grid 已在媒体查询中切为 `1fr`，计算列宽仍大于容器宽度。
+- Cause:
+  - 键盘所在 Grid 子项使用默认 `min-width: auto`，其内容固有宽度成为列的最小值。
+  - 外层 `overflow: hidden` 隐藏了溢出，因此看起来像是组件内容缺失。
+- Detection:
+  - 对比 `.hotkey-editor-panel-layout` 与 `.hotkey-editor-map-section` / `.keyboard-visualizer` 的 `getBoundingClientRect().width`。
+  - 在 1024×768 和 1220×820 检查 `right <= main.right`，并确认文档宽度等于视口宽度。
+- Safe fix:
+  1. 给承载宽内容的 Grid/Flex 子项设置 `min-width: 0`。
+  2. 保留键盘内部等比例布局或局部滚动，不让固有宽度反向撑大页面列。
+  3. 用实际浏览器几何值和截图同时验证，而不只检查页面是否出现水平滚动条。
+- Avoid:
+  - 只给最外层加 `overflow: hidden` 掩盖越界。
+  - 仅修改 `grid-template-columns: 1fr`，却忽略 Grid 子项的默认最小宽度。

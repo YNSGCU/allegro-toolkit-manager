@@ -18,12 +18,10 @@ describe('app shell config', () => {
     ]);
   });
 
-  it('keeps overview and environment as utility entries', () => {
+  it('merges overview and environment into one system status entry', () => {
     const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
 
-    expect(utilityItems.map((item) => item.key)).toEqual([
-      'overview',
-      'environment',
-    ]);
+    expect(utilityItems.map((item) => item.key)).toEqual(['overview']);
+    expect(utilityItems[0].label).toBe('系统状态');
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import MoreActionsMenu from './MoreActionsMenu';
 
 interface MenuTreeAddBarProps {
   selectedMenuLabel: string | null;
@@ -27,15 +28,15 @@ const MenuTreeAddBar: React.FC<MenuTreeAddBarProps> = ({
       </div>
 
       <div className="menu-tree-add-actions">
-        <button type="button" className="btn btn-sm" onClick={onAddSubmenu} disabled={disabled}>
-          添加子菜单
-        </button>
-        <button type="button" className="btn btn-sm btn-primary" onClick={onAddCommand} disabled={disabled}>
-          添加命令
-        </button>
-        <button type="button" className="btn btn-sm" onClick={onAddSeparator} disabled={disabled}>
-          添加分隔线
-        </button>
+        <MoreActionsMenu
+          label="添加"
+          buttonClassName="btn btn-sm btn-primary"
+          actions={[
+            { label: '添加命令', onClick: onAddCommand, disabled },
+            { label: '添加子菜单', onClick: onAddSubmenu, disabled },
+            { label: '添加分隔线', onClick: onAddSeparator, disabled },
+          ]}
+        />
       </div>
     </div>
   );

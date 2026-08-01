@@ -9,6 +9,7 @@ import type {
   SkillMeta, SkillUsageInfo, UsageTreeNode, SkillConfigFile,
 } from '../types/skill';
 import { getLoadStatusDisplay, getSourceTypeLabel, USAGE_STATUS_DISPLAY } from '../types/skill';
+import MoreActionsMenu from './MoreActionsMenu';
 
 interface SkillDetailSidebarProps {
   skill: SkillFileItem | null;
@@ -79,7 +80,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
   onExportPackage,
 }) => {
   const [showInternals, setShowInternals] = useState(false);
-  const [activeDetailTab, setActiveDetailTab] = useState<'overview' | 'commands' | 'files' | 'maintenance'>('overview');
+  const [activeDetailTab, setActiveDetailTab] = useState<'overview' | 'commands' | 'actions'>('overview');
 
   useEffect(() => {
     setActiveDetailTab('overview');
@@ -229,8 +230,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
         {([
           ['overview', '概览'],
           ['commands', '命令与引用'],
-          ['files', '文件与加载'],
-          ['maintenance', '维护'],
+          ['actions', '操作'],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -450,7 +450,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
         </section>}
 
         {/* V5.2 配置文件 */}
-        {activeDetailTab === 'files' && (
+        {activeDetailTab === 'overview' && (
           <section className="skill-detail-section">
             <div className="skill-detail-section-title">
               配置文件
@@ -533,9 +533,14 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                     )}
                   </div>
                   <div className="skill-detail-command-actions">
-                    {onCopyCommand && <button className="btn btn-sm" onClick={() => onCopyCommand(cmd.name)} title="复制命令名">复制</button>}
-                    {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey(cmd.name)} title="绑定快捷键">绑定</button>}
-                    {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu(cmd.name)} title="添加菜单入口">菜单</button>}
+                    <MoreActionsMenu
+                      label="使用命令"
+                      actions={[
+                        ...(onCopyCommand ? [{ label: '复制命令名', onClick: () => onCopyCommand(cmd.name) }] : []),
+                        ...(onBindHotkey ? [{ label: '绑定快捷键', onClick: () => onBindHotkey(cmd.name) }] : []),
+                        ...(onAddMenu ? [{ label: '添加菜单入口', onClick: () => onAddMenu(cmd.name) }] : []),
+                      ]}
+                    />
                   </div>
                 </div>
               ))}
@@ -614,7 +619,7 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
         </>}
 
         {/* 操作按钮 */}
-        {activeDetailTab === 'maintenance' && <section className="skill-detail-section skill-maintenance-section">
+        {activeDetailTab === 'actions' && <section className="skill-detail-section skill-maintenance-section">
           <div className="skill-detail-section-title">操作</div>
           <p className="skill-detail-maintenance-hint">所有文件写入操作都必须先生成 Apply Plan，并在确认后执行。</p>
           <div className="skill-detail-actions">
@@ -623,13 +628,23 @@ const SkillDetailSidebar: React.FC<SkillDetailSidebarProps> = ({
                 {skill.enabled ? '禁用' : '启用'}
               </button>
             )}
-            {onBindHotkey && <button className="btn btn-sm" onClick={() => onBindHotkey('')}>绑定快捷键</button>}
-            {onAddMenu && <button className="btn btn-sm" onClick={() => onAddMenu('')}>添加菜单入口</button>}
-            {onAddToLoader && !skill.enabled && <button className="btn btn-sm" onClick={() => onAddToLoader(skill.path)}>加入 Loader</button>}
-            {onOpenFileLocation && <button className="btn btn-sm" onClick={() => onOpenFileLocation(skill.path)}>打开文件位置</button>}
-            {onReParse && <button className="btn btn-sm" onClick={() => onReParse(skill.path)}>重新解析</button>}
-            {onGenerateReadme && <button className="btn btn-sm" onClick={() => onGenerateReadme(skill)}>生成说明</button>}
-            {onExportPackage && <button className="btn btn-sm" onClick={() => onExportPackage(skill)}>导出包</button>}
+            <MoreActionsMenu
+              label="使用此 Skill"
+              actions={[
+                ...(onBindHotkey ? [{ label: '绑定快捷键', onClick: () => onBindHotkey('') }] : []),
+                ...(onAddMenu ? [{ label: '添加菜单入口', onClick: () => onAddMenu('') }] : []),
+              ]}
+            />
+            <MoreActionsMenu
+              label="更多操作"
+              actions={[
+                ...(onAddToLoader && !skill.enabled ? [{ label: '加入 Loader', onClick: () => onAddToLoader(skill.path) }] : []),
+                ...(onOpenFileLocation ? [{ label: '打开文件位置', onClick: () => onOpenFileLocation(skill.path) }] : []),
+                ...(onReParse ? [{ label: '重新解析', onClick: () => onReParse(skill.path) }] : []),
+                ...(onGenerateReadme ? [{ label: '生成说明', onClick: () => onGenerateReadme(skill) }] : []),
+                ...(onExportPackage ? [{ label: '导出包', onClick: () => onExportPackage(skill) }] : []),
+              ]}
+            />
           </div>
           {onDelete && !isCompany && (
             <div className="skill-danger-zone">

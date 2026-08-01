@@ -7,7 +7,7 @@ import MenuTreeAddBar from '../src/components/MenuTreeAddBar';
 afterEach(() => cleanup());
 
 describe('菜单编辑工作区', () => {
-  it('选中菜单目录后提供三个明确的就地添加入口', () => {
+  it('选中菜单目录后通过单一添加入口提供三种内容类型', () => {
     const onAddSubmenu = vi.fn();
     const onAddCommand = vi.fn();
     const onAddSeparator = vi.fn();
@@ -22,8 +22,12 @@ describe('菜单编辑工作区', () => {
     );
 
     expect(screen.getByText('添加到“测试菜单”')).toBeInTheDocument();
+    const addButton = screen.getByRole('button', { name: '添加' });
+    fireEvent.click(addButton);
     fireEvent.click(screen.getByRole('button', { name: '添加子菜单' }));
+    fireEvent.click(addButton);
     fireEvent.click(screen.getByRole('button', { name: '添加命令' }));
+    fireEvent.click(addButton);
     fireEvent.click(screen.getByRole('button', { name: '添加分隔线' }));
 
     expect(onAddSubmenu).toHaveBeenCalledOnce();
@@ -42,7 +46,7 @@ describe('菜单编辑工作区', () => {
     );
 
     expect(screen.getByText('请先在左侧选择一个菜单目录')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '添加命令' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '添加' })).toBeDisabled();
   });
 
   it('菜单页使用紧凑无乱码页头和有最小高度的编辑区', () => {
@@ -55,17 +59,20 @@ describe('菜单编辑工作区', () => {
     expect(pageSource).not.toContain('???');
     expect(pageSource).not.toContain('<MinimalSurface');
     expect(pageSource).toContain('className="menu-page-header"');
-    expect(pageSource).toContain('applyLabel="应用方案"');
+    expect(pageSource).toContain('applyLabel="审阅更改"');
+    expect(pageSource).toContain('showApplyAction={false}');
     expect(pageSource).toContain('JSON.stringify(previewStore)');
     expect(pageSource).not.toContain('showCompactManagementActions');
     expect(pageSource).toContain('新建顶级菜单');
     expect(pageSource).toContain('<MoreActionsMenu');
     expect(pageSource).toContain('<WorkspaceHeader');
     expect(pageSource).toContain('<PageState');
-    expect(pageSource).toContain('appliedProfileId={store.appliedProfileId}');
+    expect(pageSource).toContain('appliedProfileId={hasUnappliedDraft ? undefined : store.appliedProfileId}');
     expect(pageSource).toContain('needsRestart={needsAllegroRestart ? true : undefined}');
     expect(pageSource).not.toContain('return true; // has menu items, needs restart');
     expect(pageSource).toContain('<MenuTreeAddBar');
+    expect(pageSource).not.toContain('className="menu-editor-tabs"');
+    expect(pageSource).toContain('className="menu-tree-toolbar"');
     expect(pageSource).toContain('compact');
     expect(cssSource).not.toMatch(/\.menu-editor-content\s*\{[^}]*min-height:\s*520px/s);
     expect(workspaceCssSource).toMatch(/\.workspace-page-menu \.menu-editor-content\s*\{[^}]*min-height:\s*0/s);

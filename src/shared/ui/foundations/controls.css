@@ -201,6 +201,26 @@ textarea:focus {
   color: var(--ui-warning);
 }
 
+.profile-bar-applied-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 4px;
+  color: var(--ui-success);
+  font-size: var(--ui-font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profile-bar-applied-status::before {
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
 .profile-bar-id {
   font-family: var(--ui-font-mono);
   color: var(--ui-text-muted);

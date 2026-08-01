@@ -1,12 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { ArrowLeftRight, Keyboard, LayoutDashboard, ShieldAlert } from 'lucide-react';
+import { Keyboard, ShieldAlert } from 'lucide-react';
 import { HOTKEY_WORKSPACE_SECTIONS } from './hotkeyWorkspaceSections';
 
 const sectionIcons = {
-  overview: LayoutDashboard,
-  editor: Keyboard,
+  keys: Keyboard,
   conflicts: ShieldAlert,
-  'import-export': ArrowLeftRight,
 };
 
 export default function HotkeySubnav() {

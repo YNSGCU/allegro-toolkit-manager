@@ -8,11 +8,11 @@ import ExportCheatsheetDialog from '../components/ExportCheatsheetDialog';
 import ImportPreviewDialog from '../components/ImportPreviewDialog';
 import type { ImportPreviewData } from '../components/ImportPreviewDialog';
 import ProfileBar from '../components/ProfileBar';
+import MoreActionsMenu from '../components/MoreActionsMenu';
 import RawLineView from '../components/RawLineView';
 import HotkeyConflictsPanel from '../components/hotkeys/HotkeyConflictsPanel';
 import HotkeyEditorPanel from '../components/hotkeys/HotkeyEditorPanel';
 import HotkeyImportExportPanel from '../components/hotkeys/HotkeyImportExportPanel';
-import HotkeyOverviewPanel from '../components/hotkeys/HotkeyOverviewPanel';
 import HotkeySubnav from '../components/hotkeys/HotkeySubnav';
 import type {
   HotkeyWorkspaceActions,
@@ -144,6 +144,7 @@ export default function HotkeyWorkspacePage() {
   const [plan, setPlan] = useState<ApplyPlan | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showChangeHistory, setShowChangeHistory] = useState(false);
+  const [showWorkspaceTools, setShowWorkspaceTools] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [undoStatus, setUndoStatus] = useState<HotkeyWorkspaceUndoStatus>({ canUndo: false, message: '' });
   const [rawLineView, setRawLineView] = useState<{ filePath: string; lineNumber: number; isReference?: boolean } | null>(null);
@@ -660,13 +661,10 @@ export default function HotkeyWorkspacePage() {
   const statusItems = dataLoadState === 'ready'
     ? [
         {
-          label: '键位',
-          value: `${bindings.length} 条`,
-          tone: bindings.length > 0 ? 'ok' as const : 'muted' as const,
-        },
-        {
-          label: '问题',
-          value: `${stats.errorCount + stats.warningCount} 个`,
+          label: '配置',
+          value: stats.errorCount + stats.warningCount > 0
+            ? `${bindings.length} 条 · ${stats.errorCount + stats.warningCount} 个问题`
+            : `${bindings.length} 条 · 未发现问题`,
           tone: stats.errorCount > 0
             ? 'error' as const
             : stats.warningCount > 0
@@ -685,11 +683,6 @@ export default function HotkeyWorkspacePage() {
           label: '数据',
           value: dataLoadState === 'error' ? '加载失败' : '加载中',
           tone: dataLoadState === 'error' ? 'error' as const : 'muted' as const,
-        },
-        {
-          label: '键位',
-          value: '未加载',
-          tone: 'muted' as const,
         },
         {
           label: '问题',
@@ -717,11 +710,15 @@ export default function HotkeyWorkspacePage() {
         <WorkspaceHeader
           eyebrow="键位配置"
           title="快捷键"
-          description="在同一工作区检查键盘占用、编辑映射并处理跨 env 冲突。所有写入仍需经过 Apply Plan。"
+          description="在同一工作区检查键盘占用、编辑映射并处理跨 env 冲突。写入前会先展示更改供你审阅。"
           actions={(
-            <button className="btn" onClick={() => void loadAll()} disabled={loading}>
-              {loading ? '刷新中…' : '刷新数据'}
-            </button>
+            <MoreActionsMenu
+              label="工作区工具"
+              actions={[
+                { label: loading ? '刷新中…' : '刷新数据', disabled: loading, onClick: () => void loadAll() },
+                { label: '导入、导出与历史', onClick: () => setShowWorkspaceTools(true) },
+              ]}
+            />
           )}
         />
         <ProfileBar
@@ -754,7 +751,7 @@ export default function HotkeyWorkspacePage() {
           onExport={() => {
             void actions.handleExportProfile();
           }}
-          applyLabel="应用此方案"
+          applyLabel="审阅更改"
         />
         <StatusStrip
           label="快捷键当前状态"
@@ -762,16 +759,28 @@ export default function HotkeyWorkspacePage() {
         />
         <HotkeySubnav />
         <Routes>
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="overview" element={<HotkeyOverviewPanel sharedState={sharedState} actions={actions} />} />
-          <Route path="editor" element={<HotkeyEditorPanel state={sharedState} actions={actions} />} />
+          <Route index element={<Navigate to="keys" replace />} />
+          <Route path="keys" element={<HotkeyEditorPanel state={sharedState} actions={actions} />} />
+          <Route path="overview" element={<Navigate to="/hotkeys/keys" replace />} />
+          <Route path="editor" element={<Navigate to="/hotkeys/keys" replace />} />
           <Route path="conflicts" element={<HotkeyConflictsPanel state={sharedState} actions={actions} />} />
-          <Route
-            path="import-export"
-            element={<HotkeyImportExportPanel sharedState={sharedState} actions={actions} />}
-          />
+          <Route path="import-export" element={<Navigate to="/hotkeys/keys" replace />} />
         </Routes>
       </div>
+
+      {showWorkspaceTools ? (
+        <div className="modal-overlay" onClick={() => setShowWorkspaceTools(false)}>
+          <div className="modal-dialog hotkey-tools-dialog" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3>导入、导出与历史</h3>
+              <button className="btn btn-sm" onClick={() => setShowWorkspaceTools(false)}>关闭</button>
+            </div>
+            <div className="modal-body">
+              <HotkeyImportExportPanel sharedState={sharedState} actions={actions} />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {rawLineView ? (
         <div className="modal-overlay" onClick={() => setRawLineView(null)}>

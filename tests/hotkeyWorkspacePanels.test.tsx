@@ -39,6 +39,12 @@ function renderHotkeyWorkspace(initialPath: string) {
   );
 }
 
+async function openWorkspaceTools() {
+  fireEvent.click(await screen.findByRole('button', { name: '工作区工具' }));
+  fireEvent.click(screen.getByRole('button', { name: '导入、导出与历史' }));
+  await screen.findByRole('heading', { name: '导入导出' });
+}
+
 describe('hotkey workspace shared data', () => {
   it('renders conflicts route with diagnostics layout and resolves raw line paths from env sources', async () => {
     vi.stubGlobal(
@@ -412,11 +418,11 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/editor');
+    renderHotkeyWorkspace('/hotkeys/keys');
 
-    expect(await screen.findByText('键位编辑')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('搜索命令、按键或中文名...')).toBeInTheDocument();
-    expect(screen.getByText('快捷键地图')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('搜索键位、命令或来源')).toBeInTheDocument();
+    expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
     expect(screen.getByText('快捷键列表')).toBeInTheDocument();
     const keyMatches = await screen.findAllByText('a');
     expect(keyMatches.length).toBeGreaterThan(0);
@@ -547,9 +553,9 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/editor');
+    renderHotkeyWorkspace('/hotkeys/keys');
 
-    expect(await screen.findByText('键位编辑')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '新增绑定' }));
 
@@ -560,7 +566,7 @@ describe('hotkey workspace shared data', () => {
     expect(await screen.findByText(/物理键 F2/)).toBeInTheDocument();
   });
 
-  it('renders overview with compact workspace tabs and keyboard summary', async () => {
+  it('redirects the legacy overview route into the merged key workspace', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -652,10 +658,8 @@ describe('hotkey workspace shared data', () => {
 
     renderHotkeyWorkspace('/hotkeys/overview');
 
-    expect(await screen.findByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '编辑键位' })).toHaveAttribute('href', '/hotkeys/editor');
-    expect(screen.getByRole('link', { name: '检查冲突' })).toHaveAttribute('href', '/hotkeys/conflicts');
-    expect(screen.getByRole('link', { name: '导入导出' })).toHaveAttribute('href', '/hotkeys/import-export');
+    expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(2);
     expect(screen.getByTestId('keyboard-visualizer-stub')).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -837,10 +841,10 @@ describe('hotkey workspace shared data', () => {
 
     renderHotkeyWorkspace('/hotkeys/overview');
 
-    expect(await screen.findByRole('heading', { name: '键盘占用总览' })).toBeInTheDocument();
-    expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('键位2 条');
+    expect(await screen.findByRole('heading', { name: '键位' })).toBeInTheDocument();
+    expect(screen.getByLabelText('快捷键当前状态')).toHaveTextContent('配置2 条');
     expect(screen.getByLabelText('快捷键当前状态')).not.toHaveTextContent('应用状态');
-    expect(screen.getByText(/条快捷键/)).toBeInTheDocument();
+    expect(screen.getByText('快捷键列表')).toBeInTheDocument();
     expect(keyboardVisualizerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         viewMode: 'my',
@@ -960,9 +964,10 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/import-export');
+    renderHotkeyWorkspace('/hotkeys/keys');
+    await openWorkspaceTools();
 
-    expect(await screen.findByRole('heading', { name: '导入导出' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '导入导出' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '导入方案' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '导出速查表' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '变更历史' })).toBeInTheDocument();
@@ -1071,7 +1076,8 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/import-export');
+    renderHotkeyWorkspace('/hotkeys/keys');
+    await openWorkspaceTools();
 
     const exportButton = await screen.findByRole('button', { name: '导出速查表' });
     await waitFor(() => {
@@ -1182,7 +1188,8 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/import-export');
+    renderHotkeyWorkspace('/hotkeys/keys');
+    await openWorkspaceTools();
 
     const historyButton = await screen.findByRole('button', { name: '变更历史' });
     fireEvent.click(historyButton);
@@ -1331,9 +1338,10 @@ describe('hotkey workspace shared data', () => {
       },
     });
 
-    renderHotkeyWorkspace('/hotkeys/import-export');
+    renderHotkeyWorkspace('/hotkeys/keys');
+    await openWorkspaceTools();
 
-    expect(await screen.findByRole('heading', { name: '导入导出' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '导入导出' })).toBeInTheDocument();
     expect(screen.getByText('已生效')).toBeInTheDocument();
     expect(screen.getByText('其他 env 来源')).toBeInTheDocument();
     expect(screen.getByText('站点 env')).toBeInTheDocument();

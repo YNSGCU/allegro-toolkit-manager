@@ -1165,19 +1165,16 @@ const SkillPage: React.FC = () => {
         title="Skill 管理"
         description="扫描、检查并安全应用 Allegro Skill 配置。"
         actions={(
-          <>
-            <button className="btn btn-primary" onClick={loadEnhancedSkills} disabled={loading}>
-              {loading ? '扫描中...' : '重新扫描'}
-            </button>
-            <MoreActionsMenu
-              actions={[
-                { label: '管理 Skill 来源', onClick: () => setShowSourceManager((value) => !value) },
-                { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
-                { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
-                { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
-              ]}
-            />
-          </>
+          <MoreActionsMenu
+            label="工作区工具"
+            actions={[
+              { label: loading ? '扫描中...' : '重新扫描', onClick: loadEnhancedSkills, disabled: loading },
+              { label: '管理 Skill 来源', onClick: () => setShowSourceManager((value) => !value) },
+              { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
+              { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
+              { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
+            ]}
+          />
         )}
       />
 
@@ -1223,7 +1220,7 @@ const SkillPage: React.FC = () => {
               }
             }
           }}
-          applyLabel="生成 Apply Plan"
+          applyLabel="审阅更改"
         />
       )}
 
@@ -1231,22 +1228,12 @@ const SkillPage: React.FC = () => {
       <GlobalStatusBar
         items={[
           {
-            label: 'Skill 总数',
+            label: 'Skill',
             value: `${allSkills.length} 个`,
             status: allSkills.length > 0 ? 'ok' : 'muted',
           },
           {
-            label: '用户 Skill',
-            value: `${userSkills.length} 个`,
-            status: userSkills.length > 0 ? 'ok' : 'muted',
-          },
-          {
-            label: '公司 Skill',
-            value: `${companySkills.length} 个`,
-            status: companySkills.length > 0 ? 'ok' : 'muted',
-          },
-          {
-            label: '引用检查',
+            label: '诊断',
             value: !refsChecked
               ? '尚未检查'
               : refStats.total > 0
@@ -1318,38 +1305,13 @@ const SkillPage: React.FC = () => {
           onChange={(e) => updateFilter('search', e.target.value)}
           aria-label="搜索 Skill"
         />
-        <select
-          value={filters.sourceFilter}
-          onChange={(e) => updateFilter('sourceFilter', e.target.value)}
-          className="atm-input"
-          aria-label="按来源筛选"
-        >
-          <option value="all">全部来源</option>
-          <option value="user_skill">用户 Skill</option>
-          <option value="company_skill">公司 Skill</option>
-          <option value="atm_managed_skill">ATM 托管</option>
-          <option value="readonly_skill">只读 Skill</option>
-        </select>
-        <select
-          value={filters.loadStatusFilter}
-          onChange={(e) => updateFilter('loadStatusFilter', e.target.value)}
-          className="atm-input"
-          aria-label="按加载状态筛选"
-        >
-          <option value="all">全部加载状态</option>
-          <option value="loaded_configured">已配置加载</option>
-          <option value="enabled">已启用</option>
-          <option value="disabled">已禁用</option>
-          <option value="enabled_but_not_loaded">未配置启动加载</option>
-          <option value="readonly_reference">只读参考</option>
-        </select>
         <button
           type="button"
           className={`btn btn-sm ${showAdvancedFilters || hasActiveFilters ? 'btn-primary' : ''}`}
           onClick={() => setShowAdvancedFilters((value) => !value)}
           aria-expanded={showAdvancedFilters}
         >
-          高级筛选{hasActiveFilters ? ' · 已启用' : ''}
+          筛选{hasActiveFilters ? ' · 已启用' : ''}
         </button>
         <span className="skill-workspace-result-count">
           {visibleSkills.length} / {totalRawCount}
@@ -1357,6 +1319,31 @@ const SkillPage: React.FC = () => {
 
         {showAdvancedFilters && (
           <div className="skill-advanced-filters">
+            <select
+              value={filters.sourceFilter}
+              onChange={(e) => updateFilter('sourceFilter', e.target.value)}
+              className="atm-input"
+              aria-label="按来源筛选"
+            >
+              <option value="all">全部来源</option>
+              <option value="user_skill">用户 Skill</option>
+              <option value="company_skill">公司 Skill</option>
+              <option value="atm_managed_skill">ATM 托管</option>
+              <option value="readonly_skill">只读 Skill</option>
+            </select>
+            <select
+              value={filters.loadStatusFilter}
+              onChange={(e) => updateFilter('loadStatusFilter', e.target.value)}
+              className="atm-input"
+              aria-label="按加载状态筛选"
+            >
+              <option value="all">全部加载状态</option>
+              <option value="loaded_configured">已配置加载</option>
+              <option value="enabled">已启用</option>
+              <option value="disabled">已禁用</option>
+              <option value="enabled_but_not_loaded">未配置启动加载</option>
+              <option value="readonly_reference">只读参考</option>
+            </select>
             <select
               value={filters.referenceFilter}
               onChange={(e) => updateFilter('referenceFilter', e.target.value)}

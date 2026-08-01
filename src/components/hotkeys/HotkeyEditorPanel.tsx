@@ -3,7 +3,7 @@ import AddHotkeyDialog from '../AddHotkeyDialog';
 import EditApplyPlanPreview from '../EditApplyPlanPreview';
 import HotkeyEditor from '../HotkeyEditor';
 import HotkeyList from '../HotkeyList';
-import HotkeyMap from '../HotkeyMap';
+import KeyboardVisualizer from '../KeyboardVisualizer';
 import RawLineView from '../RawLineView';
 import type { HotkeyWorkspaceActions, HotkeyWorkspaceSharedState } from './types';
 import { enrichWithPhysicalKey } from '../../utils/hotkeyItem';
@@ -95,6 +95,7 @@ export default function HotkeyEditorPanel({
   const [localError, setLocalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [rawLineModal, setRawLineModal] = useState<RawLineModalState | null>(null);
+  const [selectedKeyboardKey, setSelectedKeyboardKey] = useState<string | null>(null);
 
   const selectedBinding = useMemo(
     () => state.bindings.find((binding) => binding.id === actions.selectedBindingId) ?? null,
@@ -153,6 +154,11 @@ export default function HotkeyEditorPanel({
 
     setDraftPhysicalKey('');
     setShowPhysicalKeyPicker(true);
+  };
+
+  const openAddBindingForPhysicalKey = (physicalKey: string) => {
+    setDraftPhysicalKey(physicalKey);
+    setShowAddDialog(true);
   };
 
   const confirmPhysicalKey = () => {
@@ -250,8 +256,8 @@ export default function HotkeyEditorPanel({
     <section className="hotkey-editor-panel" aria-label="键位编辑">
       <header className="hotkey-editor-panel-header">
         <div>
-          <h2>键位编辑</h2>
-          <p>在真实工作区里查找、筛选、修改和新增当前方案中的快捷键。</p>
+          <h2>键位</h2>
+          <p>从键盘定位占用，再在列表中搜索、选择和编辑绑定。</p>
         </div>
         <div className="hotkey-editor-panel-actions">
           <button
@@ -264,28 +270,27 @@ export default function HotkeyEditorPanel({
         </div>
       </header>
 
-      {state.error ? <div className="message message-error">{state.error}</div> : null}
-      {localError ? <div className="message message-error">{localError}</div> : null}
+      {state.error ? <div className="message message-error" role="alert">{state.error}</div> : null}
+      {localError ? <div className="message message-error" role="alert">{localError}</div> : null}
       {successMessage ? <div className="message message-info">{successMessage}</div> : null}
 
       <div className="hotkey-editor-panel-layout">
         <div className="hotkey-editor-panel-main">
-          <section className="hotkey-editor-map-section" aria-label="快捷键地图">
-            <h2 className="hotkey-editor-section-title">快捷键地图</h2>
-            <HotkeyMap
+          <section className="hotkey-editor-map-section" aria-label="键盘占用">
+            <KeyboardVisualizer
               bindings={state.bindings}
               reservedBindings={state.reservedBindings}
               conflicts={state.filteredConflicts}
-              selectedBindingId={actions.selectedBindingId}
-              onSelectBinding={actions.setSelectedBindingId}
-              searchQuery={state.searchQuery}
-              onSearchChange={actions.setSearchQuery}
-              filter={state.mapFilter}
-              onFilterChange={actions.setMapFilter}
+              selectedKey={selectedKeyboardKey}
+              onSelectKey={setSelectedKeyboardKey}
               viewMode={state.viewMode}
-              onEdit={openEditor}
-              onAdopt={actions.handleAdoptBinding}
+              onViewModeChange={actions.setViewMode}
+              activeLayer={state.activeLayer}
+              onLayerChange={actions.setActiveLayer}
+              onEditBinding={openEditor}
+              onAdoptBinding={actions.handleAdoptBinding}
               onOverrideSource={openSourceOverride}
+              onAddBinding={openAddBindingForPhysicalKey}
             />
           </section>
 
@@ -293,6 +298,29 @@ export default function HotkeyEditorPanel({
             <div className="card-header hotkey-editor-list-header">
               <span className="hotkey-editor-section-title hotkey-editor-section-title-inline">快捷键列表</span>
               <span>{tableBindings.length} 条</span>
+            </div>
+            <div className="hotkey-editor-list-tools">
+              <input
+                className="search-input"
+                type="search"
+                value={state.searchQuery}
+                onChange={(event) => actions.setSearchQuery(event.target.value)}
+                placeholder="搜索键位、命令或来源"
+                aria-label="搜索快捷键"
+              />
+              <select
+                value={state.mapFilter}
+                onChange={(event) => actions.setMapFilter(event.target.value as typeof state.mapFilter)}
+                aria-label="筛选快捷键"
+              >
+                <option value="all">全部绑定</option>
+                <option value="funckey">功能键</option>
+                <option value="alias">别名</option>
+                <option value="conflict">存在冲突</option>
+                <option value="warning">存在警告</option>
+                <option value="atm_managed">ATM 管理</option>
+                <option value="user_original">用户原始配置</option>
+              </select>
             </div>
             <HotkeyList
               bindings={tableBindings}

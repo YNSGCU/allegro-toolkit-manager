@@ -7,11 +7,12 @@ function readPageSource(page: string): string {
 }
 
 describe('页面工作区契约', () => {
-  it('保留快捷键为默认入口并维持五个导航项', () => {
+  it('保留快捷键为默认入口并将系统入口合并为四个导航项', () => {
     expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
     expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual([
-      'hotkeys', 'skills', 'menu', 'overview', 'environment',
+      'hotkeys', 'skills', 'menu', 'overview',
     ]);
+    expect(APP_NAV_ITEMS.find((item) => item.key === 'overview')?.label).toBe('系统状态');
     expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual(['hotkeys', 'skills', 'menu']);
   });
 
@@ -58,14 +59,12 @@ describe('页面工作区契约', () => {
     expect(source).toContain('<SkillWorkspaceTable');
   });
 
-  it('菜单页保留草稿、生成文件和 bootstrap 状态', () => {
+  it('菜单页聚合草稿与 Allegro 同步状态并保留安全应用链路', () => {
     const source = readPageSource('../src/pages/MenuPage.tsx');
     expect(source).toContain("label: '草稿'");
-    expect(source).toContain("label: '方案文件'");
-    expect(source).toContain("tooltip: 'menu_profile.json'");
-    expect(source).toContain("label: '菜单脚本'");
-    expect(source).toContain("tooltip: 'generated_menu.il'");
-    expect(source).toContain("label: '启动加载'");
+    expect(source).toContain("label: 'Allegro'");
+    expect(source).toContain('审阅并应用');
+    expect(source).toContain('showApplyAction={false}');
     expect(source).toContain('treeValidation.hasError');
     expect(source).toContain('<MoreActionsMenu');
   });
@@ -87,7 +86,8 @@ describe('页面工作区契约', () => {
     expect(workspaceCss).toMatch(
       /\.hotkey-workspace-content\s*\{[^}]*height:\s*100%;[^}]*overflow-y:\s*auto;/s,
     );
-    expect(editorSource).toContain('<h2>键位编辑</h2>');
+    expect(editorSource).toContain('<h2>键位</h2>');
+    expect(editorSource).toContain('<KeyboardVisualizer');
     expect(conflictsSource).toContain('<h2>冲突处理</h2>');
     expect(importExportSource).toContain('<h2>导入导出</h2>');
   });

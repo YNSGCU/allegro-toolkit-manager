@@ -22,7 +22,7 @@ interface ProfileBarProps {
   onExport?: (profileId: string) => void;
   applyLabel?: string;
   compact?: boolean;
-  showCompactManagementActions?: boolean;
+  showApplyAction?: boolean;
 }
 
 const DEFAULT_PROFILE_NAMES = ['默认', '默认方案', 'Default'];
@@ -42,7 +42,7 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
   onExport,
   applyLabel = '应用此方案',
   compact = false,
-  showCompactManagementActions = false,
+  showApplyAction = true,
 }) => {
   const [showNewInput, setShowNewInput] = useState(false);
   const [newName, setNewName] = useState('');
@@ -88,10 +88,20 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
   };
 
   const moreActions = useMemo<ActionItem[]>(() => {
-    const actions: ActionItem[] = [];
+    const actions: ActionItem[] = [
+      {
+        label: '新建方案',
+        onClick: () => setShowNewInput(true),
+      },
+      {
+        label: '复制方案',
+        disabled: !activeProfile,
+        onClick: () => activeProfile && onCopy(activeProfile.id),
+      },
+    ];
 
     actions.push({
-      label: '重命名',
+      label: '重命名方案',
       disabled: !activeProfile,
       onClick: () => {
         setRenameId(activeProfileId);
@@ -100,7 +110,7 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
     });
 
     actions.push({
-      label: '删除',
+      label: '删除方案',
       danger: true,
       disabled: !activeProfile,
       onClick: handleDeleteClick,
@@ -108,20 +118,20 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
 
     if (onImport) {
       actions.push({
-        label: '导入',
+        label: '导入方案',
         onClick: onImport,
       });
     }
 
     if (onExport && activeProfile) {
       actions.push({
-        label: '导出',
+        label: '导出方案',
         onClick: () => onExport(activeProfile.id),
       });
     }
 
     return actions;
-  }, [activeProfile, activeProfileId, handleDeleteClick, onExport, onImport]);
+  }, [activeProfile, activeProfileId, handleDeleteClick, onCopy, onExport, onImport]);
 
   const renderNewForm = () => (
     <div className="profile-bar-inline-form">
@@ -247,58 +257,17 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
 
   const renderCompactActions = () => (
     <div className="profile-bar-quick-actions">
-      {showNewInput ? (
-        renderNewForm()
-      ) : (
-        <button className="btn btn-sm" onClick={() => setShowNewInput(true)}>
-          新建
-        </button>
-      )}
+      {!showNewInput && !isRenameEditing ? <MoreActionsMenu actions={moreActions} label="方案管理" /> : null}
 
-      {!showNewInput ? (
-        <button
-          className="btn btn-sm"
-          onClick={() => activeProfile && onCopy(activeProfile.id)}
-          disabled={!activeProfile}
-        >
-          复制
+      {showApplyAction && canApply ? (
+        <button className="btn btn-sm profile-bar-apply" onClick={onApply}>
+          {applyLabel}
         </button>
       ) : null}
 
-      {!showNewInput && !isRenameEditing ? (
-        showCompactManagementActions ? (
-          <>
-            <button
-              className="btn btn-sm"
-              onClick={() => {
-                setRenameId(activeProfileId);
-                setRenameName(activeProfile?.name || '');
-              }}
-              disabled={!activeProfile}
-            >
-              重命名
-            </button>
-            <button
-              className="btn btn-sm btn-danger"
-              onClick={handleDeleteClick}
-              disabled={!activeProfile}
-            >
-              删除
-            </button>
-          </>
-        ) : (
-          <MoreActionsMenu actions={moreActions} label="更多" />
-        )
+      {activeProfile && isApplied ? (
+        <span className="profile-bar-applied-status" role="status">已应用</span>
       ) : null}
-
-      <button
-        className={`btn btn-sm profile-bar-apply${isApplied ? ' is-applied' : ''}`}
-        onClick={onApply}
-        disabled={!canApply}
-        title={activeProfile ? undefined : '请先创建或选择方案'}
-      >
-        {isApplied ? '已应用' : applyLabel}
-      </button>
     </div>
   );
 
@@ -332,6 +301,8 @@ const ProfileBar: React.FC<ProfileBarProps> = ({
 
         {compact ? renderCompactActions() : null}
       </div>
+
+      {compact && showNewInput ? renderNewForm() : null}
 
       {compact && isRenameEditing ? renderRenameForm() : null}
 

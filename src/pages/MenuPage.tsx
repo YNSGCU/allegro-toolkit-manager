@@ -6,7 +6,7 @@
  * 2. 命令视图 — 命令列表，显示哪些命令已有/没有菜单
  * 3. 引用检查 — 问题列表
  */
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -76,8 +76,6 @@ const MenuPage: React.FC = () => {
   const [commands, setCommands] = useState<LinkedCommand[]>([]);
   const [skills, setSkills] = useState<LinkedSkill[]>([]);
 
-  const initialLoadDone = useRef(false);
-
   // UI 状态
   const [tab, setTab] = useState<TabType>('tree');
   const [search, setSearch] = useState('');
@@ -92,7 +90,8 @@ const MenuPage: React.FC = () => {
     ilInitPath: string | null;
     hasMenuItems: boolean;
   } | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [savedItemsJson, setSavedItemsJson] = useState('[]');
+  const [hasUnappliedDraft, setHasUnappliedDraft] = useState(false);
   const [needsAllegroRestart, setNeedsAllegroRestart] = useState(false);
 
   // 弹窗
@@ -174,6 +173,10 @@ const MenuPage: React.FC = () => {
       // 标记已有非法数据
       const markedItems = markIllegalItems(data.activeProfile?.items || []);
       setItems(markedItems);
+      setSavedItemsJson(JSON.stringify(markedItems));
+      setHasUnappliedDraft(Boolean(
+        data.activeProfile && data.store.appliedProfileId !== data.activeProfile.id,
+      ));
 
       // 加载关联命令
       const cmdRes = await window.atm.menuGetLinkedCommands();
@@ -201,7 +204,6 @@ const MenuPage: React.FC = () => {
         }
       } catch { /* 非关键 */ }
 
-      setHasUnsavedChanges(false);
       setLoading(false);
     } catch (err) {
       setError(formatUserError(err, '加载菜单数据失败'));
@@ -213,18 +215,16 @@ const MenuPage: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // 初始加载完成后跟踪未保存更改
-  useEffect(() => {
-    if (initialLoadDone.current === false && !loading) {
-      initialLoadDone.current = true;
-    }
-  }, [loading]);
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(items) !== savedItemsJson,
+    [items, savedItemsJson],
+  );
 
   useEffect(() => {
-    if (initialLoadDone.current) {
-      setHasUnsavedChanges(true);
+    if (hasUnsavedChanges) {
+      setHasUnappliedDraft(true);
     }
-  }, [items]);
+  }, [hasUnsavedChanges]);
 
   // ═══════════════════════════════════════════════════
   // 菜单操作
@@ -662,6 +662,8 @@ const MenuPage: React.FC = () => {
     if (res.success) {
       setStore(updatedStore);
       setProfile(updatedProfile);
+      setSavedItemsJson(JSON.stringify(items));
+      setHasUnappliedDraft(true);
       showToast('success', '草稿已保存到 menu_profile.json');
       return true;
     } else {
@@ -899,21 +901,22 @@ const MenuPage: React.FC = () => {
         description="维护 ATM 管理的菜单覆盖层，并在写入前预览生成结果与影响范围。"
         actions={(
           <div className="menu-page-actions">
-            <button onClick={handleSaveDraft} className="btn btn-sm">保存草稿</button>
+            {hasUnsavedChanges ? (
+              <button onClick={handleSaveDraft} className="btn btn-sm btn-primary">保存草稿</button>
+            ) : items.length > 0 && (
+              hasUnappliedDraft || store?.activeProfileId !== store?.appliedProfileId || !fileStatus?.ilExists || !fileStatus?.bootstrapHasMenu
+            ) ? (
+              <button onClick={handleGeneratePlan} className="btn btn-sm btn-primary">审阅并应用</button>
+            ) : null}
             <MoreActionsMenu
+              label="工作区工具"
               actions={[
                 { label: '预览 IL', onClick: handlePreview },
                 { label: '重新扫描', onClick: handleRescan },
                 { label: '新建顶级菜单', onClick: handleAddRootMenu },
+                { label: '查看命令清单', onClick: () => setTab('commands') },
+                { label: `引用检查（${refIssues.length}）`, onClick: () => setTab('refs') },
               ]}
-            />
-            <input
-              type="search"
-              placeholder="搜索菜单…"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="menu-page-search"
-              aria-label="搜索菜单"
             />
           </div>
         )}
@@ -925,7 +928,7 @@ const MenuPage: React.FC = () => {
           title="菜单方案"
           profiles={store.profiles || []}
           activeProfileId={store.activeProfileId}
-          appliedProfileId={store.appliedProfileId}
+          appliedProfileId={hasUnappliedDraft ? undefined : store.appliedProfileId}
           onCreate={async (name) => {
             const res = await window.atm.menuProfileCreate(name);
             if (res.success) setStore(res.data.store);
@@ -948,11 +951,14 @@ const MenuPage: React.FC = () => {
               setStore(res.data.store);
               setProfile(res.data.activeProfile);
               setItems(res.data.activeProfile?.items || []);
+              setSavedItemsJson(JSON.stringify(res.data.activeProfile?.items || []));
+              setHasUnappliedDraft(res.data.store.appliedProfileId !== profileId);
               setSelectedId(null);
             }
           }}
           onApply={handleGeneratePlan}
-          applyLabel="应用方案"
+          applyLabel="审阅更改"
+          showApplyAction={false}
           compact
         />
       )}
@@ -966,58 +972,45 @@ const MenuPage: React.FC = () => {
             status: !items.length ? 'muted' : hasUnsavedChanges ? 'warning' : 'ok',
           },
           {
-            label: '方案文件',
-            value: fileStatus?.profileExists ? '已生成' : items.length ? '待生成' : '未生成',
-            status: fileStatus?.profileExists ? 'ok' : items.length ? 'warning' : 'muted',
-            tooltip: 'menu_profile.json',
-          },
-          {
-            label: '菜单脚本',
-            value: fileStatus?.ilExists
-              ? (hasUnsavedChanges ? '需要重新生成' : '已生成')
-              : items.length ? '待生成' : '未生成',
-            status: fileStatus?.ilExists
-              ? (hasUnsavedChanges ? 'warning' : 'ok')
-              : items.length ? 'warning' : 'muted',
-            tooltip: 'generated_menu.il',
-          },
-          {
-            label: '启动加载',
-            value: fileStatus?.bootstrapHasMenu ? '已配置' : '未配置',
-            status: fileStatus?.bootstrapHasMenu ? 'ok' : 'warning',
+            label: 'Allegro',
+            value: hasUnsavedChanges || hasUnappliedDraft
+              ? '有更改待应用'
+              : fileStatus?.ilExists && fileStatus?.bootstrapHasMenu ? '已同步' : '尚未配置',
+            status: hasUnsavedChanges || hasUnappliedDraft
+              ? 'warning'
+              : fileStatus?.ilExists && fileStatus?.bootstrapHasMenu ? 'ok' : 'muted',
           },
         ]}
         needsRestart={needsAllegroRestart ? true : undefined}
       />
 
-      {/* ════════════════════════════════════════ */}
-      {/* Tabs */}
-      {/* ════════════════════════════════════════ */}
-      <div className="menu-editor-tabs">
-        <TabButton
-          label={`菜单树 (${items.length})`}
-          active={tab === 'tree'}
-          onClick={() => setTab('tree')}
-        />
-        <TabButton
-          label="命令视图"
-          active={tab === 'commands'}
-          onClick={() => setTab('commands')}
-        />
-        <TabButton
-          label={`引用检查 (${refIssues.length})`}
-          active={tab === 'refs'}
-          onClick={() => setTab('refs')}
-        />
-      </div>
+      {tab !== 'tree' ? (
+        <div className="menu-utility-view-bar">
+          <div>
+            <strong>{tab === 'commands' ? '命令清单' : '引用检查'}</strong>
+            <span>{tab === 'commands' ? '用于补充菜单入口' : '用于处理异常引用'}</span>
+          </div>
+          <button className="btn btn-sm" onClick={() => setTab('tree')}>返回菜单树</button>
+        </div>
+      ) : null}
 
       {tab === 'tree' && (
-        <MenuTreeAddBar
-          selectedMenuLabel={selectedItem?.type === 'menu' ? selectedItem.label : null}
-          onAddSubmenu={() => selectedId && handleAddChild(selectedId)}
-          onAddCommand={handleAddCommandItem}
-          onAddSeparator={handleAddSeparator}
-        />
+        <div className="menu-tree-toolbar">
+          <input
+            type="search"
+            placeholder="搜索菜单…"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="menu-page-search"
+            aria-label="搜索菜单"
+          />
+          <MenuTreeAddBar
+            selectedMenuLabel={selectedItem?.type === 'menu' ? selectedItem.label : null}
+            onAddSubmenu={() => selectedId && handleAddChild(selectedId)}
+            onAddCommand={handleAddCommandItem}
+            onAddSeparator={handleAddSeparator}
+          />
+        </div>
       )}
 
       {/* ════════════════════════════════════════ */}
@@ -1301,19 +1294,6 @@ const MenuPage: React.FC = () => {
 // ═══════════════════════════════════════════════════
 // 子组件
 // ═══════════════════════════════════════════════════
-
-/** Tab 按钮 */
-const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({
-  label, active, onClick,
-}) => (
-  <button
-    onClick={onClick}
-    className={`menu-editor-tab${active ? ' is-active' : ''}`}
-    aria-current={active ? 'page' : undefined}
-  >
-    {label}
-  </button>
-);
 
 /** 引导卡片 */
 const GuideCard: React.FC<{ icon: LucideIcon; title: string; desc: string; onClick: () => void }> = ({

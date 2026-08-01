@@ -30,7 +30,7 @@ describe('hotkey workspace routing', () => {
     cleanup();
   });
 
-  it('redirects /hotkeys to overview, renders compact tabs, and does not render page scaler wrappers', async () => {
+  it('redirects /hotkeys to the key workspace, renders two task tabs, and does not render page scaler wrappers', async () => {
     mockAtm();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -48,7 +48,8 @@ describe('hotkey workspace routing', () => {
       );
 
       expect(container.querySelector('.hotkey-subnav-track')).not.toBeNull();
-      expect(container.querySelectorAll('.hotkey-subnav-link')).toHaveLength(4);
+      expect(container.querySelectorAll('.hotkey-subnav-link')).toHaveLength(2);
+      expect(screen.getByRole('link', { name: '键位' })).toHaveClass('active');
       expect(container.querySelector('.hotkey-workspace-stage')).toBeNull();
       expect(container.querySelector('.hotkey-workspace-page')).not.toHaveAttribute('style');
       expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -72,18 +73,13 @@ describe('hotkey workspace routing', () => {
     expect(profileBar).not.toBeNull();
 
     await waitFor(() =>
-      expect(within(profileBar as HTMLElement).getByRole('button', { name: '更多' })).toBeInTheDocument(),
+      expect(within(profileBar as HTMLElement).getByRole('button', { name: '方案管理' })).toBeInTheDocument(),
     );
 
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '新建' })).toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '复制' })).toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '更多' })).toBeInTheDocument();
+    expect(within(profileBar as HTMLElement).getByRole('button', { name: '方案管理' })).toBeInTheDocument();
     expect(within(profileBar as HTMLElement).getByRole('combobox', { name: '快捷键方案选择' })).toHaveDisplayValue('暂无方案');
-    expect(within(profileBar as HTMLElement).getByRole('button', { name: '应用此方案' })).toBeDisabled();
-    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '重命名' })).not.toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '删除' })).not.toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '导入' })).not.toBeInTheDocument();
-    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '导出' })).not.toBeInTheDocument();
+    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '审阅更改' })).not.toBeInTheDocument();
+    expect(within(profileBar as HTMLElement).queryByRole('button', { name: '新建方案' })).not.toBeInTheDocument();
   });
 
   it('does not report a successful diagnosis when workspace data failed to load', async () => {

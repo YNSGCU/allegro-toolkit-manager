@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'overview' | 'environment';
+  key: 'hotkeys' | 'skills' | 'menu' | 'overview';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -36,19 +36,11 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
   },
   {
     key: 'overview',
-    label: '概览',
+    label: '系统状态',
     path: '/overview',
     group: 'utility',
     shortLabel: 'OV',
-    summary: '查看整体健康度与入口状态',
-  },
-  {
-    key: 'environment',
-    label: '环境',
-    path: '/environment',
-    group: 'utility',
-    shortLabel: 'EV',
-    summary: '检查路径、权限与配置来源',
+    summary: '查看整体健康度、环境与入口状态',
   },
 ];
 
