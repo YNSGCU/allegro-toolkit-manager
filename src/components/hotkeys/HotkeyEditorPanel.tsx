@@ -270,7 +270,19 @@ export default function HotkeyEditorPanel({
         </div>
       </header>
 
-      {state.error ? <div className="message message-error" role="alert">{state.error}</div> : null}
+      {state.error ? (
+        <div className="message message-error message-with-action" role="alert">
+          <span>{state.error}</span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => void actions.reloadData()}
+            disabled={state.loading}
+          >
+            {state.loading ? '正在重试…' : '重新加载'}
+          </button>
+        </div>
+      ) : null}
       {localError ? <div className="message message-error" role="alert">{localError}</div> : null}
       {successMessage ? <div className="message message-info">{successMessage}</div> : null}
 

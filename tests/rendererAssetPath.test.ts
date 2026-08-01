@@ -9,19 +9,20 @@ import {
 describe('renderer route chunks', () => {
   it('lazy-loads routed pages and keeps a shared loading state', () => {
     const source = readFileSync(path.resolve(process.cwd(), 'src/App.tsx'), 'utf8');
-    const pages = [
-      'DashboardPage',
-      'EnvironmentPage',
-      'HotkeyWorkspacePage',
-      'SkillPage',
-      'MenuPage',
+    const loaders = [
+      ['DashboardPage', 'overview'],
+      ['EnvironmentPage', 'environment'],
+      ['HotkeyWorkspacePage', 'hotkeys'],
+      ['SkillPage', 'skills'],
+      ['MenuPage', 'menu'],
     ];
 
-    for (const page of pages) {
-      expect(source).toContain(`const ${page} = lazy(() => import('./pages/${page}'))`);
+    for (const [page, loader] of loaders) {
+      expect(source).toContain(`const ${page} = lazy(routePageLoaders.${loader})`);
       expect(source).not.toContain(`import ${page} from './pages/${page}'`);
     }
 
+    expect(source).toContain('<RouteErrorBoundary');
     expect(source).toContain('<Suspense fallback={<RouteLoadingFallback />}>');
     expect(source).toContain('title="正在加载工作区"');
   });

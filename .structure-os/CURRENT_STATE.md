@@ -4,8 +4,8 @@
 
 - Last updated: 2026-08-01
 - Current branch: Git repository initialized; UI reset baseline commit `c95a222`
-- App status: 四个侧栏入口使用共享工作区 UI；五个业务页面已按路由拆包，快捷键、Skill、菜单完成渐进披露与单一主操作收口；写入安全和 IPC 边界不变
-- Test status: 36 files / 206 tests pass；包含页面懒加载、方案栏、快捷键双视图、Skill 三类详情和菜单单一树工作台契约覆盖
+- App status: 四个侧栏入口使用共享工作区 UI；五个业务页面已按路由拆包并支持悬停/焦点预加载、路由错误恢复；核心对话框具备完整键盘焦点管理；写入安全和 IPC 边界不变
+- Test status: 39 files / 211 tests pass；包含页面懒加载与预加载、路由错误恢复、对话框焦点、方案栏、快捷键双视图、Skill 三类详情和菜单单一树工作台契约覆盖
 - Validation status: frontend TypeScript, Electron TypeScript and renderer production build pass
 
 ## Implemented Behavior
@@ -25,7 +25,9 @@
 - Hotkey data loading is isolated in `src/services/loadHotkeyWorkspaceData.ts`; the obsolete `HotkeyPage.tsx` UI was removed.
 - Hotkey contained workspace now owns vertical scrolling; upper keyboard rows open hover cards downward, empty profiles cannot be applied, and failed loading remains “尚未检查”.
 - Sidebar exposes one System Status entry; the environment route remains available from that dashboard for compatibility and detail inspection.
-- `src/App.tsx` keeps the shell eager and loads all five page modules with `React.lazy()` under a shared `Suspense` fallback; renderer entry JS dropped from 556.55kB to 244.78kB.
+- `src/App.tsx` keeps the shell eager and loads all five page modules with `React.lazy()` under shared Suspense/error boundaries; navigation hover/focus preloads the shared route loader, and renderer entry JS remains 246.60kB without the old 500kB warning.
+- Route and data failures expose direct recovery actions; Hotkey child-route switches retain their parent workspace state.
+- Core Confirm, Apply Plan and Menu Preview dialogs trap focus, close with Escape when safe, and restore focus to their trigger.
 
 ## Partial or Broken Behavior
 
@@ -38,7 +40,9 @@
 - `src/components/{KeyboardVisualizer,ProfileBar,MenuTree,MenuTreeAddBar,SkillDetailSidebar}.tsx`: fixed typography, progressive disclosure, truthful state and action-density cleanup
 - `src/pages/{DashboardPage,EnvironmentPage,HotkeyWorkspacePage,SkillPage,MenuPage}.tsx`: five-page UI reset
 - `src/services/loadHotkeyWorkspaceData.ts`: hotkey read orchestration extracted from the deleted legacy page
-- `src/App.tsx`, `tests/rendererAssetPath.test.ts`: route-level lazy loading and build-boundary regression coverage
+- `src/App.tsx`, `src/config/routePageLoaders.ts`, `src/components/Layout.tsx`: recoverable route loading and navigation preloading
+- `src/shared/ui/{feedback/RouteErrorBoundary,overlays/useDialogFocus}.tsx`: route recovery and dialog keyboard contract
+- `tests/{rendererAssetPath,routeExperience,layoutPrefetch,dialogAccessibility}.test.tsx`: route/build/focus regression coverage
 - `docs/dev/features/workspace-ui-architecture.md`, `docs/user/features/workspace-ui.md`: developer and user documentation
 
 ## Open Questions

@@ -44,7 +44,7 @@ describe('ApplyPlanDialog', () => {
   it('supports confirm and escape cancellation', () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(
+    const { rerender } = render(
       <ApplyPlanDialog
         open
         plan={plan}
@@ -54,10 +54,24 @@ describe('ApplyPlanDialog', () => {
       />,
     );
 
+    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: '确认写入并应用' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     expect(onCancel).toHaveBeenCalledTimes(1);
+
+    onCancel.mockClear();
+    rerender(
+      <ApplyPlanDialog
+        open
+        plan={plan}
+        applying
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

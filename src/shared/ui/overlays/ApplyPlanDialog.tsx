@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { getStepTypeChinese } from '../../../types/applyPlan';
+import useDialogFocus from './useDialogFocus';
 
 interface ApplyPlanStepView {
   id?: string;
@@ -117,21 +118,11 @@ export default function ApplyPlanDialog({
   onCancel,
 }: ApplyPlanDialogProps) {
   const titleId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    previousFocusRef.current = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    dialogRef.current?.focus();
-
-    return () => {
-      previousFocusRef.current?.focus();
-    };
-  }, [open]);
+  const { dialogRef, handleDialogKeyDown } = useDialogFocus<HTMLDivElement>({
+    open,
+    onClose: onCancel,
+    dismissDisabled: applying,
+  });
 
   if (!open) return null;
 
@@ -145,36 +136,6 @@ export default function ApplyPlanDialog({
   ];
   const targetCount = new Set(plan?.targetFiles || []).size;
   const backupCount = plan?.backups?.filter((backup) => backup.required).length || 0;
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape' && !applying) {
-      event.preventDefault();
-      onCancel();
-      return;
-    }
-
-    if (event.key !== 'Tab' || !dialogRef.current) return;
-
-    const focusable = Array.from(
-      dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
-      ),
-    );
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
 
   return (
     <div
@@ -190,7 +151,7 @@ export default function ApplyPlanDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleDialogKeyDown}
       >
         <header className="ui-dialog-header">
           <div>
@@ -298,7 +259,13 @@ export default function ApplyPlanDialog({
         </div>
 
         <footer className="ui-dialog-footer">
-          <button type="button" className="btn" onClick={onCancel} disabled={applying}>
+          <button
+            type="button"
+            className="btn"
+            onClick={onCancel}
+            disabled={applying}
+            data-dialog-initial-focus
+          >
             取消
           </button>
           <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={applying}>

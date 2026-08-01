@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import type { MenuItemConfig } from '../types/menu';
+import useDialogFocus from '../shared/ui/overlays/useDialogFocus';
 
 interface MenuPreviewDialogProps {
   open: boolean;
@@ -43,6 +44,11 @@ const MenuPreviewDialog: React.FC<MenuPreviewDialogProps> = ({
 }) => {
   const [tab, setTab] = useState<PreviewTab>('visual');
   const [copied, setCopied] = useState(false);
+  const titleId = useId();
+  const { dialogRef, handleDialogKeyDown } = useDialogFocus<HTMLElement>({
+    open,
+    onClose,
+  });
 
   const handleCopy = async () => {
     const content = tab === 'il' ? ilContent : (profileJson || '');
@@ -105,15 +111,23 @@ const MenuPreviewDialog: React.FC<MenuPreviewDialogProps> = ({
 
   return (
     <div className="ui-dialog-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="ui-dialog menu-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="menu-preview-title">
+      <section
+        ref={dialogRef}
+        className="ui-dialog menu-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleDialogKeyDown}
+      >
         <header className="ui-dialog-header">
           <div>
-            <h2 id="menu-preview-title">菜单预览</h2>
+            <h2 id={titleId}>菜单预览</h2>
             {itemCount ? (
               <p>{itemCount.total} 个菜单项 · {itemCount.commands} 个命令 · {itemCount.menus} 个菜单 · {itemCount.separators} 个分隔线</p>
             ) : null}
           </div>
-          <button className="ui-icon-button" onClick={onClose} aria-label="关闭菜单预览"><X aria-hidden="true" /></button>
+          <button type="button" className="ui-icon-button" onClick={onClose} aria-label="关闭菜单预览" data-dialog-initial-focus><X aria-hidden="true" /></button>
         </header>
 
         <div className="menu-preview-tabs" role="tablist" aria-label="菜单预览格式">

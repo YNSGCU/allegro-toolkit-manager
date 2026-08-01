@@ -155,3 +155,21 @@
 - Avoid:
   - 只在开发服务器验证动态导入。
   - 通过提高 `chunkSizeWarningLimit` 隐藏主包过大的问题。
+
+## PIT-2026-08-01-08: 路由错误边界不能按完整子路由重建
+
+- Area: React Router、Error Boundary、页面状态保持
+- Symptom:
+  - 在快捷键“键位 / 冲突”之间切换时重新读取整页数据，筛选、选中项或临时状态丢失。
+- Cause:
+  - 错误边界直接使用 `location.pathname` 作为 React key，任何子路由变化都会卸载并重建父工作区。
+- Detection:
+  - 检查 `/hotkeys/keys` 与 `/hotkeys/conflicts` 的边界 key 是否相同。
+  - 切换子页并确认 `HotkeyWorkspacePage` 不会重新挂载或重复装载数据。
+- Safe fix:
+  1. 用 `getRouteBoundaryKey()` 把子路由归一化为一级工作区根路径。
+  2. 只有跨一级工作区时才重建错误边界并清除旧错误。
+  3. 为根路径归一化增加单元测试。
+- Avoid:
+  - 直接把完整 pathname 或导航计数器用作错误边界 key。
+  - 为消除旧错误而牺牲父页面状态保持。

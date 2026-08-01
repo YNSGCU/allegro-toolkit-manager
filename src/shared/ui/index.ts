@@ -1,4 +1,5 @@
 export { default as PageState } from './feedback/PageState';
+export { default as RouteErrorBoundary } from './feedback/RouteErrorBoundary';
 export { formatUserError } from './feedback/formatUserError';
 export { default as ApplyPlanDialog } from './overlays/ApplyPlanDialog';
 export type { ApplyPlanViewModel } from './overlays/ApplyPlanDialog';

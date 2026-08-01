@@ -102,7 +102,19 @@ export default function HotkeyConflictsPanel({
         </div>
       </header>
 
-      {state.error ? <div className="message message-error">{state.error}</div> : null}
+      {state.error ? (
+        <div className="message message-error message-with-action" role="alert">
+          <span>{state.error}</span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => void actions.reloadData()}
+            disabled={state.loading}
+          >
+            {state.loading ? '正在重试…' : '重新加载'}
+          </button>
+        </div>
+      ) : null}
       {state.parseWarnings.map((warning) => (
         <div key={warning} className="message message-warning">
           {warning}

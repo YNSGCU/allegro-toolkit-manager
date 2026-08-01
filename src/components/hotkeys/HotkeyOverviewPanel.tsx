@@ -26,8 +26,16 @@ export default function HotkeyOverviewPanel({ sharedState: state, actions }: Hot
       </header>
 
       {state.error ? (
-        <div className="message message-error hotkey-overview-message" role="alert">
-          {state.error}
+        <div className="message message-error message-with-action hotkey-overview-message" role="alert">
+          <span>{state.error}</span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => void actions.reloadData()}
+            disabled={state.loading}
+          >
+            {state.loading ? '正在重试…' : '重新加载'}
+          </button>
         </div>
       ) : null}
       {state.loading ? <p className="hotkey-overview-note">正在加载快捷键总览...</p> : null}

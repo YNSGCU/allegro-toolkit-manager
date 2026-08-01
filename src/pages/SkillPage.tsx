@@ -362,6 +362,19 @@ const SkillPage: React.FC = () => {
     }
   }, []);
 
+  const retryCurrentView = useCallback(() => {
+    setError(null);
+    if (activeTab === 'registry') {
+      void loadCommands();
+      return;
+    }
+    if (activeTab === 'refs') {
+      void loadRefChecks();
+      return;
+    }
+    void loadEnhancedSkills();
+  }, [activeTab, loadCommands, loadEnhancedSkills, loadRefChecks]);
+
   useEffect(() => {
     loadEnhancedSkills();
   }, [loadEnhancedSkills]);
@@ -1245,9 +1258,9 @@ const SkillPage: React.FC = () => {
       />
 
       {error && (
-        <div className="message message-error message-with-action">
+        <div className="message message-error message-with-action" role="alert">
           <span>{error}</span>
-          <button className="btn btn-sm" onClick={() => { setError(null); loadEnhancedSkills(); }}>
+          <button type="button" className="btn btn-sm" onClick={retryCurrentView}>
             重试
           </button>
         </div>

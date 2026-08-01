@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { APP_NAV_ITEMS, type AppNavItem } from '../config/appShell';
+import { preloadWorkspaceRoute } from '../config/routePageLoaders';
 
 interface LayoutProps {
   children: ReactNode;
@@ -45,6 +46,12 @@ export default function Layout({ children }: LayoutProps) {
               end={item.path === '/overview'}
               title={item.summary}
               className={({ isActive }) => `atm-nav-item${isActive ? ' active' : ''}`}
+              onMouseEnter={() => {
+                void preloadWorkspaceRoute(item.path).catch(() => undefined);
+              }}
+              onFocus={() => {
+                void preloadWorkspaceRoute(item.path).catch(() => undefined);
+              }}
             >
               <Icon className="atm-nav-item-icon" aria-hidden />
               <span className="atm-nav-item-label">{item.label}</span>

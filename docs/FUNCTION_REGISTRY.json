@@ -101,12 +101,15 @@
       "status": "complete",
       "ui": [
         "src/App.tsx",
+        "src/config/routePageLoaders.ts",
         "src/components/Layout.tsx",
         "src/shared/ui/workspace/WorkspacePage.tsx",
         "src/shared/ui/workspace/WorkspaceHeader.tsx",
         "src/shared/ui/workspace/StatusStrip.tsx",
         "src/shared/ui/feedback/PageState.tsx",
-        "src/shared/ui/overlays/ApplyPlanDialog.tsx"
+        "src/shared/ui/feedback/RouteErrorBoundary.tsx",
+        "src/shared/ui/overlays/ApplyPlanDialog.tsx",
+        "src/shared/ui/overlays/useDialogFocus.ts"
       ],
       "ipc": [],
       "core": []

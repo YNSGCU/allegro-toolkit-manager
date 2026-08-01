@@ -2,17 +2,19 @@
  * ATM - 根组件与页面级加载边界
  */
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import { getDefaultWorkspaceRoute } from './config/appShell';
+import { getRouteBoundaryKey, routePageLoaders } from './config/routePageLoaders';
 import PageState from './shared/ui/feedback/PageState';
+import RouteErrorBoundary from './shared/ui/feedback/RouteErrorBoundary';
 import WorkspacePage from './shared/ui/workspace/WorkspacePage';
 
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const EnvironmentPage = lazy(() => import('./pages/EnvironmentPage'));
-const HotkeyWorkspacePage = lazy(() => import('./pages/HotkeyWorkspacePage'));
-const SkillPage = lazy(() => import('./pages/SkillPage'));
-const MenuPage = lazy(() => import('./pages/MenuPage'));
+const DashboardPage = lazy(routePageLoaders.overview);
+const EnvironmentPage = lazy(routePageLoaders.environment);
+const HotkeyWorkspacePage = lazy(routePageLoaders.hotkeys);
+const SkillPage = lazy(routePageLoaders.skills);
+const MenuPage = lazy(routePageLoaders.menu);
 
 function RouteLoadingFallback() {
   return (
@@ -26,9 +28,17 @@ function RouteLoadingFallback() {
   );
 }
 
-const App: React.FC = () => {
+function RoutedWorkspace() {
+  const location = useLocation();
+
   return (
-    <Layout>
+    <RouteErrorBoundary
+      key={getRouteBoundaryKey(location.pathname)}
+      onRetry={() => window.location.reload()}
+      onGoHome={() => {
+        window.location.hash = `#${getDefaultWorkspaceRoute()}`;
+      }}
+    >
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route
@@ -46,6 +56,14 @@ const App: React.FC = () => {
           />
         </Routes>
       </Suspense>
+    </RouteErrorBoundary>
+  );
+}
+
+const App: React.FC = () => {
+  return (
+    <Layout>
+      <RoutedWorkspace />
     </Layout>
   );
 };

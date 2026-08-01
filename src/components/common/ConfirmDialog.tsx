@@ -5,8 +5,9 @@
  * 所有需要用户确认的操作都应使用此组件。
  * 深色主题，与应用风格一致。
  */
-import React from 'react';
+import React, { useId } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
+import useDialogFocus from '../../shared/ui/overlays/useDialogFocus';
 
 export type ConfirmVariant = 'danger' | 'warning' | 'info';
 
@@ -33,6 +34,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const titleId = useId();
+  const { dialogRef, handleDialogKeyDown } = useDialogFocus<HTMLDivElement>({
+    open,
+    onClose: onCancel,
+  });
+
   if (!open) return null;
 
   const Icon = variant === 'info' ? Info : AlertTriangle;
@@ -44,10 +51,18 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className={`confirm-dialog confirm-dialog--${variant}`} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+      <div
+        ref={dialogRef}
+        className={`confirm-dialog confirm-dialog--${variant}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handleDialogKeyDown}
+      >
         <div className="confirm-dialog-header">
           <span className="confirm-dialog-icon"><Icon aria-hidden="true" /></span>
-          <h3 id="confirm-dialog-title">{title}</h3>
+          <h3 id={titleId}>{title}</h3>
         </div>
         <p className="confirm-dialog-message">
           {message}
@@ -58,10 +73,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </pre>
         )}
         <div className="confirm-dialog-actions">
-          <button className="btn" onClick={onCancel}>
+          <button type="button" className="btn" onClick={onCancel} data-dialog-initial-focus>
             {cancelLabel}
           </button>
-          <button className={`btn ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
+          <button type="button" className={`btn ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

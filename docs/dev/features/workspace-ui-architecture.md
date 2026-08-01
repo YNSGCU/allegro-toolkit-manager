@@ -22,10 +22,14 @@
 - `StatusStrip`：业务状态的紧凑、可读摘要。
 - `PageState`：加载、空数据和错误状态。
 - `ApplyPlanDialog`：Hotkey、Skill、Menu 共用的写入确认界面。
+- `RouteErrorBoundary`：异步页面加载失败时保留应用壳层，并提供重载与返回快捷键操作。
+- `useDialogFocus`：共享对话框的初始焦点、Tab 循环、Escape 关闭和焦点恢复规则。
 
 ## 路由加载边界
 
-`src/App.tsx` 保持 `Layout`、导航与统一页面加载态同步可用，五个业务页面通过 `React.lazy()` 按路由加载，并由同一 `Suspense` 边界承接首次加载。这样切换工作区时侧栏不会闪烁，页面包也不会全部进入首屏入口。
+`src/App.tsx` 保持 `Layout`、导航与统一页面加载态同步可用。`src/config/routePageLoaders.ts` 统一维护五个业务页面的动态导入函数，`React.lazy()` 与侧栏预加载复用同一份映射，避免两套路径漂移。侧栏链接在鼠标悬停或键盘聚焦时预加载目标页面；实际导航仍由 `Suspense` 承接首次加载。
+
+每个一级工作区由 `RouteErrorBoundary` 保护。页面 chunk 加载或渲染失败时，侧栏仍可使用，错误区提供“重新加载页面”和“返回快捷键”。边界 key 必须使用一级工作区根路径；`/hotkeys/keys` 与 `/hotkeys/conflicts` 共用 `/hotkeys`，避免切换子页时重建 `HotkeyWorkspacePage` 并丢失已加载状态。
 
 Electron 生产环境通过内嵌本地 HTTP 服务读取 `dist/`，并沿用 Vite 的相对资源基址 `base: './'`。入口和异步页面 chunk 都必须落在可由该服务解析的 `assets/` 路径中；修改构建基址或静态资源服务时，必须重新验证全部异步路由。禁止把构建告警通过提高 `chunkSizeWarningLimit` 隐藏。
 
@@ -53,6 +57,8 @@ Skill 默认筛选条只保留搜索和“筛选”入口，详情固定为“�
 - 键盘悬浮提示使用键盘容器的相对位置决定展开方向：上部键位向下、下部键位向上，避免遮住方案栏和工具栏。
 - 数据装载状态独立于写入中的 `loading` 状态；只有成功装载后才允许显示“0 个问题”，失败时显示“加载失败 / 尚未检查”。
 - Renderer 异常通过 `formatUserError()` 转为中文用户提示，不直接显示 `window.atm`、IPC 方法名或 JavaScript 异常类型。
+- 页面数据错误必须紧邻错误信息提供重试操作；Dashboard、Environment、Hotkey、Skill、Menu 均不得只显示不可操作的错误文字。
+- 共享对话框打开后将焦点移入对话框，Tab/Shift+Tab 不得离开，关闭后恢复到触发控件；写入执行中沿用禁止 Escape 关闭的安全规则。
 
 ## 写入安全边界
 
@@ -70,4 +76,4 @@ UI 重置不授权任何直接写文件行为。Hotkey、Skill 和 Menu 的写�
 - `npm run build:renderer`
 - 1220×820、1360×920、1600×856 三档浏览器检查，无页面级横向溢出且可见文字不小于 12px
 
-路由拆分后的生产构建入口 JS 为 244.78kB；快捷键、Skill、菜单页面包分别为 129.61kB、87.07kB、53.93kB，原 500kB 主包告警已消失。
+本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别为 130.03kB、87.19kB、54.05kB，原 500kB 主包告警未复发。
