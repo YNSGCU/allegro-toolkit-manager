@@ -78,19 +78,20 @@ React Renderer (src/) ←IPC (contextBridge)→ Electron Main (electron/) ←imp
 
 **Path alias mismatch**: `tsconfig.json` defines `@/*` → `src/*` and `@core/*` → `core/*`. `tsconfig.electron.json` only has `@core/*`. **The Vite config only has `@` → `src/`**, so `@core/` imports work in TypeScript type-checking but **NOT** in Vite bundling — use relative paths (`../../core/`) from `src/` components to reach core/ modules.
 
-### Six-Page Route Structure
+### Renderer Route Structure
 
 HashRouter in `src/App.tsx`:
 
 | Path | Component | Purpose |
 |------|-----------|---------|
-| `/` | `DashboardPage` | 概览 / 健康评分 |
+| `/` | `Navigate` | 跳转到默认快捷键工作区 |
+| `/overview` | `DashboardPage` | 系统状态 / 健康评分 |
 | `/environment` | `EnvironmentPage` | 环境检测 / 多 env 来源管理 |
-| `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（总览/编辑/冲突/导入导出） |
-| `/skills` | `SkillPage` | Skill 管理（3 Tab + 方案栏） |
-| `/menu` | `MenuPage` | 可视化菜单编辑（3视图 + 方案栏） |
+| `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（键位 / 冲突，工具弹窗承载导入导出） |
+| `/skills` | `SkillPage` | Skill 管理（表格 + 三类详情 + 方案栏） |
+| `/menu` | `MenuPage` | 菜单树编辑 + 方案栏 |
 
-Layout at `src/components/Layout.tsx` — sidebar with NavLink items.
+Layout at `src/components/Layout.tsx` — sidebar with NavLink items. `Layout` stays eager; the five page components are loaded with `React.lazy()` under one `Suspense` boundary so Vite emits route-level chunks. Keep Vite `base: './'` aligned with Electron's embedded production asset server.
 
 ### IPC Pattern (6-Layer)
 
@@ -281,8 +282,8 @@ Key components: `ProfileBar.tsx` (V5.6 unified profile bar — merged ProfileSel
 
 ## Testing
 
-- **205 tests** across 36 test files — Vitest 3.2
-- **Only `core/` code is testable** — `electron/` requires Electron runtime
+- **206 tests** across 36 test files — Vitest 3.2
+- Pure `core/` code and renderer contracts/components are testable with Vitest; Electron runtime behavior still needs type/build or desktop validation
 - Test fixtures in `test-fixtures/` directory
 - Single file: `npx.cmd vitest run tests/parseEnv.test.ts`
 

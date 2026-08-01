@@ -12,6 +12,7 @@
 ## Current Boundary Notes
 
 - Renderer now has a stable `src/shared/ui/` foundation and `src/services/` read-orchestration layer; feature components remain in `components/` pending later module-domain migration.
+- `src/App.tsx` owns route-level lazy-loading boundaries: the shell and loading state remain eager, while the five page modules are emitted as independent chunks.
 - Routed pages import shared workspace primitives from `src/shared/ui/index.ts`.
 - Electron main/preload own the bridge layer; renderer does not access Node APIs directly.
 
@@ -27,7 +28,7 @@
 
 ### Shared Workspace UI
 
-`src/components/Layout.tsx` -> `src/shared/ui/{workspace,feedback,overlays}` -> routed pages. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.
+`src/main.tsx` -> `src/App.tsx` (`Layout` + `Suspense`) -> route-specific page chunk -> `src/shared/ui/{workspace,feedback,overlays}`. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.
 
 用户错误链：页面捕获异常 -> `src/shared/ui/feedback/formatUserError.ts` -> 中文可恢复提示。该层只处理展示文案，不吞掉日志，也不改变 IPC 响应协议。
 

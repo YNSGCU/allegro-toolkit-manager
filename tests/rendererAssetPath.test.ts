@@ -1,9 +1,31 @@
+import { readFileSync } from 'node:fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
 import {
   resolveRendererRequest,
   shouldFallbackToIndexHtml,
 } from '../electron/rendererAssetPath';
+
+describe('renderer route chunks', () => {
+  it('lazy-loads routed pages and keeps a shared loading state', () => {
+    const source = readFileSync(path.resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+    const pages = [
+      'DashboardPage',
+      'EnvironmentPage',
+      'HotkeyWorkspacePage',
+      'SkillPage',
+      'MenuPage',
+    ];
+
+    for (const page of pages) {
+      expect(source).toContain(`const ${page} = lazy(() => import('./pages/${page}'))`);
+      expect(source).not.toContain(`import ${page} from './pages/${page}'`);
+    }
+
+    expect(source).toContain('<Suspense fallback={<RouteLoadingFallback />}>');
+    expect(source).toContain('title="正在加载工作区"');
+  });
+});
 
 describe('renderer asset path resolver', () => {
   const distDir = path.join('C:', 'atm', 'dist');

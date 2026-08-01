@@ -135,3 +135,23 @@
 - Avoid:
   - 只给最外层加 `overflow: hidden` 掩盖越界。
   - 仅修改 `grid-template-columns: 1fr`，却忽略 Grid 子项的默认最小宽度。
+
+## PIT-2026-08-01-07: 页面懒加载必须覆盖 Electron 的生产资源服务
+
+- Area: React 路由、Vite 动态导入、Electron 内嵌 HTTP 静态资源服务
+- Symptom:
+  - 开发服务器中路由切换正常，打包后的桌面应用首次进入某个页面时却出现空白或“动态模块加载失败”。
+- Cause:
+  - 路由改为 `React.lazy()` 后会额外请求页面 chunk；生产资源服务、构建基址或发布内容没有覆盖这些新增文件请求。
+- Detection:
+  - 检查 `vite.config.ts` 是否保持 `base: './'`。
+  - 检查生产 `dist/index.html` 的入口路径和异步 chunk 是否都位于相对 `./assets/` 下。
+  - 运行 `rendererAssetPath` 测试，确认 Electron 的内嵌 HTTP 服务不会把真实 chunk 请求错误回退到 `index.html`。
+  - 逐一打开所有异步路由，确认页面标题出现且没有动态模块请求错误。
+- Safe fix:
+  1. 保持 Vite `base: './'` 与 Electron 生产资源服务的现有契约一致。
+  2. 让应用壳层和加载态同步打包，只把路由页面放入动态导入边界。
+  3. 同时运行资源路径测试、生产构建和实际路由切换检查。
+- Avoid:
+  - 只在开发服务器验证动态导入。
+  - 通过提高 `chunkSizeWarningLimit` 隐藏主包过大的问题。
