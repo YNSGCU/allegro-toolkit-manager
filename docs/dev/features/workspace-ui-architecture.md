@@ -22,8 +22,11 @@
 - `StatusStrip`：业务状态的紧凑、可读摘要。
 - `PageState`：加载、空数据和错误状态。
 - `ApplyPlanDialog`：Hotkey、Skill、Menu 共用的写入确认界面。
+- `BusinessDialog`：深层业务弹窗共用的标题、说明、尺寸、滚动区、页脚与关闭语义。
 - `RouteErrorBoundary`：异步页面加载失败时保留应用壳层，并提供重载与返回快捷键操作。
 - `useDialogFocus`：共享对话框的初始焦点、Tab 循环、Escape 关闭和焦点恢复规则。
+
+`BusinessDialog` 提供 `sm/md/lg/xl` 四档宽度及 default/warning/danger 三种风险语气。业务组件只负责表单字段、结果列表与回调，不再自行定义遮罩、标题栏、关闭按钮和焦点规则。当前已迁移新增快捷键、编辑快捷键、Skill 信息、Skill 删除影响、菜单命令选择五个高频弹窗。
 
 ## 路由加载边界
 
@@ -59,6 +62,7 @@ Skill 默认筛选条只保留搜索和“筛选”入口，详情固定为“�
 - Renderer 异常通过 `formatUserError()` 转为中文用户提示，不直接显示 `window.atm`、IPC 方法名或 JavaScript 异常类型。
 - 页面数据错误必须紧邻错误信息提供重试操作；Dashboard、Environment、Hotkey、Skill、Menu 均不得只显示不可操作的错误文字。
 - 共享对话框打开后将焦点移入对话框，Tab/Shift+Tab 不得离开，关闭后恢复到触发控件；写入执行中沿用禁止 Escape 关闭的安全规则。
+- 业务表单统一使用可关联的 `label`、36px 控件高度、12–14px 信息层级、紧凑 14px 字段间距；错误使用 `role="alert"`，只读值和自动建议必须与可编辑字段视觉区分。
 
 ## 写入安全边界
 
@@ -76,4 +80,4 @@ UI 重置不授权任何直接写文件行为。Hotkey、Skill 和 Menu 的写�
 - `npm run build:renderer`
 - 1220×820、1360×920、1600×856 三档浏览器检查，无页面级横向溢出且可见文字不小于 12px
 
-本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别为 130.03kB、87.19kB、54.05kB，原 500kB 主包告警未复发。
+本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别约为 128.83kB、84.82kB、52.77kB，原 500kB 主包告警未复发。

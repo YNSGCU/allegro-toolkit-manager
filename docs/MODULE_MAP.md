@@ -31,7 +31,7 @@
 
 `src/main.tsx` -> `src/App.tsx` (`Layout` + `Suspense` + `RouteErrorBoundary`) -> `src/config/routePageLoaders.ts` -> route-specific page chunk -> `src/shared/ui/{workspace,feedback,overlays}`. `Layout` preloads the same route loader on link hover/focus. `ApplyPlanDialog` is shared by Hotkey, Skill and Menu while plan generation/execution remains feature-owned.
 
-对话框焦点链：触发控件 -> `src/shared/ui/overlays/useDialogFocus.ts` -> 初始焦点 / Tab 循环 / Escape -> 关闭后恢复触发控件。Apply Plan 执行中通过 `dismissDisabled` 禁止退出。
+对话框链：业务组件 -> `src/shared/ui/overlays/BusinessDialog.tsx` -> `useDialogFocus.ts` -> 初始焦点 / Tab 循环 / Escape -> 关闭后恢复触发控件。Apply Plan 与业务弹窗执行中均可通过 `dismissDisabled` 禁止退出；业务回调和 IPC 仍归各功能页面所有。
 
 用户错误链：页面捕获异常 -> `src/shared/ui/feedback/formatUserError.ts` -> 中文可恢复提示。该层只处理展示文案，不吞掉日志，也不改变 IPC 响应协议。
 

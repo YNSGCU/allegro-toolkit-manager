@@ -173,3 +173,31 @@
 - Avoid:
   - 直接把完整 pathname 或导航计数器用作错误边界 key。
   - 为消除旧错误而牺牲父页面状态保持。
+
+## PIT-2026-08-01-09: Electron 实机巡检不能只依赖窗口截图
+
+- Area: Electron、Windows UI Automation、生产资源与 preload 验证
+- Symptom:
+  - Electron 窗口已打开，但截图接口返回“不支持此接口”，默认可访问性树只包含标题栏和空文档。
+  - 首次观察只看到 Suspense 加载态，容易误判异步页面 chunk 永久卡住。
+- Root cause:
+  - 当前 Windows 图像捕获接口不能稳定捕获该 Electron 窗口；Electron 默认也未强制暴露完整 renderer 可访问性树。
+  - 页面 chunk、preload 和首次 IPC 读取需要短暂异步时间，单次快照不是完成状态。
+- Wrong attempts:
+  - 重复使用失败截图的坐标或元素索引。
+  - 看到一次“正在加载工作区”就判断动态导入失败。
+- Correct fix:
+  1. 测试启动时增加 `--force-renderer-accessibility`，重新获取当前窗口句柄。
+  2. 等异步加载完成后重新读取可访问性树，确认页面标题、preload 数据和真实业务记录出现。
+  3. 同时检查 Electron 内嵌 HTTP 端口的入口、CSS 和页面 chunk 响应，以及进程控制台日志。
+- Guardrail:
+  - 截图失败后停止复用旧坐标；Electron 实机结论至少包含“资源响应 + preload 注入 + 页面业务数据”三项证据。
+- Related files:
+  - `electron/main.ts`
+  - `electron/rendererAssetPath.ts`
+  - `src/App.tsx`
+- Detection:
+  - 启动生产构建，确认可访问性树从“正在加载工作区”更新到具体工作区与数据记录。
+- Verification:
+  - 本轮验证到快捷键页显示 env 已连接、113 条配置和真实快捷键列表；控制台未出现页面错误。
+- Last seen: 2026-08-01

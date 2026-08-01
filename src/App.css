@@ -2098,13 +2098,6 @@ body {
   gap: 8px;
 }
 
-.form-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
 /* ===== Profile 选择器 ===== */
 
 .profile-selector {
@@ -4292,25 +4285,6 @@ body {
   line-height: 1.5;
 }
 
-/* 编辑备注弹窗 */
-.skill-meta-dialog {
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-/* 表单组 */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
 /* 文本域 */
 .atm-input textarea,
 textarea.atm-input {
@@ -4345,12 +4319,6 @@ textarea.atm-input:focus {
 /* ═══════════════════════════════════════════════════
    V5.1 影响分析弹窗
    ═══════════════════════════════════════════════════ */
-
-.skill-delete-impact-dialog {
-  max-width: 640px;
-  max-height: 85vh;
-  overflow-y: auto;
-}
 
 .impact-option-list {
   display: flex;

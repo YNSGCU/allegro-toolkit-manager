@@ -2,6 +2,7 @@
  * ATM - 添加快捷键对话框（V2.2）
  */
 import React, { useState, useMemo } from 'react';
+import { BusinessDialog } from '../shared/ui';
 
 interface AddHotkeyDialogProps {
   physicalKey: string;
@@ -57,95 +58,83 @@ const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose,
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
-        <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: 15 }}>新增绑定 — 物理键 {physicalKey}</h3>
-          <button className="btn btn-sm" onClick={onClose}>关闭</button>
-        </div>
-        <div className="modal-body" style={{ padding: '12px 0' }}>
-          {/* 修饰键层 */}
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              修饰键层
-            </label>
-            <select
-              value={selectedLayerIdx}
-              onChange={(e) => setSelectedLayerIdx(Number(e.target.value))}
-              style={{ width: '100%', padding: '6px 8px' }}
-            >
-              {LAYER_OPTIONS.map((opt, i) => (
-                <option key={i} value={i}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 绑定类型 */}
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              类型
-            </label>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <label style={{ fontSize: 13, cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  checked={bindingType === 'funckey'}
-                  onChange={() => setBindingType('funckey')}
-                  style={{ marginRight: 4 }}
-                />
-                Funckey
-              </label>
-              <label style={{ fontSize: 13, cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  checked={bindingType === 'alias'}
-                  onChange={() => setBindingType('alias')}
-                  style={{ marginRight: 4 }}
-                />
-                Alias
-              </label>
-            </div>
-          </div>
-
-          {/* 命令 */}
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              原始命令
-            </label>
-            <input
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              placeholder="例: move, add connect, zoom fit"
-              style={{ width: '100%', padding: '6px 8px', fontFamily: 'monospace' }}
-            />
-          </div>
-
-          {/* 预览 */}
-          <div className="form-row" style={{
-            padding: '8px 10px',
-            background: 'var(--bg-hover)',
-            borderRadius: 'var(--radius)',
-            fontSize: 13,
-          }}>
-            <span style={{ color: 'var(--text-secondary)' }}>将绑定为：</span>
-            <code style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>
-              {bindingType} {rawKey} {command ? (command.includes(' ') ? `"${command}"` : command) : '(等待输入命令)'}
-            </code>
-          </div>
-        </div>
-        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn" onClick={onClose}>取消</button>
+    <BusinessDialog
+      title={<>新增绑定<span className="ui-dialog-title-context"> · 物理键 {physicalKey}</span></>}
+      description="选择修饰键层并填写 Allegro 命令，确认后仅生成 Apply Plan。"
+      size="sm"
+      onClose={onClose}
+      footer={(
+        <>
+          <button type="button" className="btn" onClick={onClose}>取消</button>
           <button
+            type="button"
             className="btn btn-primary"
             onClick={handleConfirm}
             disabled={!command.trim()}
           >
             生成 Apply Plan
           </button>
+        </>
+      )}
+    >
+      <div className="ui-dialog-form">
+        <div className="ui-dialog-field">
+          <label htmlFor="add-hotkey-layer">修饰键层</label>
+          <select
+            id="add-hotkey-layer"
+            value={selectedLayerIdx}
+            onChange={(e) => setSelectedLayerIdx(Number(e.target.value))}
+          >
+            {LAYER_OPTIONS.map((opt, i) => (
+              <option key={opt.label} value={i}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <fieldset className="ui-dialog-field">
+          <legend className="ui-dialog-field-label">绑定类型</legend>
+          <div className="ui-dialog-choice-group">
+            <label className="ui-dialog-choice">
+              <input
+                type="radio"
+                name="add-hotkey-type"
+                checked={bindingType === 'funckey'}
+                onChange={() => setBindingType('funckey')}
+              />
+              Funckey
+            </label>
+            <label className="ui-dialog-choice">
+              <input
+                type="radio"
+                name="add-hotkey-type"
+                checked={bindingType === 'alias'}
+                onChange={() => setBindingType('alias')}
+              />
+              Alias
+            </label>
+          </div>
+        </fieldset>
+
+        <div className="ui-dialog-field ui-dialog-field--code">
+          <label htmlFor="add-hotkey-command">原始命令</label>
+          <input
+            id="add-hotkey-command"
+            type="text"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            placeholder="例：move、add connect、zoom fit"
+            data-dialog-initial-focus
+          />
+        </div>
+
+        <div className="ui-dialog-preview" aria-live="polite">
+          <span>将绑定为</span>
+          <code>
+            {bindingType} {rawKey} {command ? (command.includes(' ') ? `"${command}"` : command) : '(等待输入命令)'}
+          </code>
         </div>
       </div>
-    </div>
+    </BusinessDialog>
   );
 };
 

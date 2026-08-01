@@ -4,8 +4,8 @@
 
 - Last updated: 2026-08-01
 - Current branch: Git repository initialized; UI reset baseline commit `c95a222`
-- App status: 四个侧栏入口使用共享工作区 UI；五个业务页面已按路由拆包并支持悬停/焦点预加载、路由错误恢复；核心对话框具备完整键盘焦点管理；写入安全和 IPC 边界不变
-- Test status: 39 files / 211 tests pass；包含页面懒加载与预加载、路由错误恢复、对话框焦点、方案栏、快捷键双视图、Skill 三类详情和菜单单一树工作台契约覆盖
+- App status: 四个侧栏入口使用共享工作区 UI；五个业务页面支持拆包、预加载和错误恢复；五个高频深层业务弹窗已迁移到统一 BusinessDialog 与紧凑表单契约；写入安全和 IPC 边界不变
+- Test status: 40 files / 216 tests pass；包含页面加载恢复、业务弹窗表单/键盘交互、方案栏、快捷键双视图、Skill 三类详情和菜单单一树工作台契约覆盖
 - Validation status: frontend TypeScript, Electron TypeScript and renderer production build pass
 
 ## Implemented Behavior
@@ -28,6 +28,7 @@
 - `src/App.tsx` keeps the shell eager and loads all five page modules with `React.lazy()` under shared Suspense/error boundaries; navigation hover/focus preloads the shared route loader, and renderer entry JS remains 246.60kB without the old 500kB warning.
 - Route and data failures expose direct recovery actions; Hotkey child-route switches retain their parent workspace state.
 - Core Confirm, Apply Plan and Menu Preview dialogs trap focus, close with Escape when safe, and restore focus to their trigger.
+- Add/Edit Hotkey, Skill metadata/impact and Menu command selector now share `BusinessDialog`; layout inline styles and legacy modal shells were removed from these five components.
 
 ## Partial or Broken Behavior
 
@@ -42,7 +43,10 @@
 - `src/services/loadHotkeyWorkspaceData.ts`: hotkey read orchestration extracted from the deleted legacy page
 - `src/App.tsx`, `src/config/routePageLoaders.ts`, `src/components/Layout.tsx`: recoverable route loading and navigation preloading
 - `src/shared/ui/{feedback/RouteErrorBoundary,overlays/useDialogFocus}.tsx`: route recovery and dialog keyboard contract
+- `src/shared/ui/overlays/BusinessDialog.tsx`, `src/shared/ui/foundations/dialogs.css`: shared business dialog and compact form contract
+- `src/components/{AddHotkeyDialog,HotkeyEditor,SkillMetaDialog,SkillDeleteImpactDialog,CommandSelector}.tsx`: first cross-domain dialog migration
 - `tests/{rendererAssetPath,routeExperience,layoutPrefetch,dialogAccessibility}.test.tsx`: route/build/focus regression coverage
+- `tests/businessDialogs.test.tsx`: labelled forms, error announcement, risk options, command search and initial-focus coverage
 - `docs/dev/features/workspace-ui-architecture.md`, `docs/user/features/workspace-ui.md`: developer and user documentation
 
 ## Open Questions

@@ -109,6 +109,7 @@
         "src/shared/ui/feedback/PageState.tsx",
         "src/shared/ui/feedback/RouteErrorBoundary.tsx",
         "src/shared/ui/overlays/ApplyPlanDialog.tsx",
+        "src/shared/ui/overlays/BusinessDialog.tsx",
         "src/shared/ui/overlays/useDialogFocus.ts"
       ],
       "ipc": [],

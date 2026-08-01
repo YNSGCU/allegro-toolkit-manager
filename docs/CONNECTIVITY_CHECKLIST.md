@@ -14,7 +14,7 @@
 
 - No project-local Structure OS CLI to automate governance validation.
 - Source layout has not yet been migrated to the recommended module-boundary structure.
-- Skill workspace responsive/static rendering is verified in a browser; real scan, diagnostic and Apply Plan data still require Electron runtime verification.
+- Electron production runtime has verified renderer chunks, preload injection, IPC environment reads and real Hotkey data loading; Skill/Menu write-plan execution still requires a user-approved manual smoke test because it can affect local Allegro configuration.
 
 ## Verification Commands
 

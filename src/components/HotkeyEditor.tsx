@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { HotkeyBinding, HotkeyEditValidation, CommandSourceType, KeyRecommendation } from '../types/hotkey';
 import { BINDING_SRC_CONFIG } from '../utils/hotkeyItem';
+import { BusinessDialog } from '../shared/ui';
 
 interface HotkeyEditorProps {
   binding: HotkeyBinding;
@@ -208,36 +209,45 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
   const canSave = key.trim().length > 0 && command.trim().length > 0 && validation.valid;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
-        <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: 16 }}>编辑快捷键</h3>
-          <button className="btn btn-sm" onClick={onClose}>关闭</button>
-        </div>
-
-        <div className="modal-body" style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <BusinessDialog
+      title={<>编辑快捷键<span className="ui-dialog-title-context"> · {binding.key}</span></>}
+      description="修改键位、命令与来源；保存后仅生成 Apply Plan。"
+      size="lg"
+      onClose={onClose}
+      bodyClassName="hotkey-edit-dialog-body"
+      footer={(
+        <>
+          <button type="button" className="btn" onClick={onClose}>取消</button>
+          <button type="button" className="btn btn-primary" onClick={handleSave} disabled={!canSave}>
+            {canSave ? '生成 Apply Plan' : '请修正错误'}
+          </button>
+        </>
+      )}
+    >
+      <div className="hotkey-edit-dialog-form">
 
           {/* 两栏布局：编辑表单 | 推荐键位 */}
-          <div style={{ display: 'flex', gap: 16 }}>
+          <div className="hotkey-edit-dialog-grid">
             {/* 左栏：编辑表单 */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="ui-dialog-form hotkey-edit-dialog-fields">
               {/* 类型 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>类型</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <label>
-                    <input type="radio" checked={type === 'funckey'} onChange={() => setType('funckey')} /> Funckey
+              <fieldset className="ui-dialog-field">
+                <legend className="ui-dialog-field-label">绑定类型</legend>
+                <div className="ui-dialog-choice-group">
+                  <label className="ui-dialog-choice">
+                    <input type="radio" name="hotkey-edit-type" checked={type === 'funckey'} onChange={() => setType('funckey')} /> Funckey
                   </label>
-                  <label>
-                    <input type="radio" checked={type === 'alias'} onChange={() => setType('alias')} /> Alias
+                  <label className="ui-dialog-choice">
+                    <input type="radio" name="hotkey-edit-type" checked={type === 'alias'} onChange={() => setType('alias')} /> Alias
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               {/* 按键/别名 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>按键/别名</label>
+              <div className="ui-dialog-field ui-dialog-field--code">
+                <label htmlFor="hotkey-edit-key">按键 / 别名</label>
                 <input
+                  id="hotkey-edit-key"
                   className="search-input"
                   type="text"
                   value={key}
@@ -245,30 +255,30 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
                   onFocus={() => setKeyFocused(true)}
                   onBlur={() => setTimeout(() => setKeyFocused(false), 200)}
                   placeholder={type === 'funckey' ? '例: F8, ~v, C+s' : '例: zs'}
-                  style={{ flex: 1 }}
+                  data-dialog-initial-focus
                 />
               </div>
 
               {/* 原始命令 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>原始命令</label>
+              <div className="ui-dialog-field ui-dialog-field--code">
+                <label htmlFor="hotkey-edit-command">原始命令</label>
                 <input
+                  id="hotkey-edit-command"
                   className="search-input"
                   type="text"
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   placeholder="例: move, add connect, zoom fit"
-                  style={{ flex: 1, fontFamily: 'monospace' }}
                 />
               </div>
 
               {/* 命令来源修正 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>命令来源</label>
+              <div className="ui-dialog-field">
+                <label htmlFor="hotkey-edit-source">命令来源</label>
                 <select
+                  id="hotkey-edit-source"
                   value={commandSource}
                   onChange={(e) => setCommandSource(e.target.value as any)}
-                  style={{ flex: 1, padding: '4px 8px' }}
                 >
                   {SOURCE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -277,70 +287,54 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
               </div>
 
               {/* 启用 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>状态</label>
-                <label>
+              <div className="ui-dialog-field">
+                <span className="ui-dialog-field-label">状态</span>
+                <label className="ui-dialog-choice hotkey-edit-enabled">
                   <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> 启用
                 </label>
               </div>
 
               {/* 备注 */}
-              <div className="form-row">
-                <label className="form-label" style={{ width: 80 }}>备注</label>
+              <div className="ui-dialog-field">
+                <label htmlFor="hotkey-edit-note">备注</label>
                 <input
+                  id="hotkey-edit-note"
                   className="search-input"
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="可选备注"
-                  style={{ flex: 1 }}
                 />
               </div>
             </div>
 
             {/* 右栏：推荐可用键位 */}
-            <div style={{ width: 200, borderLeft: '1px solid var(--border-color)', paddingLeft: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>
-                推荐可用键位
-              </div>
+            <aside className="hotkey-edit-recommendations" aria-labelledby="hotkey-edit-recommendations-title">
+              <h3 id="hotkey-edit-recommendations-title" className="ui-dialog-section-title">推荐可用键位</h3>
               {loadingRecommendations ? (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>加载中...</div>
+                <div className="ui-dialog-field-hint">正在加载…</div>
               ) : recommendedKeys.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="hotkey-edit-recommendation-list">
                   {recommendedKeys.map((rec, i) => (
                     <button
                       key={i}
-                      className="recommended-key-btn"
+                      type="button"
+                      className={`recommended-key-btn ${rec.status === 'available' ? 'is-available' : 'is-unavailable'}`}
                       onClick={() => setKey(rec.key)}
                       title={rec.reason || ''}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '3px 8px',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: 4,
-                        background: rec.status === 'available' ? 'var(--accent-green-alpha, #e8f5e9)' : 'var(--bg-secondary)',
-                        color: rec.status === 'available' ? 'var(--accent-green, #2e7d32)' : 'var(--text-muted)',
-                        opacity: rec.status === 'available' ? 1 : 0.6,
-                      }}
                     >
-                      <code style={{ fontWeight: 600, fontSize: 13 }}>{rec.displayKey}</code>
-                      <span style={{ fontSize: 10 }}>
+                      <code>{rec.displayKey}</code>
+                      <span>
                         {rec.status === 'available' ? '可用' : rec.reason || rec.status}
                       </span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>点击按键框加载推荐...</div>
+                <div className="ui-dialog-field-hint">聚焦按键输入框后加载推荐</div>
               )}
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8 }}>
-                点击推荐键位自动填入
-              </div>
-            </div>
+              <div className="ui-dialog-field-hint hotkey-edit-recommendation-hint">点击推荐项可自动填入</div>
+            </aside>
           </div>
 
           {/* ── 修改影响预览 ── */}
@@ -387,71 +381,59 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
           )}
 
           {/* 只读参考信息 */}
-          <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 4, paddingTop: 8 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>参考信息（不可编辑）</div>
+          <section className="hotkey-edit-reference" aria-labelledby="hotkey-edit-reference-title">
+            <h3 id="hotkey-edit-reference-title" className="ui-dialog-section-title">参考信息</h3>
 
             {/* 快捷键来源 */}
-            <div className="form-row" style={{ marginBottom: 4 }}>
-              <label className="form-label" style={{ width: 100, fontSize: 12 }}>快捷键来源</label>
+            <div className="hotkey-edit-reference-row">
+              <span>快捷键来源</span>
               <span className={`source-tag ${bindingSrcConfig.className}`}>
                 {bindingSrcConfig.label}
               </span>
               {binding.profileName && (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>
-                  方案: {binding.profileName}
-                </span>
+                <small>方案：{binding.profileName}</small>
               )}
             </div>
 
             {/* 原始行号 */}
             {binding.lineNumber && (
-              <div className="form-row" style={{ marginBottom: 4 }}>
-                <label className="form-label" style={{ width: 100, fontSize: 12 }}>原始行号</label>
-                <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {binding.lineNumber}
-                </span>
+              <div className="hotkey-edit-reference-row">
+                <span>原始行号</span>
+                <code>{binding.lineNumber}</code>
               </div>
             )}
 
             {/* 原始命令行 */}
-            <div className="form-row">
-              <label className="form-label" style={{ width: 100, fontSize: 12 }}>原始命令</label>
-              <code style={{ fontSize: 11, color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+            <div className="hotkey-edit-reference-row">
+              <span>原始命令</span>
+              <code>
                 {binding.type} {binding.key} "{binding.command}"
               </code>
             </div>
-          </div>
+          </section>
 
           {/* 实时检测结果 */}
-          <div className="edit-validation" style={{ fontSize: 12 }}>
-            {validating && <span style={{ color: 'var(--text-muted)' }}>检测中...</span>}
+          <div className="edit-validation hotkey-edit-validation" aria-live="polite">
+            {validating && <span className="ui-dialog-field-hint">正在检测…</span>}
 
             {validation.errors.length > 0 && (
-              <div style={{ color: 'var(--accent-red)', marginTop: 4 }}>
+              <div className="ui-dialog-alert ui-dialog-alert--danger" role="alert">
                 {validation.errors.map((e, i) => <div key={i}>{e}</div>)}
               </div>
             )}
 
             {validation.warnings.length > 0 && (
-              <div style={{ color: 'var(--accent-yellow)', marginTop: 4 }}>
+              <div className="ui-dialog-alert ui-dialog-alert--warning">
                 {validation.warnings.map((w, i) => <div key={i}>{w}</div>)}
               </div>
             )}
 
             {!validating && validation.warnings.length === 0 && validation.errors.length === 0 && (
-              <div style={{ color: 'var(--accent-green)' }}>通过检测</div>
+              <div className="hotkey-edit-validation-success">通过检测</div>
             )}
           </div>
-        </div>
-
-        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn" onClick={onClose}>取消</button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={!canSave}>
-            {canSave ? '生成 Apply Plan' : '请修正错误'}
-          </button>
-        </div>
       </div>
-    </div>
+    </BusinessDialog>
   );
 };
 
