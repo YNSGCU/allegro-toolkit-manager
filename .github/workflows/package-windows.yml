@@ -42,7 +42,7 @@ jobs:
         shell: pwsh
         env:
           ATM_GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: npm run publish:github
 
       - name: 确认发布产物
