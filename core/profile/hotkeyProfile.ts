@@ -116,6 +116,7 @@ export function createProfile(
   name: string,
   description?: string,
   sourceBindings?: HotkeyProfileBinding[],
+  metadata?: Pick<HotkeyProfile, 'sourceEnvironmentId' | 'sourceAllegroVersion' | 'testedAllegroVersions' | 'targetCompatibility'>,
 ): HotkeyProfile | null {
   const now = new Date().toISOString();
   const profile: HotkeyProfile = {
@@ -125,6 +126,7 @@ export function createProfile(
     createdAt: now,
     updatedAt: now,
     bindings: sourceBindings || [],
+    ...metadata,
   };
 
   return saveProfile(pcbenvPath, profile) ? profile : null;
@@ -187,6 +189,7 @@ export function importProfileFromJson(
 
     if (!data.name) data.name = `导入方案 ${new Date().toLocaleDateString()}`;
     if (!data.description) data.description = '';
+    if (!Array.isArray(data.testedAllegroVersions)) data.testedAllegroVersions = [];
 
     return saveProfile(pcbenvPath, data as HotkeyProfile) ? (data as HotkeyProfile) : null;
   } catch {

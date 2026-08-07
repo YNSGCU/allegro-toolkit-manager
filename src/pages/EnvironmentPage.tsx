@@ -1,9 +1,10 @@
 /** ATM - 环境检测 */
 import React, { useEffect, useState } from 'react';
-import { FolderOpen, RefreshCw } from 'lucide-react';
-import type { EnvironmentInfo } from '../types/environment';
+import { FolderOpen, FolderPlus, RefreshCw, Trash2 } from 'lucide-react';
+import type { AllegroEnvironmentWorkspace, EnvironmentInfo, EnvironmentRegistry } from '../types/environment';
 import FileStatusCard from '../components/FileStatusCard';
 import { formatUserError, PageState, StatusStrip, WorkspaceHeader, WorkspacePage } from '../shared/ui';
+import ToastContainer, { useToast } from '../components/common/Toast';
 
 type EnvVarMap = Record<string, string | null>;
 
@@ -24,11 +25,21 @@ function getDetectionModeText(mode: EnvironmentInfo['detectedMode']) {
 }
 
 const EnvironmentPage: React.FC = () => {
+  const { toasts, addToast, removeToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null);
   const [envVars, setEnvVars] = useState<EnvVarMap>({});
   const [error, setError] = useState<string | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [registry, setRegistry] = useState<EnvironmentRegistry | null>(null);
+  const [switchingEnvironment, setSwitchingEnvironment] = useState(false);
+  const [runtimeVerification, setRuntimeVerification] = useState<string | null>(null);
+
+  const loadWorkspaces = async (refresh = false, manualPath?: string) => {
+    if (typeof window.atm === 'undefined' || typeof window.atm.listAllegroEnvironments !== 'function') return;
+    const result = await window.atm.listAllegroEnvironments(refresh, manualPath);
+    if (result.success && result.data) setRegistry(result.data);
+  };
 
   const loadEnvironment = async (manualPath?: string) => {
     setLoading(true);
@@ -37,7 +48,8 @@ const EnvironmentPage: React.FC = () => {
       if (typeof window.atm === 'undefined') {
         throw new Error('未连接到 Electron 主进程，请在 ATM 桌面应用中打开。');
       }
-      const result = await window.atm.locateEnvironment(manualPath);
+      await loadWorkspaces(true, manualPath);
+      const result = await window.atm.locateEnvironment();
       if (result.success && result.data) {
         setEnvInfo(result.data);
         if (result.data.warnings.length > 0) setError(result.data.warnings.join('；'));
@@ -76,6 +88,58 @@ const EnvironmentPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddInstallRoot = async () => {
+    try {
+      const result = await window.atm.addAllegroInstallRoot();
+      if (result.success && result.data) {
+        setRegistry(result.data.registry);
+        await loadEnvironment();
+        addToast('success', `\u5df2\u6dfb\u52a0\u5b89\u88c5\u76ee\u5f55\uff1a${result.data.selectedRoot}`);
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '\u6dfb\u52a0\u5b89\u88c5\u76ee\u5f55\u5931\u8d25'));
+    }
+  };
+
+  const handleRemoveInstallRoot = async (installRoot: string) => {
+    try {
+      const result = await window.atm.removeAllegroInstallRoot(installRoot);
+      if (result.success && result.data) {
+        setRegistry(result.data);
+        await loadEnvironment();
+        addToast('success', '\u5df2\u79fb\u9664\u5b89\u88c5\u76ee\u5f55');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '\u79fb\u9664\u5b89\u88c5\u76ee\u5f55\u5931\u8d25'));
+    }
+  };
+
+  const handleSwitchEnvironment = async (environmentId: string) => {
+    if (!environmentId || !window.atm || typeof window.atm.setActiveAllegroEnvironment !== 'function') return;
+    setSwitchingEnvironment(true);
+    try {
+      const result = await window.atm.setActiveAllegroEnvironment(environmentId);
+      if (result.success && result.data?.environment) {
+        setRegistry(result.data.registry);
+        await loadEnvironment();
+        setSelectedPath(result.data.environment.pcbenvPath);
+      } else {
+        setError(formatUserError(result.error, '切换 Allegro 环境失败'));
+      }
+    } finally {
+      setSwitchingEnvironment(false);
+    }
+  };
+
+  const handleVerifyRuntime = async () => {
+    const environmentId = registry?.activeEnvironmentId;
+    if (!environmentId || typeof window.atm.verifyAllegroRuntime !== 'function') return;
+    setSwitchingEnvironment(true);
+    const result = await window.atm.verifyAllegroRuntime(environmentId);
+    setSwitchingEnvironment(false);
+    setRuntimeVerification(result.success && result.data ? result.data.result.message : (result.error || '运行验证失败'));
   };
 
   if (loading && !envInfo) {
@@ -117,6 +181,10 @@ const EnvironmentPage: React.FC = () => {
               <FolderOpen aria-hidden="true" />
               选择 pcbenv
             </button>
+            <button className="btn" onClick={() => void handleAddInstallRoot()} disabled={loading}>
+              <FolderPlus aria-hidden="true" />
+              添加安装目录
+            </button>
           </>
         )}
       />
@@ -131,6 +199,58 @@ const EnvironmentPage: React.FC = () => {
           { label: '警告', value: `${envInfo?.warnings.length ?? 0} 项`, tone: envInfo?.warnings.length ? 'warning' : 'ok' },
         ]}
       />
+
+      <section className="environment-workspace-switcher" aria-label="Allegro 多版本环境">
+        <div>
+          <strong>当前 Allegro 环境</strong>
+          <span className="environment-workspace-hint">所有扫描和写入都会针对所选环境</span>
+        </div>
+        <select
+          value={registry?.activeEnvironmentId || ''}
+          onChange={(event) => void handleSwitchEnvironment(event.target.value)}
+          disabled={switchingEnvironment || !registry?.environments.length}
+          aria-label="选择 Allegro 环境"
+        >
+          {!registry?.environments.length ? <option value="">未发现 Allegro 环境</option> : null}
+          {registry?.environments.map((workspace: AllegroEnvironmentWorkspace) => (
+            <option value={workspace.id} key={workspace.id}>
+              {workspace.name}{workspace.allegroVersion ? ` · ${workspace.allegroVersion}` : ''} · {workspace.pcbenvPath}
+            </option>
+          ))}
+        </select>
+        {envInfo?.sharedEnvironmentIds?.length ? (
+          <span className="environment-shared-warning">当前 pcbenv 还被其他 Allegro 版本共享，修改会同时生效</span>
+        ) : null}
+        <div className="environment-runtime-verification">
+          <button className="btn btn-sm" onClick={() => void handleVerifyRuntime()} disabled={!registry?.activeEnvironmentId || switchingEnvironment}>???? Allegro ??</button>
+          <span>{runtimeVerification || '??? Vibe Bridge ??????????????????'}</span>
+        </div>
+
+        {registry?.manualInstallRoots?.length ? (
+          <div className="environment-manual-roots">
+            <div className="environment-manual-roots-head">
+              <strong>?????????</strong>
+              <span className="environment-manual-roots-hint">???????????????????? SPB ???</span>
+            </div>
+            <ul className="environment-manual-roots-list">
+              {registry.manualInstallRoots.map((root) => (
+                <li key={root}>
+                  <code>{root}</code>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    onClick={() => void handleRemoveInstallRoot(root)}
+                    aria-label={`?? ${root}`}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    ??
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
 
       {error ? <div className="message message-warning environment-inline-warning">{error}</div> : null}
 
@@ -187,6 +307,7 @@ const EnvironmentPage: React.FC = () => {
           </table>
         </div>
       </section>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </WorkspacePage>
   );
 };

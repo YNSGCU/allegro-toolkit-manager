@@ -20,7 +20,7 @@
 │   ├── components/ # UI 组件
 │   │   └── common/ # 通用组件（Toast、ConfirmDialog、ErrorPanel）
 │   ├── hooks/      # React Hooks（数据加载、筛选、元数据、Apply Plan）
-│   ├── pages/      # 页面（Dashboard、Environment、Hotkey、Skill）
+│   ├── pages/      # 页面（Dashboard、Environment、Hotkey、Skill、Menu）
 │   └── types/      # TypeScript 类型定义
 ├── docs/           # 中文文档
 └── scripts/        # 开发辅助脚本
@@ -69,6 +69,13 @@ npm run build:renderer
 
 # 预览构建产物
 npm run preview
+
+# 完整发布前门禁（安全审计、Lint、格式、类型、测试、构建）
+npm run verify
+
+# Windows x64 解包目录 / NSIS 安装包
+npm run package:dir
+npm run package:win
 ```
 
 ### 常见问题
@@ -134,15 +141,14 @@ npx.cmd vitest run tests/parseEnv.test.ts
 npm run test:watch
 ```
 
-测试仅覆盖 `core/` 目录（纯 TypeScript 模块）。
-`electron/` 代码需要 Electron 运行时，无法通过 Vitest 测试。
+测试覆盖 `core/` 事务逻辑与 React 渲染层关键交互；Electron IPC 通过双 tsconfig 类型检查和打包后进程冒烟验证。
 
 ### 项目状态
 
-- ⚠️ 当前不是 git 仓库，使用 `git init` 初始化
-- 无 ESLint/Prettier 配置
-- 无 CI/CD 配置
-- TypeScript 类型检查是唯一的静态分析工具
+- Git 已初始化，UI 重置基线为 `c95a222`。
+- Windows CI 执行 `npm run verify`，标签构建可生成未签名 NSIS 安装包。
+- ESLint 负责高置信度运行时错误规则，Prettier 当前约束脚本和工程配置。
+- 生产依赖审计包含 React Router RSC 专项禁用检查；ATM 不使用 RSC API。
 
 ## 模块地图
 

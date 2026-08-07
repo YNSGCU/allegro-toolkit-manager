@@ -318,6 +318,7 @@ export type SkillApplyStepType =
   | 'write_skill_loader'
   | 'write_bootstrap'
   | 'modify_ilinit'
+  | 'write_file'
   | 'create_directory'
   | 'move_file';
 
@@ -352,6 +353,12 @@ export interface SkillApplyPlan {
   backups?: Array<{ sourceFile: string; backupFile: string; required: boolean }>;
   targetFiles?: string[];
   status?: string;
+  /** 旧版 Skill 执行入口的显式操作元数据，禁止再从 summary 文本反推。 */
+  operation?: 'toggle' | 'delete' | 'sync-symphony-file';
+  targetSkillPath?: string;
+  targetSkillId?: string;
+  targetEntryCommands?: string[];
+  deleteOption?: ImpactOptionAction;
 }
 
 // ═══════════════════════════════════════════════════

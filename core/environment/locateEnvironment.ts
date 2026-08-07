@@ -7,6 +7,7 @@ import os from 'os';
 import { detectPcbenv, searchCommonPcbenvLocations } from './detectPcbenv';
 import { checkFileAccess, ensureDirectoryExists } from './fileAccess';
 import type { EnvironmentInfo, HealthScore, HealthScoreItem } from '../../src/types/environment';
+import { getActiveEnvironment, refreshEnvironmentRegistry } from './environmentRegistry';
 
 /**
  * 定位用户 Allegro 配置环境
@@ -18,6 +19,20 @@ export function locateEnvironment(manualPcbenvPath?: string): EnvironmentInfo {
   const warnings: string[] = [];
   let homePath: string | null = null;
   let pcbenvPath: string | null = null;
+  const activeWorkspace = manualPcbenvPath
+    ? null
+    : (() => {
+      const existing = getActiveEnvironment();
+      if (existing) return existing;
+      const registry = refreshEnvironmentRegistry();
+      return registry.environments.find((item) => item.id === registry.activeEnvironmentId) || null;
+    })();
+
+  // 已选择的 Allegro 工作区优先于进程环境变量，避免多版本安装时漂移到错误的 pcbenv。
+  if (activeWorkspace?.pcbenvPath) {
+    pcbenvPath = activeWorkspace.pcbenvPath;
+    homePath = activeWorkspace.homePath;
+  }
 
   // Step 1: 如果用户手动指定了路径，直接使用
   if (manualPcbenvPath) {
@@ -144,6 +159,11 @@ export function locateEnvironment(manualPcbenvPath?: string): EnvironmentInfo {
   }
 
   return {
+    environmentId: activeWorkspace?.id,
+    allegroVersion: activeWorkspace?.allegroVersion ?? null,
+    installRoot: activeWorkspace?.installRoot ?? null,
+    executablePath: activeWorkspace?.executablePath ?? null,
+    sharedEnvironmentIds: activeWorkspace?.sharedWithIds ?? [],
     homePath,
     pcbenvPath,
     envFilePath,

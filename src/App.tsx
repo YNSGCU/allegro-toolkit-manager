@@ -15,6 +15,7 @@ const EnvironmentPage = lazy(routePageLoaders.environment);
 const HotkeyWorkspacePage = lazy(routePageLoaders.hotkeys);
 const SkillPage = lazy(routePageLoaders.skills);
 const MenuPage = lazy(routePageLoaders.menu);
+const ColorPage = lazy(routePageLoaders.colors);
 
 function RouteLoadingFallback() {
   return (
@@ -50,6 +51,7 @@ function RoutedWorkspace() {
           <Route path="/hotkeys/*" element={<HotkeyWorkspacePage />} />
           <Route path="/skills" element={<SkillPage />} />
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/colors" element={<ColorPage />} />
           <Route
             path="*"
             element={<Navigate to={getDefaultWorkspaceRoute()} replace />}

@@ -60,6 +60,13 @@ export function registerSkillProfileIpc(): void {
       const atmDir = getAtmDir();
       const store = loadSkillProfileStore(atmDir);
       const updated = createSkillProfile(store, name, description);
+      const envInfo = locateEnvironment();
+      const created = updated.profiles[updated.profiles.length - 1];
+      if (created) {
+        created.sourceEnvironmentId = envInfo.environmentId ?? null;
+        created.sourceAllegroVersion = envInfo.allegroVersion ?? null;
+        created.testedAllegroVersions = envInfo.allegroVersion ? [envInfo.allegroVersion] : [];
+      }
       saveSkillProfileStore(atmDir, updated);
       return { success: true, data: { store: updated } };
     } catch (err) {
@@ -249,6 +256,8 @@ export function registerSkillProfileIpc(): void {
         backups: backupEntries.map(entry => entry.backup),
         requiresRestart: true,
         targetFiles: [...new Set(steps.map(step => step.targetFile))],
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
       });
       return { success: true, data: plan };
     } catch (err) {
@@ -259,6 +268,9 @@ export function registerSkillProfileIpc(): void {
   ipcMain.handle('skill-profile:execute-apply-plan', async (_event, planJson: string) => {
     try {
       const plan: ApplyPlan = JSON.parse(planJson);
+      const envInfo = locateEnvironment();
+      if (plan.environmentId && plan.environmentId !== envInfo.environmentId) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '当前 Allegro 环境已变化，请重新生成 Apply Plan' };
+      if (plan.environmentPcbenvPath && path.normalize(plan.environmentPcbenvPath).toLowerCase() !== path.normalize(envInfo.pcbenvPath || '').toLowerCase()) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: 'Apply Plan 目标 pcbenv 已变化，请重新生成计划' };
       if (plan.module !== 'skill') {
         return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '拒绝执行非 Skill Apply Plan' };
       }

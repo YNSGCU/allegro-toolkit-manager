@@ -986,7 +986,7 @@ describe('hotkey workspace shared data', () => {
     createElement.mockRestore();
   });
 
-  it('renders export cheatsheet with the shared modal shell instead of a custom popup shell', async () => {
+  it('renders export cheatsheet with the accessible BusinessDialog shell', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -1092,19 +1092,19 @@ describe('hotkey workspace shared data', () => {
     const dialog = document.querySelector('.export-dialog');
     expect(dialog).not.toBeNull();
     expect(dialog).toHaveClass('export-dialog');
-    expect(dialog).toHaveClass('modal-dialog');
+    expect(dialog).toHaveClass('ui-dialog', 'ui-business-dialog');
     expect(dialog).toHaveClass('export-dialog--compact');
     expect(dialog?.classList.contains('modal-content')).toBe(false);
-    const closeButton = screen.getByRole('button', { name: '关闭导出弹窗' });
-    expect(closeButton).toHaveClass('modal-close-btn');
-    expect(dialog?.querySelector('.modal-footer')).not.toBeNull();
-    const footerButtons = dialog?.querySelectorAll('.modal-footer button') ?? [];
+    const closeButton = screen.getByRole('button', { name: '关闭对话框' });
+    expect(closeButton).toHaveClass('ui-icon-button');
+    expect(dialog?.querySelector('.ui-business-dialog-footer')).not.toBeNull();
+    const footerButtons = dialog?.querySelectorAll('.ui-business-dialog-footer button') ?? [];
     expect(footerButtons).toHaveLength(2);
     expect(footerButtons[0]).toHaveClass('btn');
     expect(footerButtons[1]).toHaveClass('btn', 'btn-primary');
   });
 
-  it('renders change history with the shared modal shell instead of the legacy popup shell', async () => {
+  it('renders change history with the accessible BusinessDialog shell', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -1194,13 +1194,13 @@ describe('hotkey workspace shared data', () => {
     const historyButton = await screen.findByRole('button', { name: '变更历史' });
     fireEvent.click(historyButton);
 
-    const dialog = await screen.findByLabelText('变更历史弹窗');
+    const dialog = await screen.findByRole('dialog', { name: '变更历史' });
     expect(dialog).toHaveClass('change-history-dialog');
-    expect(dialog).toHaveClass('modal-dialog');
+    expect(dialog).toHaveClass('ui-dialog', 'ui-business-dialog');
     expect(dialog?.classList.contains('modal-content')).toBe(false);
 
-    const closeButton = screen.getByRole('button', { name: '关闭变更历史弹窗' });
-    expect(closeButton).toHaveClass('modal-close-btn');
+    const closeButton = screen.getByRole('button', { name: '关闭对话框' });
+    expect(closeButton).toHaveClass('ui-icon-button');
     expect(screen.getByRole('button', { name: '刷新历史' })).toHaveClass('btn');
     expect(screen.getByRole('button', { name: '清空历史' })).toHaveClass('btn', 'btn-danger');
     expect(dialog.querySelector('.change-history-toolbar .atm-btn')).toBeNull();

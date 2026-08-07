@@ -22,6 +22,38 @@ describe('business dialog experience', () => {
     expect(document.querySelector('.modal-overlay')).not.toBeInTheDocument();
   });
 
+  it('suggests move when adding M and blocks an occupied layer', async () => {
+    const onConfirm = vi.fn();
+    const { unmount } = render(
+      <AddHotkeyDialog physicalKey="M" onClose={() => {}} onConfirm={onConfirm} />,
+    );
+
+    const moveOption = await screen.findByRole('option', { name: /move.*移动/ });
+    fireEvent.click(moveOption);
+    expect(screen.getByLabelText('原始命令')).toHaveValue('move');
+    fireEvent.click(screen.getByRole('button', { name: '生成 Apply Plan' }));
+    expect(onConfirm).toHaveBeenCalledWith({ key: 'm', command: 'move', type: 'funckey' });
+    unmount();
+
+    render(
+      <AddHotkeyDialog
+        physicalKey="M"
+        currentBindings={[{
+          id: 'occupied-m',
+          key: 'm',
+          command: 'mirror',
+          type: 'funckey',
+          bindingSource: 'user_env_original',
+          status: 'normal',
+        }]}
+        onClose={() => {}}
+        onConfirm={onConfirm}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('已绑定到“mirror”');
+    expect(screen.getByRole('button', { name: '生成 Apply Plan' })).toBeDisabled();
+  });
+
   it('keeps skill metadata errors announced and the form available for retry', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('保存失败，请重试'));
     render(

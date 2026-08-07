@@ -17,8 +17,19 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
   const knownHandlers: string[] = [
     // app
     'app:getRuntimeInfo',
+    'app:update-state',
+    'app:update-settings',
+    'app:update-settings-save',
+    'app:update-check',
+    'app:update-download',
+    'app:update-install',
     // env
     'env:locate',
+    'env:list-workspaces',
+    'env:set-active-workspace',
+    'env:list-compatibility-records',
+    'env:save-compatibility-record',
+    'env:verify-vibe-runtime',
     'env:select-pcbenv',
     'env:check-file-access',
     'env:health-score',
@@ -57,6 +68,8 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'profile:import',
     'profile:diff',
     'profile:save-bindings',
+    'profile:check-compatibility',
+    'profile:migrate',
     // command
     'command:save-override',
     // skill V1/V2

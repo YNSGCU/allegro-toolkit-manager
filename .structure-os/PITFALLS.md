@@ -1,4 +1,17 @@
+## PIT-2026-08-06-01: 菜单拖动排序必须限制在同级
+
+- 规则：拖动只接受同一 parentId 下的目标项；跨层级拖动忽略。层级变更必须使用显式编辑动作并经过菜单验证。
+- 持久化：拖动只修改草稿，仍必须生成并执行菜单 Apply Plan。
+
 # Pitfalls
+
+## PIT-2026-08-01-10: 不同历史 JSON 结构不能共用同一个文件
+
+- Area: Apply Plan、快捷键历史、Skill/Menu 撤销
+- Symptom: 菜单或 Skill 应用后再编辑快捷键，历史读取报错或旧记录被覆盖。
+- Cause: 旧快捷键历史使用 `{ records: [...] }`，统一 Apply Plan 历史使用数组；两者曾同时写入 `change_history.json`。
+- Safe fix: 旧快捷键继续使用 `change_history.json`；统一事务使用 `apply_plan_history.json`。执行前对所有写入目标建立事务快照，新建文件用 `existedBefore: false` 标记。
+- Avoid: 仅因为文件名都叫“变更历史”就复用同一持久化结构；只备份已存在文件而忽略本次新建文件。
 
 ## PIT-2026-07-02-01: Electron install can lose bundled typings or runtime files
 
@@ -201,3 +214,73 @@
 - Verification:
   - 本轮验证到快捷键页显示 env 已连接、113 条配置和真实快捷键列表；控制台未出现页面错误。
 - Last seen: 2026-08-01
+
+## PIT-2026-08-01-11: 输入框不能只统一外框而遗漏文字契约
+
+- Area: 共享控件、搜索框、表单占位文字、中文桌面 UI
+- Symptom:
+  - 输入框高度和边框看似一致，但框内文字显得过小、偏上或与旁边下拉框不协调。
+  - 中英文混排的占位文字比正式输入值更薄、更淡，像是使用了另一套字体。
+- Root cause:
+  - 共享样式只规定 `min-height`、边框和背景，没有统一内边距、字号与行高。
+  - 旧页面样式单独把 `.search-input::placeholder` 固定为 12px，覆盖了控件继承关系；浏览器还可能继续降低占位文字透明度。
+- Correct fix:
+  1. 在 `foundations/controls.css` 为单行输入和选择控件集中规定字体、13px 字号、1.4 行高与水平内边距。
+  2. 让 `input::placeholder` 和 `textarea::placeholder` 继承控件排版，并显式设置辅助文字颜色与 `opacity: 1`。
+  3. 删除页面级占位字号覆盖，并用样式契约测试防止旧规则回流。
+- Guardrail:
+  - 业务组件只提供字段语义、标签和示例内容；控件正文与占位文字的排版统一由共享基础层负责。
+- Related files:
+  - `src/shared/ui/foundations/controls.css`
+  - `src/App.css`
+  - `tests/controlTypography.test.ts`
+- Verification:
+  - 搜索框和物理键输入框共用相同排版；契约测试确认旧 12px 占位规则已移除。
+- Last seen: 2026-08-01
+
+## PIT-2026-08-01-12: 编辑表单字段必须在计划执行器中有真实语义
+
+- Area: 快捷键编辑、Profile、Apply Plan、来源能力边界
+- Symptom:
+  - 编辑弹窗可以修改启用状态、备注或方案绑定，确认执行后却没有任何数据变化。
+  - 只读参考 env 或 Skill 直接注册项也显示“编辑”，执行计划可能只完成备份便返回成功。
+- Root cause:
+  - UI 按一个通用表单展示所有字段，没有根据 `bindingSource` 区分可写能力。
+  - Profile 计划只写了“将被更新”的占位说明，没有提供真实目标内容；执行器对 `modify_profile` 直接跳过。
+  - 计划生成器没有拒绝零个有效写入步骤，导致空计划假成功。
+- Wrong attempts:
+  - 只修正按钮文案或 Toast，不检查目标文件内容。
+  - 在 renderer 中直接调用 Profile 保存接口，绕过计划预览、备份和回滚。
+- Correct fix:
+  1. env 绑定只展示类型、按键和命令；Profile 绑定才展示启用状态和备注。
+  2. 只读来源禁用编辑入口，Core 对不支持来源再次拒绝。
+  3. Profile 步骤携带真实 `expectedContent` 与 `writeContent`，执行前检查外部变化。
+  4. 计划必须且只能包含可识别写入目标；失败时恢复快照，成功后刷新工作区。
+- Guardrail:
+  - 新增编辑字段时必须同时提供“来源能力矩阵 + 计划步骤 + 执行分支 + 文件结果断言”，缺一项都不能宣称功能完成。
+- Related files:
+  - `src/components/HotkeyEditor.tsx`
+  - `src/components/hotkeys/HotkeyEditorPanel.tsx`
+  - `core/apply/hotkeyEditPlan.ts`
+  - `electron/ipc/hotkey.ipc.ts`
+  - `tests/hotkeyEditPlan.test.ts`
+- Detection:
+  - 对 env、当前方案和只读来源分别生成计划，确认步骤数、目标路径和执行后内容。
+- Verification:
+  - 临时 pcbenv 测试覆盖 env CRLF 修改、外部变化拒绝、Profile 字段更新、撤销、重复键与只读来源拒绝。
+- Last seen: 2026-08-01
+## PIT-2026-08-04-01: 多 Allegro 版本不能依赖进程环境变量临时定位
+
+- 现象：不同页面或 IPC 分别调用自动检测，多版本安装时可能读写不同的 `pcbenv`。
+- 根因：环境模型没有持久化的 `activeEnvironmentId`，`CDSROOT/HOME` 只反映 ATM 进程而不一定反映用户准备管理的 Allegro 版本。
+- 规则：所有配置读取与 Apply Plan 必须通过环境注册表解析同一个活动工作区；手动选择目录必须同步更新活动环境。
+- 额外风险：多个版本共享同一个 `pcbenv` 时，一次修改会影响全部版本，必须展示共享影响范围。
+
+
+## PIT-2026-08-06-02: 没有真实发布源时不得伪造应用更新地址
+
+- Area: electron-updater、NSIS 打包、应用内更新
+- Symptom: 客户端显示可更新但下载到错误项目或不存在的安装包。
+- Cause: 复用其他项目的 GitHub Release 地址，或普通本地打包意外生成 publish 元数据。
+- Safe fix: ATM 默认保持未配置；正式构建必须通过 ATM_UPDATE_FEED_URL 显式注入 HTTPS 目录，并同时发布 latest.yml、NSIS 安装包和 .blockmap。
+- Avoid: 复制 PiAgent 更新 URL、在没有真实 Release 时宣称更新可用、默认开启自动下载或自动安装。

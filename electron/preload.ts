@@ -24,6 +24,28 @@ contextBridge.exposeInMainWorld('atm', {
   locateEnvironment: (manualPcbenvPath?: string) =>
     ipcRenderer.invoke('env:locate', manualPcbenvPath),
 
+  listAllegroEnvironments: (refresh = false, manualPcbenvPath?: string) =>
+    ipcRenderer.invoke('env:list-workspaces', refresh, manualPcbenvPath),
+
+  setActiveAllegroEnvironment: (environmentId: string) =>
+    ipcRenderer.invoke('env:set-active-workspace', environmentId),
+
+  /** 手动添加 Allegro 安装根目录（新电脑第一次使用时） */
+  addAllegroInstallRoot: () => ipcRenderer.invoke('env:add-install-root'),
+
+  /** 移除手动安装目录 */
+  removeAllegroInstallRoot: (installRoot: string) =>
+    ipcRenderer.invoke('env:remove-install-root', installRoot),
+
+  listCompatibilityRecords: (filters?: any) =>
+    ipcRenderer.invoke('env:list-compatibility-records', filters),
+
+  saveCompatibilityRecord: (record: any) =>
+    ipcRenderer.invoke('env:save-compatibility-record', record),
+
+  verifyAllegroRuntime: (environmentId: string) =>
+    ipcRenderer.invoke('env:verify-vibe-runtime', environmentId),
+
   /** 打开文件选择对话框选择 pcbenv */
   selectPcbenv: () => ipcRenderer.invoke('env:select-pcbenv'),
 
@@ -128,6 +150,12 @@ contextBridge.exposeInMainWorld('atm', {
   /** 获取已应用的快捷键方案 ID */
   getAppliedHotkeyProfile: () =>
     ipcRenderer.invoke('profile:get-applied'),
+
+  checkHotkeyProfileCompatibility: (profileId: string, targetEnvironmentId: string) =>
+    ipcRenderer.invoke('profile:check-compatibility', profileId, targetEnvironmentId),
+
+  migrateHotkeyProfile: (profileId: string, targetEnvironmentId: string) =>
+    ipcRenderer.invoke('profile:migrate', profileId, targetEnvironmentId),
 
   // ===== 保留键（V1.6） =====
   /** 获取软件默认/系统保留快捷键 */
@@ -471,9 +499,89 @@ contextBridge.exposeInMainWorld('atm', {
   skillProfileExecuteApplyPlan: (planJson: string) =>
     ipcRenderer.invoke('skill-profile:execute-apply-plan', planJson),
 
+  // ===== Symphony 协同模式适配 =====
+  /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */
+  symphonyCheck: () => ipcRenderer.invoke('skill:symphony-check'),
+  /** ?? symphony_skill.txt ??????? Apply Plan? */
+  symphonyGeneratePlan: (optionsJson: string) =>
+    ipcRenderer.invoke('skill:symphony-generate', optionsJson),
+  /** 执行 Symphony 登记计划 */
+  symphonyApplyPlan: (planJson: string) =>
+    ipcRenderer.invoke('skill:symphony-apply', planJson),
+  /** ?? AXL ??????? */
+  symphonyTableInfo: () => ipcRenderer.invoke('skill:symphony-table-info'),
+
   // ===== V5.4 运行时版本自检 =====
   /** 获取运行时版本信息（三层一致性检测用） */
   getRuntimeInfo: () => ipcRenderer.invoke('app:getRuntimeInfo'),
+
+  // ===== 应用内更新 =====
+  // ===== 閰嶈壊鏂规(配色方案) =====
+  /** 妫€鏌?Vibe Bridge 鍙敤鎬?*/
+  colorCheckBridge: () => ipcRenderer.invoke('color:check-bridge'),
+
+  /** 检查桥接安装状态（自动加载是否已配置） */
+  colorCheckBridgeSetup: () => ipcRenderer.invoke('color:bridge-setup-status'),
+
+  /** 生成启用桥接自动加载的 Apply Plan */
+  colorCreateBridgeEnablePlan: () => ipcRenderer.invoke('color:bridge-enable-plan'),
+
+  /** 执行启用桥接自动加载的 Apply Plan */
+  colorExecuteBridgeEnablePlan: (planJson: string) =>
+    ipcRenderer.invoke('color:bridge-execute-plan', planJson),
+
+  /** 浠庡綋鍓嶆墦寮€鐨?Allegro 鏉垮瓙鎹曡幏閰嶈壊 */
+  colorCapture: () => ipcRenderer.invoke('color:capture'),
+
+  /** 灏嗛厤鑹叉柟妗堝簲鐢ㄥ埌褰撳墠鏉垮瓙锛堥渶 UI 纭锛?*/
+  colorApply: (schemeId: string, applyVisibility?: boolean) =>
+    ipcRenderer.invoke('color:apply', schemeId, applyVisibility),
+
+  /** 鍔犺浇鍏ㄩ儴閰嶈壊鏂规 */
+  colorLoadSchemes: () => ipcRenderer.invoke('color:schemes'),
+
+  /** 淇濆瓨鎹曡幏蹇収涓烘柟妗?*/
+  colorCreateScheme: (snapshot: any, name: string, description?: string) =>
+    ipcRenderer.invoke('color:scheme-create', snapshot, name, description),
+
+  /** 澶嶅埗鏂规 */
+  colorCopyScheme: (schemeId: string, newName?: string) =>
+    ipcRenderer.invoke('color:scheme-copy', schemeId, newName),
+
+  /** 閲嶅懡鍚嶆柟妗?*/
+  colorRenameScheme: (schemeId: string, newName: string) =>
+    ipcRenderer.invoke('color:scheme-rename', schemeId, newName),
+
+  /** 鍒犻櫎鏂规 */
+  colorDeleteScheme: (schemeId: string) =>
+    ipcRenderer.invoke('color:scheme-delete', schemeId),
+
+  /** 璁剧疆娲昏穬鏂规 */
+  colorSetActiveScheme: (schemeId: string) =>
+    ipcRenderer.invoke('color:scheme-set-active', schemeId),
+
+  /** 更新方案（编辑调色板/图层颜色） */
+  colorUpdateScheme: (schemeId: string, updates: any) =>
+    ipcRenderer.invoke('color:scheme-update', schemeId, updates),
+
+  /** 瀵煎叆 .col 鏂囦欢 */
+  colorImportCol: () => ipcRenderer.invoke('color:import-col'),
+
+  /** 瀵煎嚭 .col 鏂囦欢 */
+  colorExportCol: (schemeId: string) =>
+    ipcRenderer.invoke('color:export-col', schemeId),
+  getUpdateState: () => ipcRenderer.invoke('app:update-state'),
+  getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
+  saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>
+    ipcRenderer.invoke('app:update-settings-save', settings),
+  checkForUpdates: () => ipcRenderer.invoke('app:update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('app:update-download'),
+  installUpdate: () => ipcRenderer.invoke('app:update-install'),
+  onUpdateState: (listener: (state: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: unknown) => listener(state);
+    ipcRenderer.on('app:update-state-changed', handler);
+    return () => ipcRenderer.removeListener('app:update-state-changed', handler);
+  },
 });
 
 console.log('[ATM Preload] window.atm injected successfully');

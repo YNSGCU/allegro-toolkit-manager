@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'overview';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -33,6 +33,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'primary',
     shortLabel: 'MN',
     summary: '编辑菜单树并生成覆盖层',
+  },
+  {
+    key: 'colors',
+    label: '配色',
+    path: '/colors',
+    group: 'primary',
+    shortLabel: 'CL',
+    summary: '复制板子配色方案并可视化，跨板子应用',
   },
   {
     key: 'overview',

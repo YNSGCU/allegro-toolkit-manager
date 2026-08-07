@@ -9,6 +9,7 @@ export const routePageLoaders = {
   hotkeys: () => import('../pages/HotkeyWorkspacePage'),
   skills: () => import('../pages/SkillPage'),
   menu: () => import('../pages/MenuPage'),
+  colors: () => import('../pages/ColorPage'),
 } satisfies Record<string, RoutePageLoader>;
 
 const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
@@ -17,6 +18,7 @@ const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
   ['/hotkeys', routePageLoaders.hotkeys],
   ['/skills', routePageLoaders.skills],
   ['/menu', routePageLoaders.menu],
+  ['/colors', routePageLoaders.colors],
 ];
 
 const preloadRequests = new Map<RoutePageLoader, Promise<void>>();

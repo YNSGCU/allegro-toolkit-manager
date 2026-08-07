@@ -14,9 +14,10 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import type { ApplyPlan, ApplyStep, EnvEntry, HotkeyBinding } from '../../src/types/hotkey';
+import type { EnvEntry, HotkeyBinding, HotkeyProfile } from '../../src/types/hotkey';
 import type { HotkeyEditRequest } from '../../src/types/hotkey';
 import { ATM_MANAGED_BLOCK_END } from '../../src/types/hotkey';
+import { addChangeRecord } from '../changeHistory/changeHistory';
 
 /** 编辑操作类型 */
 export type EditOpType =
@@ -36,6 +37,8 @@ export interface EditPlanStep {
   after: string;
   lineNumber?: number;
   backupPath?: string;
+  expectedContent?: string;
+  writeContent?: string;
 }
 
 /** 编辑 Apply Plan */
@@ -55,7 +58,6 @@ export interface EditApplyPlan {
  * @param envFilePath env 文件路径
  * @param entries 当前 env 解析条目
  * @param profileFilePath Profile 文件路径（可选）
- * @param overrideJsonPath 用户来源修正 JSON 路径（可选）
  * @returns EditApplyPlan
  */
 export function generateEditPlan(
@@ -64,24 +66,18 @@ export function generateEditPlan(
   envFilePath: string,
   entries: EnvEntry[],
   profileFilePath?: string,
-  overrideJsonPath?: string,
 ): EditApplyPlan {
   const steps: EditPlanStep[] = [];
   const now = new Date().toISOString();
+  const nextKey = editRequest.key?.trim();
+  const nextCommand = editRequest.command?.trim();
 
-  // 1. 备份 env 文件
-  const backupDir = path.join(path.dirname(envFilePath), 'atm_generated', 'backup');
-  const backupName = `env.backup.${Date.now()}`;
-  const backupPath = path.join(backupDir, backupName);
-
-  steps.push({
-    opType: 'modify_env',
-    target: envFilePath,
-    description: `备份 env 文件到 ${backupPath}`,
-    before: '(文件备份)',
-    after: backupPath,
-    backupPath,
-  });
+  if (editRequest.key !== undefined && !nextKey) {
+    throw new Error('按键或别名不能为空');
+  }
+  if (editRequest.command !== undefined && !nextCommand) {
+    throw new Error('命令不能为空');
+  }
 
   // 2. 根据快捷键来源生成修改步骤
   const isDelete = editRequest.command === '' || editRequest.command === undefined;
@@ -89,12 +85,26 @@ export function generateEditPlan(
   const isProfileBinding = currentBinding.bindingSource === 'active_profile' || currentBinding.bindingSource === 'imported_profile';
 
   // env 源修改
-  if (isEnvBinding && !isDelete && editRequest.key && editRequest.command !== undefined) {
+  if (isEnvBinding && !isDelete && nextKey && nextCommand !== undefined) {
+    if (!currentBinding.lineNumber) {
+      throw new Error('当前 env 绑定缺少原始行号，无法安全编辑');
+    }
     const oldLine = entries.find((e) => e.lineNumber === currentBinding.lineNumber);
-    const beforeText = oldLine?.raw || '';
+    if (!oldLine) {
+      throw new Error(`未找到 env 第 ${currentBinding.lineNumber} 行，文件可能已被外部修改`);
+    }
+    const beforeText = oldLine.raw;
     const newType = editRequest.type || currentBinding.type;
-    const newKey = editRequest.key || currentBinding.key;
-    const newCommand = editRequest.command !== undefined ? editRequest.command : currentBinding.command;
+    const newKey = nextKey || currentBinding.key;
+    const newCommand = nextCommand !== undefined ? nextCommand : currentBinding.command;
+    const duplicate = entries.find((entry) =>
+      entry.lineNumber !== currentBinding.lineNumber
+      && entry.type === newType
+      && entry.key?.toLowerCase() === newKey.toLowerCase()
+    );
+    if (duplicate) {
+      throw new Error(`${newType} ${newKey} 已在 env 第 ${duplicate.lineNumber} 行绑定到 ${duplicate.command}`);
+    }
     const cmdQuoted = newCommand.includes(' ') ? `"${newCommand}"` : newCommand;
     const afterText = `${newType} ${newKey} ${cmdQuoted}`;
 
@@ -105,14 +115,19 @@ export function generateEditPlan(
       before: beforeText,
       after: afterText,
       lineNumber: currentBinding.lineNumber,
-      backupPath,
     });
   }
 
   // 删除 = 注释原行
   if (isEnvBinding && isDelete) {
+    if (!currentBinding.lineNumber) {
+      throw new Error('当前 env 绑定缺少原始行号，无法安全删除');
+    }
     const oldLine = entries.find((e) => e.lineNumber === currentBinding.lineNumber);
-    const beforeText = oldLine?.raw || '';
+    if (!oldLine) {
+      throw new Error(`未找到 env 第 ${currentBinding.lineNumber} 行，文件可能已被外部修改`);
+    }
+    const beforeText = oldLine.raw;
     const afterText = `# ${beforeText}  ; ATM: 注释删除 ${now.slice(0, 10)}`;
 
     steps.push({
@@ -122,33 +137,69 @@ export function generateEditPlan(
       before: beforeText,
       after: afterText,
       lineNumber: currentBinding.lineNumber,
-      backupPath,
     });
   }
 
   // Profile 源修改
-  if (isProfileBinding && profileFilePath) {
-    const profileContent = fs.existsSync(profileFilePath) ? fs.readFileSync(profileFilePath, 'utf-8') : '';
+  if (isProfileBinding) {
+    if (!profileFilePath || !fs.existsSync(profileFilePath)) {
+      throw new Error('当前方案文件不存在，无法生成编辑计划');
+    }
+    const profileContent = fs.readFileSync(profileFilePath, 'utf-8');
+    const profile = JSON.parse(profileContent) as HotkeyProfile;
+    const materializedPrefix = currentBinding.profileId
+      ? `profile:${currentBinding.profileId}:`
+      : '';
+    const profileBindingId = materializedPrefix && currentBinding.id.startsWith(materializedPrefix)
+      ? currentBinding.id.slice(materializedPrefix.length)
+      : currentBinding.id;
+    const bindingIndex = profile.bindings.findIndex((binding) => binding.id === profileBindingId);
+    if (bindingIndex < 0) {
+      throw new Error(`当前方案中找不到绑定 ${profileBindingId}`);
+    }
+
+    const beforeBinding = profile.bindings[bindingIndex];
+    const afterBinding = {
+      ...beforeBinding,
+      type: editRequest.type || beforeBinding.type,
+      key: nextKey || beforeBinding.key,
+      command: nextCommand !== undefined ? nextCommand : beforeBinding.command,
+      enabled: editRequest.enabled ?? beforeBinding.enabled,
+      note: editRequest.note ?? beforeBinding.note,
+    };
+    profile.bindings[bindingIndex] = afterBinding;
+    const duplicate = profile.bindings.find((binding, index) =>
+      index !== bindingIndex
+      && binding.type === afterBinding.type
+      && binding.key.toLowerCase() === afterBinding.key.toLowerCase()
+    );
+    if (duplicate) {
+      throw new Error(`${afterBinding.type} ${afterBinding.key} 已在当前方案中绑定到 ${duplicate.command}`);
+    }
+    profile.updatedAt = now;
+    const nextProfileContent = JSON.stringify(profile, null, 2);
+
+    if (JSON.stringify(beforeBinding) === JSON.stringify(afterBinding)) {
+      throw new Error('没有检测到需要保存的方案修改');
+    }
 
     steps.push({
       opType: 'modify_profile',
       target: profileFilePath,
-      description: `修改 Profile 中的快捷键绑定`,
-      before: profileContent ? '(Profile 文件已存在)' : '(新建 Profile 文件)',
-      after: profileContent ? '(Profile 文件将被更新)' : '(新 Profile 文件将被创建)',
-      backupPath,
+      description: `修改方案“${profile.name}”中的快捷键绑定`,
+      before: JSON.stringify(beforeBinding, null, 2),
+      after: JSON.stringify(afterBinding, null, 2),
+      expectedContent: profileContent,
+      writeContent: nextProfileContent,
     });
   }
 
-  // 命令来源修正
-  if (editRequest.commandSource && overrideJsonPath) {
-    steps.push({
-      opType: 'override_source',
-      target: overrideJsonPath,
-      description: `将命令 "${currentBinding.command}" 的来源修正为 ${editRequest.commandSource}`,
-      before: '(当前无修正记录)',
-      after: `{ "${currentBinding.command}": { "source": "${editRequest.commandSource}" } }`,
-    });
+  if (!isEnvBinding && !isProfileBinding) {
+    throw new Error(`来源 ${currentBinding.bindingSource} 为只读或暂不支持编辑`);
+  }
+
+  if (steps.length === 0) {
+    throw new Error('没有生成任何可执行的编辑步骤');
   }
 
   return {
@@ -156,7 +207,7 @@ export function generateEditPlan(
     createdAt: now,
     summary: `编辑快捷键 ${currentBinding.key}${isDelete ? '（删除）' : ` → ${editRequest.command || currentBinding.command}`}`,
     steps,
-    requiresRestart: true,
+    requiresRestart: isEnvBinding,
   };
 }
 
@@ -172,24 +223,21 @@ export function generateAddPlan(
 ): EditApplyPlan {
   const steps: EditPlanStep[] = [];
   const now = new Date().toISOString();
+  const normalizedKey = key.trim();
+  const normalizedCommand = command.trim();
 
-  // 1. 备份 env 文件
-  const backupDir = path.join(path.dirname(envFilePath), 'atm_generated', 'backup');
-  const backupName = `env.backup.${Date.now()}`;
-  const backupPath = path.join(backupDir, backupName);
+  if (!normalizedKey) throw new Error('按键或别名不能为空');
+  if (!normalizedCommand) throw new Error('命令不能为空');
+  const duplicate = entries.find((entry) =>
+    entry.type === type && entry.key?.toLowerCase() === normalizedKey.toLowerCase()
+  );
+  if (duplicate) {
+    throw new Error(`${type} ${normalizedKey} 已在 env 第 ${duplicate.lineNumber} 行绑定到 ${duplicate.command}`);
+  }
 
-  steps.push({
-    opType: 'modify_env',
-    target: envFilePath,
-    description: `备份 env 文件到 ${backupPath}`,
-    before: '(文件备份)',
-    after: backupPath,
-    backupPath,
-  });
-
-  // 2. 生成添加行
-  const cmdQuoted = command.includes(' ') ? `"${command}"` : command;
-  const newLine = `${type} ${key} ${cmdQuoted}`;
+  // 生成添加行
+  const cmdQuoted = normalizedCommand.includes(' ') ? `"${normalizedCommand}"` : normalizedCommand;
+  const newLine = `${type} ${normalizedKey} ${cmdQuoted}`;
 
   // 判断是否已有 ATM 托管块
   const hasManagedBlock = entries.some((e) => e.raw.includes(ATM_MANAGED_BLOCK_END));
@@ -198,8 +246,8 @@ export function generateAddPlan(
     opType: 'add_env_line',
     target: envFilePath,
     description: hasManagedBlock
-      ? `在 ATM 托管块中添加: ${type} ${key} → ${command}`
-      : `在文件末尾添加: ${type} ${key} → ${command}`,
+      ? `在 ATM 托管块中添加: ${type} ${normalizedKey} → ${normalizedCommand}`
+      : `在文件末尾添加: ${type} ${normalizedKey} → ${normalizedCommand}`,
     before: '(新增行)',
     after: newLine,
   });
@@ -207,7 +255,7 @@ export function generateAddPlan(
   return {
     id: crypto.randomUUID?.() || `edit_${Date.now()}`,
     createdAt: now,
-    summary: `添加快捷键 ${type} ${key} → ${command}`,
+    summary: `添加快捷键 ${type} ${normalizedKey} → ${normalizedCommand}`,
     steps,
     requiresRestart: true,
   };
@@ -220,27 +268,80 @@ export function generateAddPlan(
 export function executeEditPlan(
   plan: EditApplyPlan,
   envFilePath: string,
-  entries: EnvEntry[],
-): { success: boolean; error?: string } {
+  _entries: EnvEntry[],
+): { success: boolean; error?: string; backupPath?: string } {
+  const pcbenvPath = path.dirname(envFilePath);
+  const writeSteps = plan.steps.filter((step) => [
+    'modify_env',
+    'comment_env_line',
+    'add_env_line',
+    'modify_profile',
+    'override_source',
+  ].includes(step.opType));
+  const targets = [...new Set(writeSteps.map((step) => path.resolve(step.target)))];
+  const snapshots = new Map<string, { existedBefore: boolean; backupPath: string }>();
+  const backupDir = path.join(pcbenvPath, 'atm_generated', 'backup');
+
+  if (targets.length !== 1) {
+    return { success: false, error: `编辑计划必须且只能包含一个写入目标，当前为 ${targets.length} 个` };
+  }
+
+  const firstTarget = targets[0];
+  const backupPath = path.join(
+    backupDir,
+    `${path.basename(firstTarget)}.backup.${Date.now()}`,
+  );
+
   try {
+    for (const target of targets) {
+      const relativeTarget = path.relative(pcbenvPath, target);
+      if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
+        throw new Error(`计划目标超出 pcbenv 范围: ${target}`);
+      }
+    }
+
+    fs.mkdirSync(backupDir, { recursive: true });
+    for (const target of targets) {
+      const existedBefore = fs.existsSync(target);
+      const targetBackupPath = targets.length === 1
+        ? backupPath
+        : path.join(backupDir, `${path.basename(target)}.backup.${Date.now()}`);
+      if (existedBefore) {
+        fs.copyFileSync(target, targetBackupPath);
+      }
+      snapshots.set(target, { existedBefore, backupPath: targetBackupPath });
+    }
+
     for (const step of plan.steps) {
       switch (step.opType) {
         case 'modify_env':
         case 'comment_env_line': {
           if (!step.lineNumber) continue;
-          const content = fs.readFileSync(envFilePath, 'utf-8');
-          const lines = content.split('\n');
-          const idx = step.lineNumber - 1; // 0-based index
-          if (idx >= 0 && idx < lines.length) {
-            const newLines = [...lines];
-            newLines[idx] = step.after;
-            fs.writeFileSync(envFilePath, newLines.join('\n'), 'utf-8');
+          if (path.resolve(step.target) !== path.resolve(envFilePath)) {
+            throw new Error(`计划目标与当前 env 不一致: ${step.target}`);
           }
+          const content = fs.readFileSync(envFilePath, 'utf-8');
+          const eol = content.includes('\r\n') ? '\r\n' : '\n';
+          const lines = content.split(/\r?\n/);
+          const idx = step.lineNumber - 1; // 0-based index
+          if (idx < 0 || idx >= lines.length) {
+            throw new Error(`env 行号超出范围: ${step.lineNumber}`);
+          }
+          if (lines[idx] !== step.before) {
+            throw new Error(`env 第 ${step.lineNumber} 行已被外部修改，请刷新后重试`);
+          }
+          const newLines = [...lines];
+          newLines[idx] = step.after;
+          fs.writeFileSync(envFilePath, newLines.join(eol), 'utf-8');
           break;
         }
         case 'add_env_line': {
+          if (path.resolve(step.target) !== path.resolve(envFilePath)) {
+            throw new Error(`计划目标与当前 env 不一致: ${step.target}`);
+          }
           const content = fs.readFileSync(envFilePath, 'utf-8');
-          const lines = content.split('\n');
+          const eol = content.includes('\r\n') ? '\r\n' : '\n';
+          const lines = content.split(/\r?\n/);
           // 优先插到 ATM 托管块结束标记之前
           const endIdx = lines.findIndex((l) => l.includes(ATM_MANAGED_BLOCK_END));
           if (endIdx >= 0) {
@@ -249,21 +350,53 @@ export function executeEditPlan(
             // 没有托管块则追加到末尾
             lines.push('', step.after);
           }
-          fs.writeFileSync(envFilePath, lines.join('\n'), 'utf-8');
+          fs.writeFileSync(envFilePath, lines.join(eol), 'utf-8');
           break;
         }
         case 'modify_profile': {
-          // Profile 文件已由 saveProfileBindings 处理
+          const currentContent = fs.readFileSync(step.target, 'utf-8');
+          if (step.expectedContent !== undefined && currentContent !== step.expectedContent) {
+            throw new Error('方案文件已被外部修改，请刷新后重试');
+          }
+          fs.writeFileSync(step.target, step.writeContent ?? step.after, 'utf-8');
           break;
         }
         case 'override_source': {
-          // 来源修正由 command:save-override IPC 处理
+          fs.mkdirSync(path.dirname(step.target), { recursive: true });
+          fs.writeFileSync(step.target, step.writeContent ?? step.after, 'utf-8');
           break;
         }
       }
     }
-    return { success: true };
+
+    addChangeRecord(pcbenvPath, {
+      operation: plan.steps.some(step => step.opType === 'add_env_line') ? 'add_env_line' : 'plan_apply',
+      summary: plan.summary,
+      targetFile: firstTarget,
+      backupFile: backupPath,
+      backupId: path.basename(backupPath),
+      stepsCount: plan.steps.length,
+      planId: plan.id,
+      undoable: true,
+    });
+
+    return { success: true, backupPath };
   } catch (err) {
-    return { success: false, error: String(err) };
+    try {
+      for (const [target, snapshot] of snapshots) {
+        if (snapshot.existedBefore && fs.existsSync(snapshot.backupPath)) {
+          fs.copyFileSync(snapshot.backupPath, target);
+        } else if (!snapshot.existedBefore && fs.existsSync(target)) {
+          fs.unlinkSync(target);
+        }
+      }
+    } catch (rollbackError) {
+      return {
+        success: false,
+        backupPath,
+        error: `${String(err)}；自动回滚失败: ${String(rollbackError)}`,
+      };
+    }
+    return { success: false, backupPath, error: String(err) };
   }
 }

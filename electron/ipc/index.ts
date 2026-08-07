@@ -11,12 +11,16 @@ import { registerSkillApplyIpc } from './skill.apply.ipc';
 import { registerSkillRefsIpc } from './skill.refs.ipc';
 import { registerSkillUsageIpc } from './skill.usage.ipc';
 import { registerSkillMetaIpc } from './skillMeta.ipc';
+import { registerSkillSymphonyIpc } from './skill.symphony.ipc';
 import { registerHistoryIpc } from './history.ipc';
 import { registerImportIpc } from './import.ipc';
 import { registerMenuIpc } from './menu.ipc';
 import { registerSkillProfileIpc } from './skill.profile.ipc';
+import { registerColorIpc } from './color.ipc';
+import { registerUpdateIpc } from './update.ipc';
+import type { UpdateService } from '../services/updateService';
 
-export function registerIpcHandlers(): void {
+export function registerIpcHandlers(updateService?: UpdateService): void {
   // app:getRuntimeInfo 必须在最前注册，以便其他模块能检测到它
   registerAppIpc();
   registerEnvIpc();
@@ -28,9 +32,12 @@ export function registerIpcHandlers(): void {
   registerSkillRefsIpc();
   registerSkillUsageIpc();
   registerSkillMetaIpc();
+  registerSkillSymphonyIpc();
 
   registerHistoryIpc();
   registerImportIpc();
   registerMenuIpc();
   registerSkillProfileIpc();
+  registerColorIpc();
+  if (updateService) registerUpdateIpc(updateService);
 }

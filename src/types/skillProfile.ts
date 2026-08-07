@@ -1,6 +1,7 @@
 /**
  * ATM - Skill Profile 类型定义（V5.5）
  */
+import type { ProfileCompatibilityMetadata } from './environment';
 export interface SkillProfileItem {
   skillId: string;
   skillName: string;
@@ -20,6 +21,10 @@ export interface SkillProfile {
   loadOrder: string[];
   createdAt: string;
   updatedAt: string;
+  sourceEnvironmentId?: string | null;
+  sourceAllegroVersion?: string | null;
+  testedAllegroVersions?: string[];
+  targetCompatibility?: ProfileCompatibilityMetadata;
 }
 
 export interface SkillProfileStore {

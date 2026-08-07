@@ -146,6 +146,7 @@
 
 .atm-sidebar-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 16px;
@@ -153,6 +154,26 @@
   border-top: 1px solid var(--ui-border);
   color: var(--ui-text-muted);
   font-size: var(--ui-font-size-xs);
+}
+
+.atm-environment-switcher {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.atm-environment-switcher span {
+  font-weight: 600;
+  color: var(--ui-text-secondary);
+}
+
+.atm-environment-switcher select {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding-inline: 8px 24px;
+  font-size: var(--ui-font-size-sm);
 }
 
 .atm-sidebar-footer svg {

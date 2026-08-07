@@ -2,6 +2,7 @@
  * ATM - Allegro Toolkit Manager
  * 快捷键相关类型定义（V1.5：Profile/来源分离/编辑）
  */
+import type { ProfileCompatibilityMetadata } from './environment';
 
 /** env 文件中的一行条目 */
 export interface EnvEntry {
@@ -228,6 +229,8 @@ export interface ApplyPlan {
   requiresRestart: boolean;
   rollbackManifestPath?: string;
   managedBindings?: HotkeyBinding[];
+  environmentId?: string | null;
+  environmentPcbenvPath?: string | null;
 }
 
 /** 执行结果 */
@@ -256,6 +259,11 @@ export interface HotkeyProfile {
   updatedAt: string;
   /** 方案中的快捷键列表 */
   bindings: HotkeyProfileBinding[];
+  /** 方案创建时绑定的环境，用于跨版本迁移预检 */
+  sourceEnvironmentId?: string | null;
+  sourceAllegroVersion?: string | null;
+  testedAllegroVersions?: string[];
+  targetCompatibility?: ProfileCompatibilityMetadata;
 }
 
 /** 方案中的快捷键条目 */

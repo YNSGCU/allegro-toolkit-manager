@@ -4123,12 +4123,6 @@ body {
   gap: 6px;
 }
 
-/* ===== 搜索输入框 ===== */
-.search-input::placeholder {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
 /* ═══════════════════════════════════════════════
    V4.5 — Skill 页自适应布局
    ═══════════════════════════════════════════════ */
@@ -5819,4 +5813,55 @@ textarea.atm-input:focus {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+
+/* 环境页 - 手动安装目录 */
+.environment-manual-roots {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg-input, #f8f5ef);
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: var(--radius-sm, 10px);
+}
+
+.environment-manual-roots-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-primary, #171717);
+}
+
+.environment-manual-roots-hint {
+  font-size: 12px;
+  color: var(--text-muted, #8d877f);
+}
+
+.environment-manual-roots-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.environment-manual-roots-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+}
+
+.environment-manual-roots-list code {
+  font-size: 12px;
+  font-family: Consolas, 'Courier New', monospace;
+  color: var(--text-secondary, #5f5a52);
+  word-break: break-all;
 }

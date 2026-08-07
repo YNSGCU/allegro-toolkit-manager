@@ -1,122 +1,180 @@
 {
-  "generatedAt": "2026-08-01",
-  "features": [
-    {
-      "id": "environment-detection",
-      "status": "complete",
-      "ui": [
-        "src/pages/EnvironmentPage.tsx",
-        "src/pages/DashboardPage.tsx"
-      ],
-      "ipc": [
-        "env:locate",
-        "env:scan-all",
-        "env:load-settings",
-        "env:save-settings"
-      ],
-      "core": [
-        "core/environment/locateEnvironment.ts",
-        "core/environment/scanEnvSources.ts",
-        "core/settings/atmSettings.ts"
-      ]
-    },
-    {
-      "id": "hotkey-management",
-      "status": "complete",
-      "ui": [
-        "src/pages/HotkeyWorkspacePage.tsx",
-        "src/components/hotkeys/HotkeySubnav.tsx",
-        "src/components/hotkeys/HotkeyEditorPanel.tsx",
-        "src/components/HotkeyList.tsx",
-        "src/services/loadHotkeyWorkspaceData.ts"
-      ],
-      "ipc": [
-        "hotkey:parse-env",
-        "hotkey:validate",
-        "hotkey:create-apply-plan",
-        "hotkey:apply-plan",
-        "profile:list",
-        "history:load"
-      ],
-      "core": [
-        "core/parser/parseEnv.ts",
-        "core/validator/validateHotkeys.ts",
-        "core/apply/createApplyPlan.ts",
-        "core/changeHistory/changeHistory.ts",
-        "core/profile/hotkeyProfile.ts"
-      ]
-    },
-    {
-      "id": "skill-management",
-      "status": "complete",
-      "ui": [
-        "src/pages/SkillPage.tsx",
-        "src/components/SkillWorkspaceTable.tsx",
-        "src/components/SkillDetailSidebar.tsx"
-      ],
-      "ipc": [
-        "skill:scan",
-        "skill:enhanced-scan",
-        "skill:toggle",
-        "skill:loader-order",
-        "skill-profile:load-all",
-        "skill-profile:create-apply-plan",
-        "skill-profile:execute-apply-plan"
-      ],
-      "core": [
-        "core/skill/scanSkill.ts",
-        "core/skill/enhancedScan.ts",
-        "core/skill/skillProfileManager.ts",
-        "core/generator/generateSkillLoader.ts"
-      ]
-    },
-    {
-      "id": "menu-management",
-      "status": "complete",
-      "ui": [
-        "src/pages/MenuPage.tsx"
-      ],
-      "ipc": [
-        "menu:load-profiles",
-        "menu:validate",
-        "menu:generate-preview",
-        "menu:create-apply-plan"
-      ],
-      "core": [
-        "core/menu/menuManager.ts",
-        "core/menu/menuValidator.ts"
-      ]
-    },
-    {
-      "id": "runtime-version-diagnostics",
-      "status": "complete",
-      "ui": [
-        "src/components/common/VersionInfoPanel.tsx",
-        "src/pages/DashboardPage.tsx"
-      ],
-      "ipc": [
-        "app:getRuntimeInfo"
-      ],
-      "core": []
-    },
-    {
-      "id": "workspace-ui",
-      "status": "complete",
-      "ui": [
-        "src/App.tsx",
-        "src/config/routePageLoaders.ts",
-        "src/components/Layout.tsx",
-        "src/shared/ui/workspace/WorkspacePage.tsx",
-        "src/shared/ui/workspace/WorkspaceHeader.tsx",
-        "src/shared/ui/workspace/StatusStrip.tsx",
-        "src/shared/ui/feedback/PageState.tsx",
-        "src/shared/ui/feedback/RouteErrorBoundary.tsx",
-        "src/shared/ui/overlays/ApplyPlanDialog.tsx",
-        "src/shared/ui/overlays/BusinessDialog.tsx",
-        "src/shared/ui/overlays/useDialogFocus.ts"
-      ],
-      "ipc": [],
-      "core": []
-    }
-  ]
+    "generatedAt":  "2026-08-06",
+    "features":  [
+                     {
+                         "id":  "multi-allegro-environments",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/components/AllegroEnvironmentSwitcher.tsx",
+                                    "src/pages/EnvironmentPage.tsx",
+                                    "src/components/HotkeyProfileMigrationDialog.tsx"
+                                ],
+                         "ipc":  [
+                                     "env:list-workspaces",
+                                     "env:set-active-workspace",
+                                     "env:verify-vibe-runtime",
+                                     "env:list-compatibility-records",
+                                     "profile:check-compatibility",
+                                     "profile:migrate"
+                                 ],
+                         "core":  [
+                                      "core/environment/environmentRegistry.ts",
+                                      "core/environment/compatibility.ts",
+                                      "core/environment/compatibilityRecords.ts",
+                                      "core/environment/vibeBridgeProbe.ts",
+                                      "core/environment/locateEnvironment.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "environment-detection",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/pages/EnvironmentPage.tsx",
+                                    "src/pages/DashboardPage.tsx"
+                                ],
+                         "ipc":  [
+                                     "env:locate",
+                                     "env:scan-all",
+                                     "env:load-settings",
+                                     "env:save-settings"
+                                 ],
+                         "core":  [
+                                      "core/environment/locateEnvironment.ts",
+                                      "core/environment/scanEnvSources.ts",
+                                      "core/settings/atmSettings.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "hotkey-management",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/pages/HotkeyWorkspacePage.tsx",
+                                    "src/components/hotkeys/HotkeySubnav.tsx",
+                                    "src/components/hotkeys/HotkeyEditorPanel.tsx",
+                                    "src/components/HotkeyCommandAssist.tsx",
+                                    "src/components/AddHotkeyDialog.tsx",
+                                    "src/components/HotkeyEditor.tsx",
+                                    "src/components/HotkeyList.tsx",
+                                    "src/services/loadHotkeyWorkspaceData.ts",
+                                    "src/utils/hotkeyCommandSuggestions.ts"
+                                ],
+                         "ipc":  [
+                                     "hotkey:parse-env",
+                                     "hotkey:validate",
+                                     "hotkey:create-apply-plan",
+                                     "hotkey:apply-plan",
+                                     "profile:list",
+                                     "history:load"
+                                 ],
+                         "core":  [
+                                      "core/parser/parseEnv.ts",
+                                      "core/validator/validateHotkeys.ts",
+                                      "core/apply/createApplyPlan.ts",
+                                      "core/apply/hotkeyEditPlan.ts",
+                                      "core/changeHistory/changeHistory.ts",
+                                      "core/profile/hotkeyProfile.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "skill-management",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/pages/SkillPage.tsx",
+                                    "src/components/SkillWorkspaceTable.tsx",
+                                    "src/components/SkillDetailSidebar.tsx"
+                                ],
+                         "ipc":  [
+                                     "skill:scan",
+                                     "skill:enhanced-scan",
+                                     "skill:toggle",
+                                     "skill:loader-order",
+                                     "skill-profile:load-all",
+                                     "skill-profile:create-apply-plan",
+                                     "skill-profile:execute-apply-plan"
+                                 ],
+                         "core":  [
+                                      "core/skill/scanSkill.ts",
+                                      "core/skill/enhancedScan.ts",
+                                      "core/skill/skillProfileManager.ts",
+                                      "core/generator/generateSkillLoader.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "menu-management",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/pages/MenuPage.tsx",
+                                    "src/components/MenuTree.tsx",
+                                    "src/utils/menuTreeOrder.ts"
+                                ],
+                         "ipc":  [
+                                     "menu:load-profiles",
+                                     "menu:validate",
+                                     "menu:generate-preview",
+                                     "menu:create-apply-plan"
+                                 ],
+                         "core":  [
+                                      "core/menu/menuManager.ts",
+                                      "core/menu/menuValidator.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "runtime-version-diagnostics",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/components/common/VersionInfoPanel.tsx",
+                                    "src/pages/DashboardPage.tsx"
+                                ],
+                         "ipc":  [
+                                     "app:getRuntimeInfo"
+                                 ],
+                         "core":  [
+
+                                  ]
+                     },
+                     {
+                         "id":  "workspace-ui",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/App.tsx",
+                                    "src/config/routePageLoaders.ts",
+                                    "src/components/Layout.tsx",
+                                    "src/shared/ui/workspace/WorkspacePage.tsx",
+                                    "src/shared/ui/workspace/WorkspaceHeader.tsx",
+                                    "src/shared/ui/workspace/StatusStrip.tsx",
+                                    "src/shared/ui/feedback/PageState.tsx",
+                                    "src/shared/ui/feedback/RouteErrorBoundary.tsx",
+                                    "src/shared/ui/overlays/ApplyPlanDialog.tsx",
+                                    "src/shared/ui/overlays/BusinessDialog.tsx",
+                                    "src/shared/ui/overlays/useDialogFocus.ts"
+                                ],
+                         "ipc":  [
+
+                                 ],
+                         "core":  [
+
+                                  ]
+                     },
+                     {
+                         "id":  "application-updates",
+                         "status":  "partial",
+                         "ui":  [
+                                    "src/components/common/ApplicationUpdatePanel.tsx",
+                                    "src/components/common/VersionInfoPanel.tsx"
+                                ],
+                         "ipc":  [
+                                     "app:update-state",
+                                     "app:update-settings",
+                                     "app:update-settings-save",
+                                     "app:update-check",
+                                     "app:update-download",
+                                     "app:update-install",
+                                     "app:update-state-changed"
+                                 ],
+                         "core":  [
+                                      "electron/services/updateService.ts",
+                                      "scripts/package-update.mjs"
+                                  ]
+                     }
+                 ]
 }

@@ -1,0 +1,3250 @@
+{
+ "description": "Allegro AXL API Symphony ????????? Cadence 17.2-2016 Symphony SKILL Development Guide Appendix 3: AXL Function Support?",
+ "version": "17.2-2016",
+ "source": "D:/application/Cadence/Cadence17_2/Cadence/SPB_17.2/doc/symSkill/appB.html",
+ "categories": {
+  "R": "ReadOnly - ??????????",
+  "S": "Supported - ???????",
+  "I": "Changes Ignored - ??? Symphony ??",
+  "U": "Unsupported - ????????????",
+  "B": "Obsolete - ???"
+ },
+ "functions": {
+  "axl_ol_ol": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axl_ol_ol2": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddAutoAssignNetAlgorithm": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlAddSelectAll": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSelectBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSelectName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSelectObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSelectPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSimpleMoveDynamics": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddSimpleRbandDynamics": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAddTaper": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlAirGap": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAltSymbolList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAltSymbolOK": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlAltSymbolReplace": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlBackDrill": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlBackDrillGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlBondFingerDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlBondWireDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlBuildClassPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlBuildSubclassPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCancelEnterFun": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCancelOff": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCancelOn": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCancelTest": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlChangeLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlChangeLine2Cline": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlChangeLineFont": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlChangeNet": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlChangeWidth": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlCheckString": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlClasses": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlClearDynamics": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlClearObjectCustomColor": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlClearSelSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlClipboardGetText": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlClipboardSetText": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCmdList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCmdRegister": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCmdUnregister": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCnsAddVia": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSAssemblyModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSAssemblyModeSet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCnsAssignPurge": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlCnsClassTableChange": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsClassTableCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsClassTableDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsClassTableFind": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCnsClassTableSeek": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSCsetLock": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsDeleteClassClassObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsDeleteRegionClassClassObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsDeleteRegionClassObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsDeleteVia": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSDesignModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSDesignModeSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSDesignValueCheck": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSDesignValueGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSDesignValueSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSEcsetCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSEcsetDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSEcsetGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSEcsetModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSEcsetModeSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSEcsetValueCheck": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSEcsetValueGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSEcsetValueSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSGetAssembly": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetDefaultMinLineWidth": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetPhysical": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetPinDelayEnabled": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetPinDelayPVF": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetSameNet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetSameNetXtalkEnabled": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetSpacing": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCnsGetViaList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetViaZEnabled": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSGetViaZPVF": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSIsCsetLocked": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSIsLockedDomain": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCnsList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSLockDomain": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSMapClear": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSMapUpdate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsNetFlattened": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSPhysicalModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSPhysicalModeSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsPurgeAll": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsPurgeCsets": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCnsPurgeObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSameNetModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSSameNetModeSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetAssembly": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetPhysical": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetPinDelayEnabled": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetPinDelayPVF": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCNSSetSameNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetSameNetXtalkEnabled": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCNSSetSpacing": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSetViaZEnabled": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCNSSetViaZPVF": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCNSSpacingMax": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSSpacingMin": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSSpacingModeGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCNSSpacingModeSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlColorGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlColorLoad": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlColorOnGet": {
+   "category": "B",
+   "obsolete": true
+  },
+  "axlColorOnSet": {
+   "category": "B",
+   "obsolete": true
+  },
+  "axlColorPriorityGet": {
+   "category": "B",
+   "obsolete": true
+  },
+  "axlColorPrioritySet": {
+   "category": "B",
+   "obsolete": true
+  },
+  "axlColorSave": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlColorSet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlColorShadowGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlColorShadowSet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCompAddPin": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCompDeletePin": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCompileSymbol": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCompMovePin": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlComponentChangeClass": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCompSetPinAttributes": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlConductorBottomLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlConductorTopLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlControlRaise": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCopyObject": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlCopyProperties": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlcreate": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlCreateAttachment": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCreateBondFinger": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCreateBondWire": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlCreateDeviceFileTemplate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCreateWirebondGuide": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlCurrentDesign": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCursorGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCursorWarp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlCustomColorObject": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlCVFColorChooserDlg": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDB2Path": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBActiveShape": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBAddGroupObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBAddProp": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBAltOrigin": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBAssignNet": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBChangeDesignExtents": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBChangeDesignOrigin": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBChangeDesignUnits": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBChangeText": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCheck": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCloak": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBControl": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCopyPadstack": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateCircle": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateCloseShape": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateComponent": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateConceptComponent": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateExternalDRC": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateFilmRec": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlDBCreateGroup": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateLine": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateManyModuleInstances": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateModuleDef": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateModuleInstance": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateOpenShape": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreatePadStack": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreatePath": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreatePin": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreatePropDictEntry": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateRectangle": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateShape": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateSymbol": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateSymbolAutosilk": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateSymbolSkeleton": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateSymDefSkeleton": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBCreateText": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateVia": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateVoid": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBCreateVoidCircle": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBDeleteProp": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBDeletePropAll": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBDeletePropDictEntry": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBDelLock": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBDisbandGroup": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBDisplayControl": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlDBDummyNet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBDynamicShapes": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBFindByName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetAttachedText": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetConnect": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetDesign": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetDesignUnits": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetDrillPlating": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetExtents": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetGroupFromItem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetLayerType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetLength": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetLock": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetLonelyBranches": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetManhattan": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetPad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetPropDict": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetPropDictEntry": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetProperties": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetShapes": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetSymbolBodyExtent": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGetTextBlockCount": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGridGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBGridSet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlDBGroupRename": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDbidName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIgnoreFixed": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBIsBondingWireLayer": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlDBIsBondpad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsBondwire": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsDiePad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsDieStackLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsFixed": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsPackagePin": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsPlatingbarPin": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBIsReadOnly": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBMemoryReclaim": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBOpenShape": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBPinPairLength": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBRefreshId": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBRemoveGroupObjects": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBSectorSize": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlDBSetLock": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBTextBlockCompact": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBTextBlockCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBTextBlockFindName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBTextBlockGetName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDBTextBlockSetName": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDBTransactionCommit": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBTransactionMark": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBTransactionOops": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBTransactionRollback": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBTransactionStart": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDBTuneSectorSize": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDebug": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDegToRad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDehighlightObject": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlDeleteAttachment": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDeleteByLayer": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDeleteFillet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDeleteObject": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDeleteTaper": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDesignFlip": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDesignType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDetailLoad": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDetailSave": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlDiffPair": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDiffPairAuto": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDiffPairDBID": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDistance": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllCall": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllCallList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllClose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllDump": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllOpen": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDllSym": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMBrowsePath": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMClose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMDirectoryBrowse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMFileBrowse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMFileError": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMFileParts": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMFindFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMGetFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMLibraryFileNames": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMOpenFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDMOpenLog": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axldo": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDrawObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDRCGetCount": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDRCItem": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlDRCUpdate": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlDRCWaive": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlDRCWaiveGetCount": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlDynamicsObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEmail": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterAngle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterEvent": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterPath": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterPolar": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEnterString": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEraseObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlEventSetStartPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlExportXmlDBRecords": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlExtentDB": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlExtentLayout": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlExtentSymbol": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlExtractMap": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlExtractToFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlfcreate": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlFillet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlFilletConvert": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlFilmCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlFindPath": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFinishEnterFun": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFlushDisplay": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormAutoResize": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormBNFDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormBuildPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormCallback": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormClearMouseActive": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormClose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormColorize": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormCreate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormDefaultButton": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormDisplay": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormFlexDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGetActiveField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGetField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGetFieldType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridBatch": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridCancelPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridDeleteRows": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridEvents": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridGetCell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridInsertCol": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridInsertRows": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridNewCell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridOption": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridOptions": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridReset": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridSelected": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridSelectedCnt": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridSetBatch": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridSetSelectRows": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormGridUpdate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormIntroDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormInvalidateField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormIsFieldEditable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormIsFieldVisible": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListAddItem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListDeleteAll": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListDeleteItem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListGetItem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListGetSelCount": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListGetSelItems": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListOptions": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListSelAll": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormListSelect": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormMsg": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormRestoreField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetActiveField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetDecimal": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetEventAction": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetField": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetFieldEditable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetFieldLimits": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetFieldVisible": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetInfo": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormSetMouseActive": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTest": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTitle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewAddItem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewChangeImages": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewChangeLabel": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewGetImages": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewGetLabel": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewGetParents": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewGetSelectState": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewLoadBitmaps": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlFormTreeViewSetSelectState": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeo2Str": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoArcCenterAngle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoArcCenterRadius": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoEqual": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoPointInShape": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoPointsEqual": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoPointShapeInfo": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGeoRotatePt": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetActiveLayer": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlGetActiveTextBlock": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlGetAlias": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetAllAttachmentNames": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetAllViaList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetAllVisibleProfiles": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetAttachment": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetCmdSupplementalData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDieData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDieStackData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDieStackMemberSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDieStackNames": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDieType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDrawingName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetDynamicsSegs": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetFindFilter": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetFuncKey": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetImpedance": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetIposerData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetLastEnterPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetLineLock": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetMetalUsageForLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetModuleInstanceDefinition": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetModuleInstanceLocation": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetModuleInstanceLogicMethod": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetModuleInstanceNetExceptions": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetParam": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetSelSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetSelSetCount": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetSpacerData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetTrapBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetVariable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetVariableList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetWireProfileColor": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetWireProfileDefinition": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetWireProfileDirection": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetWireProfileVisible": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGetXSection": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlGRPDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwBitmap": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwCircle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwInit": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwLine": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwMapWindow": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwPoly": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwRectangle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwText": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlGRPDrwUpdate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlHighlightObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlHistory": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlHttp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIgnoreFixed": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpdedanceGetLayerBroadsideDPImp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpdedanceGetLayerBroadsideDPWidth": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpdedanceGetLayerEdgeDPImp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpdedanceGetLayerEdgeDPSpacing": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpdedanceGetLayerEdgeDPWidth": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImpedance2Width": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlImportWireProfileDefinitions": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlImportXmlDBRecords": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlInTrigger": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlInTriggerFunc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsAttachment": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsBetween": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsCustomColored": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsDBIDType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsDebug": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsDummyNet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsEtchLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsFormType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsGridCellType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsHighlighted": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsitFill": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsLayerNegative": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsPinUnused": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsPointInsideBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsPointOnLine": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsPolyType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsProductLineActive": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsProductStarted": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsProtectAlias": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsSymbolEditor": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsViewFileType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlIsVisibleLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlJournal": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlKillDesign": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlLastPick": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLastPickIsSnapped": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLayerCreateCrossSection": {
+   "category": "U",
+   "obsolete": true
+  },
+  "axlLayerCreateNonConductor": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlLayerDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlLayerGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLayerPriorityClearAll": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerPriorityGet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerPriorityRestoreAll": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerPrioritySaveAll": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerPrioritySet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerSet": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlLayerViaLabel": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLicDefaultVersion": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLicFeatureExists": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLicIsProductEnabled": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLineSlope": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlLineXLine": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlLoadPadstack": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlLoadSymbol": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlLogHeader": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMakeDynamicsPath": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMapClassName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMatchGroupAdd": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlMatchGroupCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlMatchGroupDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlMatchGroupProp": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlMatchGroupRemove": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlMaterialGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMathDotProduct": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMemSize": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMeterCreate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMeterDestroy": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMeterIsCancelled": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMeterUpdate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMidPointArc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMidPointLine": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMiniStatusLoad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMiniStatusReset": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMKS2UU": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMKSAlias": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMKSConvert": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMKSStr2UU": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMPythag": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgCancelPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgCancelSeen": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgClear": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextClear": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextFinish": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextGetString": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextInBuf": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextRemove": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextStart": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgContextTest": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgPut": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMsgTest": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMUniVector": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMXYAdd": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMXYMult": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMXYMultAdd": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlMXYSub": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlNetClassAdd": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlNetClassCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlNetClassDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlNetClassGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlNetClassRemove": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlNetEcsetValueGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlNetSched": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlNetsSched": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlOK2Void": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOKToProceed": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOpenDesign": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlOpenDesignForBatch": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlOpenFindFilter": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlOSBackSlash": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOSControl": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOSFileCopy": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOSFileMove": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOSNtp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlOSSlash": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPackageDesignCheckAddCategory": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPackageDesignCheckAddCheck": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPackageDesignCheckDrcError": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPackageDesignCheckLogError": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPadFigureTypes": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPadOnLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPadstackEdit": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPadstackSetType": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPadstackToDisk": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPadstackUsageTypes": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPadSuppressGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPadSuppressOkLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPadSuppressSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPadUserMaskLayers": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathArcAngle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathArcCenter": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathArcRadius": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathGetLastPathSeg": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathGetPathSegs": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathGetWidth": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathLine": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathOffset": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathSegGetArcCenter": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathSegGetArcClockwise": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathSegGetEndPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathSegGetWidth": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathSetLineLock": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathStart": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPathStartCircle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPdfView": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPinExport": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPinImport": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPinPair": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlPinPairSeek": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPinsOfNet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyErrorGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyExpand": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyFromDB": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyFromHole": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyMemUse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyOffset": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPolyOperation": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPrintDbid": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlProtectAlias": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlPurgePadstacks": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRadToDeg": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlRatsnestBlank": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlRatsnestDisplay": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlReadOnlyVariable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlRecursiveDelete": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlRefreshSymbol": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRegexpIs": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlRegionAdd": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlRegionCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRegionDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRegionRemove": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlRemoveNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRenameDesign": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRenameNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRenameRefdes": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlReplacePadstack": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlReportList": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlReportRegister": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlReratNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlRunBatchDBProgram": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSaveDesign": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSaveEnable": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlScheduleNet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSegDelayAndZ0": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSelect": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSelectByName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSelectByProperty": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetActiveLayer": {
+   "category": "R",
+   "obsolete": true
+  },
+  "axlSetAlias": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetAllProfilesVisible": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetAttachment": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetBondWireProfile": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetDefaultDieInformation": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetDieData": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetDieStackData": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetDieType": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetDynamicsMirror": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetDynamicsRotation": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetFindFilter": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetFunckey": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetIposerData": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetLineLock": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetParam": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlSetPlaneType": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetRotateIncrement": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetSpacerData": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetSymbolType": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSetVariable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetVariableFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSetWireProfileColor": {
+   "category": "I",
+   "obsolete": false
+  },
+  "axlSetWireProfileVisible": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlShapeAutoVoid": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShapeChangeDynamicType": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlShapeDeleteVoids": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShapeDynamicUpdate": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShapeMerge": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShapeRaisePriority": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlShellPost": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlShoveItems": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShoveSetParams": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlShowObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlShowObjectToFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSingleSelectBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSingleSelectName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSingleSelectObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSingleSelectPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSleep": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSmoothDesign": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSmoothItems": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlSmoothSetParams": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlSnapToObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSort": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetClose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetDefineCell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetDoc": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetCell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetRGBColorString": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetRGBForNamedColor": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetStyles": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetWorksheets": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetGetWorksheetSize": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetInit": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetRead": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetReadDelimited": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetCell": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetCellProp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetColumnProp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetDocProp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetRowProp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetStyle": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetStyleBorder": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetStyleParent": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetStyleProp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetSetWorksheet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSpreadsheetWrite": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlStrcmpAlpNum": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlStringCSVParse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlStringRemoveSpaces": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubclasses": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubclassFormPopup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubclassRoute": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubSelectAll": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubSelectBox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubSelectName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubSelectObject": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSubSelectPoint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlSymbolAttach": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlSymbolDetach": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlTechnologyType": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTempDirectory": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTempFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTempFileRemove": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTestPoint": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlText2Lines": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTextOrientationCopy": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTransformObject": {
+   "category": "S",
+   "obsolete": false
+  },
+  "axlTriggerClear": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTriggerPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlTriggerSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUICmdPopupSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIColorDialog": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIConfirm": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIConfirmEx": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIControl": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIDataBrowse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIEditFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIGetUserData": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuChange": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuDebug": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuDelete": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuDump": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuFind": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuInsert": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuLoad": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMenuRegister": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIMultipleChoice": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIPopupDefine": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIPopupSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIPrompt": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIViewFileCreate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIViewFileReuse": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIViewFileScrollTo": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWBeep": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWBlock": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWClose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWCloseAll": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWDisableQuit": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWExpose": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWExposeByName": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWHelpRegister": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWIconify": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWIsIconic": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWIsWindow": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWMove": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWPerm": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWRedraw": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWSetHelpTag": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWSetParent": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWShow": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWSize": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIWTimerAdd": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlUIWTimerRemove": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlUIWUpdate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIYesNo": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUIYesNoCancel": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUnfixAll": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlUnsetVariable": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlUnsetVariableFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVersion": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVersionIdGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVersionIdPrint": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlViaZLength": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVisibleDesign": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVisibleGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVisibleLayer": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVisibleSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlVisibleUpdate": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWFMAnyExported": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWidth2Impedance": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWindowBoxGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWindowBoxSet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWindowFit": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWriteDeviceFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlWritePackageFile": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlXSectionCopy": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlXSectionCreate": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlXSectionDelete": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlXSectionGet": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlXSectionLayerFunctions": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlXSectionLayerTypes": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlXSectionModify": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlXSectionSet": {
+   "category": "U",
+   "obsolete": false
+  },
+  "axlZoomBbox": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomCenter": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomControl": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomFit": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomInOut": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomPoints": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomToDbid": {
+   "category": "R",
+   "obsolete": false
+  },
+  "axlZoomWorld": {
+   "category": "R",
+   "obsolete": false
+  },
+  "bBoxAdd": {
+   "category": "R",
+   "obsolete": false
+  },
+  "copyDeep": {
+   "category": "R",
+   "obsolete": false
+  },
+  "isBoxp": {
+   "category": "R",
+   "obsolete": false
+  },
+  "lastelem": {
+   "category": "R",
+   "obsolete": false
+  },
+  "letStar": {
+   "category": "R",
+   "obsolete": false
+  },
+  "listnindex": {
+   "category": "R",
+   "obsolete": false
+  },
+  "movedown": {
+   "category": "R",
+   "obsolete": false
+  },
+  "moveup": {
+   "category": "R",
+   "obsolete": false
+  },
+  "parseFile": {
+   "category": "R",
+   "obsolete": false
+  },
+  "parseQuotedString": {
+   "category": "R",
+   "obsolete": false
+  },
+  "pprintln": {
+   "category": "R",
+   "obsolete": false
+  },
+  "propNames": {
+   "category": "R",
+   "obsolete": false
+  }
+ }
+}

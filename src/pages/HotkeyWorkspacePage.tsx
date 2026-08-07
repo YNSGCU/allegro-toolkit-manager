@@ -8,6 +8,7 @@ import ExportCheatsheetDialog from '../components/ExportCheatsheetDialog';
 import ImportPreviewDialog from '../components/ImportPreviewDialog';
 import type { ImportPreviewData } from '../components/ImportPreviewDialog';
 import ProfileBar from '../components/ProfileBar';
+import HotkeyProfileMigrationDialog from '../components/HotkeyProfileMigrationDialog';
 import MoreActionsMenu from '../components/MoreActionsMenu';
 import RawLineView from '../components/RawLineView';
 import HotkeyConflictsPanel from '../components/hotkeys/HotkeyConflictsPanel';
@@ -145,6 +146,7 @@ export default function HotkeyWorkspacePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showChangeHistory, setShowChangeHistory] = useState(false);
   const [showWorkspaceTools, setShowWorkspaceTools] = useState(false);
+  const [showProfileMigration, setShowProfileMigration] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [undoStatus, setUndoStatus] = useState<HotkeyWorkspaceUndoStatus>({ canUndo: false, message: '' });
   const [rawLineView, setRawLineView] = useState<{ filePath: string; lineNumber: number; isReference?: boolean } | null>(null);
@@ -540,6 +542,7 @@ export default function HotkeyWorkspacePage() {
   };
 
   const handleFileSelected = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -557,7 +560,7 @@ export default function HotkeyWorkspacePage() {
     } catch (err) {
       setError(`导入失败：${String(err)}`);
     } finally {
-      event.target.value = '';
+      input.value = '';
     }
   }, [bindings, profiles, reservedBindings]);
 
@@ -717,6 +720,7 @@ export default function HotkeyWorkspacePage() {
               actions={[
                 { label: loading ? '刷新中…' : '刷新数据', disabled: loading, onClick: () => void loadAll() },
                 { label: '导入、导出与历史', onClick: () => setShowWorkspaceTools(true) },
+                { label: '迁移当前方案到其他 Allegro 版本', disabled: !activeProfileId, onClick: () => setShowProfileMigration(true) },
               ]}
             />
           )}
@@ -783,6 +787,18 @@ export default function HotkeyWorkspacePage() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {showProfileMigration && profiles.find((profile) => profile.id === activeProfileId) ? (
+        <HotkeyProfileMigrationDialog
+          profile={profiles.find((profile) => profile.id === activeProfileId)!}
+          currentEnvironmentId={envInfo?.environmentId}
+          onClose={() => setShowProfileMigration(false)}
+          onMigrated={(message) => {
+            setError(message);
+            void loadAll();
+          }}
+        />
       ) : null}
 
       {rawLineView ? (

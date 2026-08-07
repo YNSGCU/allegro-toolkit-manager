@@ -7,6 +7,7 @@
  * 然后重启 Electron 应用。
  */
 import { app, BrowserWindow } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import http from 'http';
 import fs from 'fs';
@@ -14,6 +15,8 @@ import { registerIpcHandlers } from './ipc/index';
 import { initDebug } from '../core/debug';
 import { ATM_WINDOW_BOUNDS } from './windowConfig';
 import { resolveRendererRequest, shouldFallbackToIndexHtml } from './rendererAssetPath';
+import { UpdateService } from './services/updateService';
+
 
 let mainWindow: BrowserWindow | null = null;
 let server: http.Server | null = null;
@@ -102,7 +105,6 @@ async function createWindow(): Promise<void> {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      webSecurity: false,
     },
   });
 
@@ -120,7 +122,6 @@ async function createWindow(): Promise<void> {
     const appUrl = `http://127.0.0.1:${port}/index.html`;
     console.log('[ATM] Production server started at', appUrl);
     mainWindow.loadURL(appUrl);
-    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on('closed', () => {
@@ -132,8 +133,33 @@ app.whenReady().then(async () => {
   // 初始化调试日志控制（环境变量 ATM_DEBUG=true）
   initDebug();
 
-  registerIpcHandlers();
+  let defaultFeedUrl = '';
+  try {
+    const packageMetadata = JSON.parse(fs.readFileSync(path.join(app.getAppPath(), 'package.json'), 'utf8'));
+    if (typeof packageMetadata.atmUpdateFeedUrl === 'string') defaultFeedUrl = packageMetadata.atmUpdateFeedUrl;
+  } catch {
+    // 本地开发或旧安装包没有内置更新源。
+  }
+  const updateService = new UpdateService(
+    autoUpdater,
+    app.getVersion(),
+    app.isPackaged,
+    app.getPath('userData'),
+    (state) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (!window.isDestroyed()) window.webContents.send('app:update-state-changed', state);
+      }
+    },
+    defaultFeedUrl,
+  );
+
+  registerIpcHandlers(updateService);
+  await updateService.configure();
   await createWindow();
+
+  if (updateService.state().status === 'idle') {
+    setTimeout(() => void updateService.check(), 5000);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

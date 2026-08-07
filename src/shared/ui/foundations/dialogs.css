@@ -614,6 +614,141 @@ fieldset.ui-dialog-field {
   padding-top: 14px;
 }
 
+.hotkey-command-assist {
+  position: relative;
+  min-width: 0;
+}
+
+.hotkey-command-assist > input {
+  width: 100%;
+}
+
+.hotkey-command-suggestions {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 248px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-overlay);
+}
+
+.hotkey-command-suggestion {
+  width: 100%;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: var(--ui-text);
+  text-align: left;
+}
+
+.hotkey-command-suggestion:hover,
+.hotkey-command-suggestion.is-active {
+  border-color: var(--ui-border);
+  background: var(--ui-accent-soft);
+}
+
+.hotkey-command-suggestion-main {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hotkey-command-suggestion-main code {
+  color: var(--ui-text);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  font-weight: 700;
+}
+
+.hotkey-command-suggestion-main strong {
+  overflow: hidden;
+  color: var(--ui-accent);
+  font-size: var(--ui-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotkey-command-suggestion-description {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-secondary);
+  font-size: var(--ui-font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotkey-command-suggestion-source {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.hotkey-command-assist-status {
+  margin-top: 5px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-font-size-xs);
+  line-height: 1.45;
+}
+
+.hotkey-command-assist-status.is-match {
+  color: var(--ui-success);
+}
+
+.hotkey-command-assist-status.is-unverified {
+  color: var(--ui-warning);
+}
+
+.hotkey-migration-dialog {
+  width: min(620px, calc(100vw - 32px));
+}
+
+.compatibility-report {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-subtle);
+}
+
+.compatibility-report--blocked {
+  border-color: var(--ui-danger-border, #d1242f);
+}
+
+.compatibility-report--warning {
+  border-color: var(--ui-warning-border, #bf8700);
+}
+
+.compatibility-report ul {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.compatibility-report li span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ui-text-muted);
+}
+
 .hotkey-edit-dialog-form {
   display: flex;
   flex-direction: column;

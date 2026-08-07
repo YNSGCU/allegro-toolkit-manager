@@ -1,0 +1,217 @@
+/* Symphony 协同检查弹窗专用样式 */
+.symphony-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--ui-space-3, 10px);
+  margin-bottom: var(--ui-space-3, 10px);
+}
+
+.symphony-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--ui-space-3, 10px);
+  border: 1px solid var(--ui-border, #d5dce4);
+  border-radius: var(--ui-radius-md, 8px);
+  background: var(--ui-surface-muted, #f6f8fa);
+}
+
+.symphony-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ui-text-strong, #17202a);
+}
+
+.symphony-stat-label {
+  font-size: 12px;
+  color: var(--ui-text-muted, #6b7785);
+}
+
+.symphony-stat--warn .symphony-stat-value {
+  color: var(--ui-warning, #b8860b);
+}
+
+.symphony-stat--danger .symphony-stat-value {
+  color: var(--ui-danger, #c0392b);
+}
+
+.symphony-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3, 10px);
+  margin-bottom: var(--ui-space-2, 6px);
+}
+
+.symphony-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ui-text-muted, #6b7785);
+  cursor: pointer;
+  user-select: none;
+}
+
+.symphony-toggle-label--block {
+  display: flex;
+  margin-top: var(--ui-space-2, 6px);
+}
+
+.symphony-command-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--ui-border, #d5dce4);
+  border-radius: var(--ui-radius-md, 8px);
+  padding: var(--ui-space-2, 6px);
+}
+
+.symphony-command-row {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr auto auto;
+  align-items: center;
+  gap: var(--ui-space-3, 10px);
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.symphony-command-row:hover {
+  background: var(--ui-surface-muted, #f6f8fa);
+}
+
+.symphony-command-name {
+  font-family: var(--ui-font-mono, Consolas, monospace);
+  font-size: 12px;
+  color: var(--ui-text-strong, #17202a);
+  white-space: nowrap;
+}
+
+.symphony-command-skill {
+  color: var(--ui-text-muted, #6b7785);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symphony-source-line {
+  color: var(--ui-text-muted, #6b7785);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.symphony-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.symphony-badge.is-ok {
+  color: var(--ui-success, #1e7d3c);
+  background: color-mix(in srgb, var(--ui-success, #1e7d3c) 12%, transparent);
+}
+
+.symphony-badge.is-warn {
+  color: var(--ui-warning, #b8860b);
+  background: color-mix(in srgb, var(--ui-warning, #b8860b) 12%, transparent);
+}
+
+.symphony-badge.is-danger {
+  color: var(--ui-danger, #c0392b);
+  background: color-mix(in srgb, var(--ui-danger, #c0392b) 12%, transparent);
+}
+
+.symphony-rw-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-text-muted, #6b7785);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.symphony-issue-group {
+  margin-bottom: var(--ui-space-3, 10px);
+}
+
+.symphony-issue-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.symphony-issue-group-title.is-error {
+  color: var(--ui-danger, #c0392b);
+}
+
+.symphony-issue-group-title.is-warning {
+  color: var(--ui-warning, #b8860b);
+}
+
+.symphony-issue-group-title.is-info {
+  color: var(--ui-text-muted, #6b7785);
+}
+
+.symphony-issue-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border: 1px solid var(--ui-border, #d5dce4);
+  border-left-width: 3px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.symphony-issue-row.is-error {
+  border-left-color: var(--ui-danger, #c0392b);
+}
+
+.symphony-issue-row.is-warning {
+  border-left-color: var(--ui-warning, #b8860b);
+}
+
+.symphony-issue-row.is-info {
+  border-left-color: var(--ui-border, #d5dce4);
+}
+
+.symphony-issue-row strong {
+  color: var(--ui-text-strong, #17202a);
+}
+
+.symphony-issue-row > span {
+  color: var(--ui-text-muted, #6b7785);
+}
+
+.symphony-suggestions {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--ui-text-soft, #4a5560);
+  font-size: 12px;
+}
+
+.ui-dialog-alert--ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-success, #1e7d3c);
+  background: color-mix(in srgb, var(--ui-success, #1e7d3c) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ui-success, #1e7d3c) 30%, transparent);
+}

@@ -18,9 +18,9 @@ Allegro Toolkit Manager (ATM) is a desktop tool for inspecting and safely managi
 
 ## Current Feature Status
 
-- Complete: environment scan, hotkey workflow, skill workflow, menu workflow, shared profile bar/status UI, Apply Plan pipeline, Vitest coverage for `core/`
+- Complete: environment scan, hotkey command assistance and reliable env/Profile editing, skill workflow, menu workflow, shared profile bar/status UI, transactional Apply Plan pipeline, Windows CI and unsigned NSIS packaging
 - Partial: Structure OS governance files, runtime registry, durable handoff memory
-- Planned: source-tree restructuring toward clearer module boundaries, stronger install/runtime automation
+- Planned: incremental source-tree boundary cleanup, real publisher metadata and public-release code signing
 - Deprecated: none recorded
 
 ## Tech Stack
@@ -53,14 +53,13 @@ Allegro Toolkit Manager (ATM) is a desktop tool for inspecting and safely managi
 
 ## Current Risks
 
-- Repository is not initialized as git, so change history is local-only.
 - No project-local Structure OS CLI is installed.
 - Source tree is functional but not yet aligned to the recommended `pages/modules/shared/infra` layout.
 - Electron install health can affect both type declarations and binary availability if package contents are incomplete.
+- Windows artifacts have a project icon but are not code-signed; publisher identity is still generic.
 
 ## Next Recommended Tasks
 
-- Initialize git before larger refactors.
 - Keep the new governance files updated when behavior or architecture changes.
-- Normalize the Electron install workflow so `electron.d.ts` and `dist/` remain available after reinstall.
-- Plan a later source-tree boundary cleanup without mixing it into feature work.
+- Run `npm run verify` before merging and `npm run package:dir` after packaging changes.
+- Replace generic publisher metadata and add Windows signing before public distribution.

@@ -5,11 +5,13 @@ import {
   Gauge,
   Keyboard,
   Menu,
+  Palette,
   ShieldCheck,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { APP_NAV_ITEMS, type AppNavItem } from '../config/appShell';
 import { preloadWorkspaceRoute } from '../config/routePageLoaders';
+import AllegroEnvironmentSwitcher from './AllegroEnvironmentSwitcher';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +21,7 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   hotkeys: Keyboard,
   skills: Blocks,
   menu: Menu,
+  colors: Palette,
   overview: Gauge,
 };
 
@@ -82,6 +85,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         <div className="atm-sidebar-footer">
+          <AllegroEnvironmentSwitcher />
           <ShieldCheck aria-hidden="true" />
           <span>安全配置工作台</span>
         </div>

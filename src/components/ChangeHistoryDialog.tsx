@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { ChangeRecord } from '../types/hotkey';
 import ConfirmDialog from './common/ConfirmDialog';
+import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 
 interface ChangeHistoryDialogProps {
   pcbenvPath: string;
@@ -104,27 +105,15 @@ export const ChangeHistoryDialog: React.FC<ChangeHistoryDialogProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="变更历史弹窗"
-        className="modal-dialog change-history-dialog change-history-dialog--compact"
-        onClick={(event) => event.stopPropagation()}
+    <>
+      <BusinessDialog
+        title="变更历史"
+        description="查看快捷键配置写入记录，并从备份撤销最近的可恢复操作。"
+        onClose={onClose}
+        size="lg"
+        className="change-history-dialog change-history-dialog--compact"
+        bodyClassName="change-history-body"
       >
-        <div className="modal-header">
-          <h3>变更历史</h3>
-          <button
-            type="button"
-            className="modal-close-btn"
-            aria-label="关闭变更历史弹窗"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="modal-body change-history-body">
           <div className="change-history-toolbar">
             <div className="change-history-toolbar-actions">
               <button
@@ -228,8 +217,7 @@ export const ChangeHistoryDialog: React.FC<ChangeHistoryDialogProps> = ({
               })}
             </div>
           )}
-        </div>
-      </div>
+      </BusinessDialog>
 
       <ConfirmDialog
         open={showClearConfirm}
@@ -243,7 +231,7 @@ export const ChangeHistoryDialog: React.FC<ChangeHistoryDialogProps> = ({
         }}
         onCancel={() => setShowClearConfirm(false)}
       />
-    </div>
+    </>
   );
 };
 

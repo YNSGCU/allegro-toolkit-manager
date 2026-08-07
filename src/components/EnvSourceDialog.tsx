@@ -9,6 +9,7 @@
 import React from 'react';
 import type { EnvSourceList, EnvSource } from '../types/environment';
 import EnvSourceTag from './EnvSourceTag';
+import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 
 interface EnvSourceDialogProps {
   envSources: EnvSourceList;
@@ -133,18 +134,19 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-dialog"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 800, maxHeight: '80vh', overflowY: 'auto' }}
-      >
-        <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: 15 }}>管理 Env 来源</h3>
-          <button className="btn btn-sm" onClick={onClose}>关闭</button>
-        </div>
-
-        <div className="modal-body" style={{ padding: '12px 0' }}>
+    <BusinessDialog
+      title="管理 Env 来源"
+      description="选择唯一可写的用户 env，并管理只读参考来源。"
+      onClose={onClose}
+      size="xl"
+      className="env-source-dialog"
+      footer={(
+        <>
+          <button className="btn" onClick={onRefresh}>重新扫描</button>
+          <button className="btn btn-primary" onClick={onClose}>关闭</button>
+        </>
+      )}
+    >
           {/* ═══ 用户 env ═══ */}
           {userSources.length > 0 && (
             <div style={{ marginBottom: 16 }}>
@@ -201,14 +203,7 @@ const EnvSourceDialog: React.FC<EnvSourceDialogProps> = ({
               只有当前可写的用户 env 才能被 Apply Plan 修改。
             </p>
           </div>
-        </div>
-
-        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn" onClick={onRefresh}>重新扫描</button>
-          <button className="btn btn-primary" onClick={onClose}>关闭</button>
-        </div>
-      </div>
-    </div>
+    </BusinessDialog>
   );
 };
 

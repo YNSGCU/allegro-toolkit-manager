@@ -77,6 +77,16 @@ function matchesFilter(binding: HotkeyBinding, state: HotkeyWorkspaceSharedState
   }
 }
 
+function canEditBinding(binding: HotkeyBinding): boolean {
+  if (binding.editable === false) return false;
+  return [
+    'user_env_original',
+    'atm_managed_block',
+    'active_profile',
+    'imported_profile',
+  ].includes(binding.bindingSource);
+}
+
 export default function HotkeyEditorPanel({
   state,
   actions,
@@ -120,9 +130,17 @@ export default function HotkeyEditorPanel({
   );
 
   const currentProfileBindings = useMemo(
-    () =>
-      state.profiles.find((profile) => profile.id === state.activeProfileId)?.bindings as HotkeyBinding[] | undefined,
-    [state.activeProfileId, state.profiles],
+    () => state.bindings.filter(
+      (binding) => binding.bindingSource === 'active_profile' && binding.profileId === state.activeProfileId,
+    ),
+    [state.activeProfileId, state.bindings],
+  );
+
+  const currentEnvBindings = useMemo(
+    () => state.bindings.filter(
+      (binding) => binding.bindingSource === 'user_env_original' || binding.bindingSource === 'atm_managed_block',
+    ),
+    [state.bindings],
   );
 
   const resolvedPhysicalKey = useMemo(
@@ -131,6 +149,10 @@ export default function HotkeyEditorPanel({
   );
 
   const openEditor = (binding: HotkeyBinding) => {
+    if (!canEditBinding(binding)) {
+      setLocalError('该绑定来自只读参考、系统保留项或 Skill 直接注册，不能在快捷键编辑器中修改。');
+      return;
+    }
     actions.setSelectedBindingId(binding.id);
     setLocalError(null);
     setSuccessMessage(null);
@@ -373,8 +395,13 @@ export default function HotkeyEditorPanel({
                 </p>
 
                 <div className="hotkey-editor-detail-actions">
-                  <button className="btn btn-primary" onClick={() => openEditor(selectedBinding)}>
-                    编辑此绑定
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => openEditor(selectedBinding)}
+                    disabled={!canEditBinding(selectedBinding)}
+                    title={!canEditBinding(selectedBinding) ? '该来源只能查看，不能直接编辑' : undefined}
+                  >
+                    {canEditBinding(selectedBinding) ? '编辑此绑定' : '只读来源'}
                   </button>
                   <button className="btn" onClick={() => void actions.handleAdoptBinding(selectedBinding)}>
                     接管到当前方案
@@ -423,7 +450,7 @@ export default function HotkeyEditorPanel({
           binding={editingBinding}
           onClose={() => setEditingBinding(null)}
           onSave={(editData) => void handleEditorSave(editData)}
-          currentEnvBindings={state.bindings}
+          currentEnvBindings={currentEnvBindings}
           currentProfileBindings={currentProfileBindings}
           profileId={state.activeProfileId}
           allReservedBindings={state.reservedBindings}
@@ -484,6 +511,7 @@ export default function HotkeyEditorPanel({
       {showAddDialog && resolvedPhysicalKey ? (
         <AddHotkeyDialog
           physicalKey={resolvedPhysicalKey}
+          currentBindings={[...state.bindings, ...state.reservedBindings]}
           onClose={() => {
             setShowAddDialog(false);
             if (!selectedPhysicalKey) {

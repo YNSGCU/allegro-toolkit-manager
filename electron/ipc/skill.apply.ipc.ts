@@ -11,12 +11,13 @@ import { parseSkillFile } from '../../core/parser/parseSkillMeta';
 import { scanEnhancedSkills } from '../../core/skill/enhancedScan';
 import { generateSkillLoader, updateSkillStatus } from '../../core/generator/generateSkillLoader';
 import {
-  generateBootstrapIlContent,
   generateBootstrapLines,
   insertBootstrapToIlinit,
 } from '../../core/generator/generateBootstrap';
-import { readFileContent, writeFileContent, ensureDirectoryExists } from '../../core/environment/fileAccess';
-import { createBackup } from '../../core/backup/createBackup';
+import {
+  createApplyPlan as createUnifiedApplyPlan,
+  executeApplyPlan as executeUnifiedApplyPlan,
+} from '../../core/apply/applyPlanEngine';
 import { CommandIndex } from '../../core/skill/commandIndex';
 import { enrichBindings } from '../../core/validator/validateHotkeys';
 import { analyzeSkillDeleteImpact, createDeletePlan } from '../../core/skill/skillImpactAnalysis';
@@ -92,53 +93,24 @@ export function registerSkillApplyIpc(): void {
     try {
       const plan: SkillApplyPlan = JSON.parse(planJson);
       const envInfo = getEnvInfoWithCompanyPaths();
+      const lockedPlan = (plan as SkillApplyPlan & { environmentId?: string | null; environmentPcbenvPath?: string | null });
+      if (lockedPlan.environmentId && lockedPlan.environmentId !== envInfo.environmentId) return { success: false, error: '当前 Allegro 环境已变化，请重新生成 Apply Plan' };
+      if (lockedPlan.environmentPcbenvPath && path.normalize(lockedPlan.environmentPcbenvPath).toLowerCase() !== path.normalize(envInfo.pcbenvPath || '').toLowerCase()) return { success: false, error: 'Apply Plan 目标 pcbenv 已变化，请重新生成计划' };
       const atmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
-      let appliedSteps = 0;
-      ensureDirectoryExists(atmDir);
-      ensureDirectoryExists(path.join(atmDir, 'backup'));
-      appliedSteps++;
-      const backupPlanSteps = plan.steps.filter((s) => s.type === 'backup');
-      for (const step of backupPlanSteps) {
-        const backupResult = createBackup(step.target, path.join(atmDir, 'backup'), `Skill Plan: ${plan.id}`);
-        if (!backupResult.success && !backupResult.error?.includes('不存在')) {
-          return { success: false, planId: plan.id, appliedSteps, totalSteps: plan.steps.length, error: `备份失败: ${backupResult.error}` };
-        }
-        appliedSteps++;
-      }
-      const writeLoaderStep = plan.steps.find((s) => s.type === 'write_skill_loader');
-      if (writeLoaderStep) {
-        const scanResult = scanAllSkills(envInfo);
-        for (const skill of scanResult.all) {
-          if (skill.functions.length === 0) skill.functions = parseSkillFile(skill.filePath).functions;
-        }
-        const userSkills = scanResult.all.filter((s) => s.tier === 'user');
-        const atmSkills = scanResult.all.filter((s) => s.tier === 'atm');
-        const loaderContent = generateSkillLoader(userSkills, atmSkills, envInfo.pcbenvPath || '');
-        const writeResult = writeFileContent(writeLoaderStep.target, loaderContent);
-        if (!writeResult.success) return { success: false, planId: plan.id, appliedSteps, totalSteps: plan.steps.length, error: `写入 Skill Loader 失败: ${writeResult.error}` };
-        appliedSteps++;
-      }
-      const writeBootstrapStep = plan.steps.find((s) => s.type === 'write_bootstrap');
-      if (writeBootstrapStep) {
-        const bootstrapIlContent = generateBootstrapIlContent(atmDir);
-        const writeResult = writeFileContent(writeBootstrapStep.target, bootstrapIlContent);
-        if (!writeResult.success) return { success: false, planId: plan.id, appliedSteps, totalSteps: plan.steps.length, error: `写入 bootstrap.il 失败: ${writeResult.error}` };
-        appliedSteps++;
-      }
-      const modifyIlinitStep = plan.steps.find((s) => s.type === 'modify_ilinit');
-      if (modifyIlinitStep) {
-        const { content, error: readError } = readFileContent(modifyIlinitStep.target);
-        if (!readError && content !== undefined) {
-          const bootstrapLines = generateBootstrapLines(atmDir);
-          const updatedContent = insertBootstrapToIlinit(content, bootstrapLines);
-          if (updatedContent !== null) {
-            const writeResult = writeFileContent(modifyIlinitStep.target, updatedContent);
-            if (!writeResult.success) return { success: false, planId: plan.id, appliedSteps, totalSteps: plan.steps.length, error: `更新 allegro.ilinit 失败: ${writeResult.error}` };
-          }
-        }
-        appliedSteps++;
-      }
-      return { success: true, planId: plan.id, appliedSteps, totalSteps: plan.steps.length };
+      const materialized = materializeSkillPlan(plan, atmDir, envInfo);
+      const unifiedPlan = createUnifiedApplyPlan({
+        title: plan.summary,
+        description: '由旧版 Skill 计划转换为统一事务执行计划',
+        module: 'skill',
+        steps: materialized,
+        requiresRestart: plan.requiresRestart,
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
+      });
+      return await executeUnifiedApplyPlan(unifiedPlan, {
+        backupDir: path.join(atmDir, 'backups'),
+        historyDir: path.join(atmDir, 'history'),
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { success: false, error: `执行 Skill Plan 失败: ${message}` };
@@ -237,6 +209,98 @@ export function registerSkillApplyIpc(): void {
   });
 }
 
+function ensureSkillLoaderReference(currentContent: string, loaderPath: string): string {
+  if (currentContent.includes('generated_skill_loader.il')) return currentContent;
+  const line = `load("${loaderPath.replace(/\\/g, '/')}")`;
+  return currentContent.trim()
+    ? `${currentContent.replace(/\s*$/, '')}\n\n${line}\n`
+    : `${line}\n`;
+}
+
+function materializeSkillPlan(
+  plan: SkillApplyPlan,
+  atmDir: string,
+  envInfo: ReturnType<typeof getEnvInfoWithCompanyPaths>,
+) {
+  if (plan.operation === 'delete') {
+    if (!plan.targetSkillPath || !plan.deleteOption) {
+      throw new Error('删除计划缺少目标 Skill 元数据，已拒绝执行');
+    }
+
+    const scanResult = scanAllSkills(envInfo);
+    for (const skill of scanResult.all) {
+      if (skill.functions.length === 0) skill.functions = parseSkillFile(skill.filePath).functions;
+    }
+    const remaining = scanResult.all.filter(skill =>
+      path.resolve(skill.filePath) !== path.resolve(plan.targetSkillPath!),
+    );
+    const loaderPath = path.join(atmDir, 'generated_skill_loader.il');
+    const steps: Array<{
+      type: 'write_skill_loader' | 'write_file' | 'delete_file';
+      title: string;
+      description: string;
+      targetFile: string;
+      after?: string;
+    }> = [{
+      type: 'write_skill_loader',
+      title: '更新 Skill 加载器',
+      description: '从 ATM 加载器中移除目标 Skill',
+      targetFile: loaderPath,
+      after: generateSkillLoader(
+        remaining.filter(skill => skill.tier === 'user'),
+        remaining.filter(skill => skill.tier === 'atm'),
+        envInfo.pcbenvPath || '',
+      ),
+    }];
+
+    if (plan.deleteOption === 'delete_and_comment_hotkeys' && envInfo.envFilePath && fs.existsSync(envInfo.envFilePath)) {
+      const currentEnv = fs.readFileSync(envInfo.envFilePath, 'utf8');
+      const targetCommands = new Set((plan.targetEntryCommands || []).map(command => command.toLowerCase()));
+      const nextEnv = currentEnv
+        .split(/\r?\n/)
+        .map(line => {
+          const match = line.match(/^\s*(?:funckey|alias)\s+\S+\s+"?([^";]+?)"?\s*(?:;.*)?$/i);
+          if (!match || !targetCommands.has(match[1].trim().toLowerCase())) return line;
+          return `# ATM disabled: ${line}`;
+        })
+        .join(currentEnv.includes('\r\n') ? '\r\n' : '\n');
+      steps.push({
+        type: 'write_file',
+        title: '注释关联快捷键',
+        description: '保留原始 env 行并添加 ATM disabled 注释',
+        targetFile: envInfo.envFilePath,
+        after: nextEnv,
+      });
+    }
+
+    if (plan.deleteOption === 'advanced_delete') {
+      steps.push({
+        type: 'delete_file',
+        title: '删除 Skill 源文件',
+        description: '事务备份完成后删除目标 Skill 文件',
+        targetFile: plan.targetSkillPath,
+      });
+    }
+
+    return steps;
+  }
+
+  return plan.steps
+    .filter(step => step.type !== 'backup' && step.type !== 'create_directory')
+    .map(step => {
+      if (!step.target || step.after === undefined) {
+        throw new Error(`Skill 计划步骤缺少写入内容: ${step.description}`);
+      }
+      return {
+        type: step.type,
+        title: step.title || step.description,
+        description: step.description,
+        targetFile: step.target,
+        after: step.after,
+      };
+    });
+}
+
 /**
  * 生成 Skill 切换操作的 Apply Plan
  */
@@ -256,21 +320,36 @@ function createSkillTogglePlan(
   const ilinitPath = envInfo.ilinitFilePath || path.join(envInfo.pcbenvPath || '', 'allegro.ilinit');
   const action = newStatus === 'enabled' ? '启用' : '禁用';
   steps.push({ type: 'backup', target: loaderPath, description: `备份 generated_skill_loader.il（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'generated_skill_loader.il') });
-  steps.push({ type: 'write_skill_loader', target: loaderPath, description: `${action} Skill "${skill.name}" → 重新生成 generated_skill_loader.il` });
+  steps.push({ type: 'write_skill_loader', target: loaderPath, description: `${action} Skill "${skill.name}" → 重新生成 generated_skill_loader.il`, after: loaderContent });
   // Bootstrap 备份与写入
   try {
     if (fs.existsSync(bootstrapIlPath)) {
       steps.push({ type: 'backup', target: bootstrapIlPath, description: `备份 bootstrap.il（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'bootstrap.il') });
     }
   } catch {}
-  steps.push({ type: 'write_bootstrap', target: bootstrapIlPath, description: `更新 bootstrap.il（${action} ${skill.name} 后）` });
+  const currentBootstrap = fs.existsSync(bootstrapIlPath)
+    ? fs.readFileSync(bootstrapIlPath, 'utf8')
+    : '';
+  steps.push({
+    type: 'write_bootstrap',
+    target: bootstrapIlPath,
+    description: `确保 bootstrap.il 加载 Skill Loader（${action} ${skill.name} 后）`,
+    after: ensureSkillLoaderReference(currentBootstrap, loaderPath),
+  });
   // ilinit 备份与修改
   try {
     if (fs.existsSync(ilinitPath)) {
       steps.push({ type: 'backup', target: ilinitPath, description: `备份 allegro.ilinit（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'allegro.ilinit') });
     }
   } catch {}
-  steps.push({ type: 'modify_ilinit', target: ilinitPath, description: `确保 allegro.ilinit 包含 ATM bootstrap 加载指令` });
+  const currentIlinit = fs.existsSync(ilinitPath) ? fs.readFileSync(ilinitPath, 'utf8') : '';
+  const nextIlinit = insertBootstrapToIlinit(currentIlinit, generateBootstrapLines(atmDir));
+  steps.push({
+    type: 'modify_ilinit',
+    target: ilinitPath,
+    description: `确保 allegro.ilinit 包含 ATM bootstrap 加载指令`,
+    after: nextIlinit ?? currentIlinit,
+  });
   warnings.push({ level: 'info', message: `${action} "${skill.name}" 后需要重启 Allegro 才能生效。` });
-  return { id: `skill-toggle-${backupId}`, createdAt: new Date().toISOString(), summary: `${action} Skill: ${skill.name}`, steps, warnings, requiresRestart: true };
+  return { id: `skill-toggle-${backupId}`, createdAt: new Date().toISOString(), summary: `${action} Skill: ${skill.name}`, steps, warnings, requiresRestart: true, operation: 'toggle', targetSkillPath: skill.filePath };
 }

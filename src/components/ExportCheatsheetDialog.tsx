@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { ExportOptions, HotkeyBinding } from '../types/hotkey';
+import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 
 interface ExportCheatsheetDialogProps {
   bindings: HotkeyBinding[];
@@ -112,24 +113,30 @@ export const ExportCheatsheetDialog: React.FC<ExportCheatsheetDialogProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-dialog export-dialog export-dialog--compact"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="modal-header">
-          <h3>导出快捷键速查表</h3>
+    <BusinessDialog
+      title="导出快捷键速查表"
+      description="选择导出范围、分组和文件格式。"
+      onClose={onClose}
+      size="lg"
+      dismissDisabled={exporting}
+      className="export-dialog export-dialog--compact"
+      bodyClassName="export-dialog-body"
+      footer={(
+        <>
+          <button type="button" className="btn" onClick={onClose} disabled={exporting}>
+            取消
+          </button>
           <button
             type="button"
-            className="modal-close-btn"
-            aria-label="关闭导出弹窗"
-            onClick={onClose}
+            className="btn btn-primary"
+            onClick={handleExport}
+            disabled={exporting || filteredBindings.length === 0}
           >
-            ×
+            {exporting ? '导出中...' : '导出并保存'}
           </button>
-        </div>
-
-        <div className="modal-body export-dialog-body">
+        </>
+      )}
+    >
           <div className="export-options">
             <div className="export-section">
               <h4>导出格式</h4>
@@ -242,23 +249,7 @@ export const ExportCheatsheetDialog: React.FC<ExportCheatsheetDialogProps> = ({
           </div>
 
           {error ? <div className="error-message">{error}</div> : null}
-        </div>
-
-        <div className="modal-footer export-dialog-footer">
-          <button type="button" className="btn" onClick={onClose} disabled={exporting}>
-            取消
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleExport}
-            disabled={exporting || filteredBindings.length === 0}
-          >
-            {exporting ? '导出中...' : '导出并保存'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </BusinessDialog>
   );
 };
 

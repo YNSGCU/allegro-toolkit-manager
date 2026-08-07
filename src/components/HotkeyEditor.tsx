@@ -4,9 +4,10 @@
  * 保存时生成 Apply Plan，不直接写 env
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import type { HotkeyBinding, HotkeyEditValidation, CommandSourceType, KeyRecommendation } from '../types/hotkey';
+import type { HotkeyBinding, HotkeyEditValidation, KeyRecommendation } from '../types/hotkey';
 import { BINDING_SRC_CONFIG } from '../utils/hotkeyItem';
 import { BusinessDialog } from '../shared/ui';
+import HotkeyCommandAssist from './HotkeyCommandAssist';
 
 interface HotkeyEditorProps {
   binding: HotkeyBinding;
@@ -19,15 +20,6 @@ interface HotkeyEditorProps {
   envFilePath?: string;
 }
 
-const SOURCE_OPTIONS: { value: CommandSourceType | 'ambiguous'; label: string }[] = [
-  { value: 'allegro_builtin', label: 'Allegro 内置' },
-  { value: 'user_skill', label: '本地 Skill' },
-  { value: 'company_skill', label: '公司 Skill' },
-  { value: 'atm_managed_skill', label: 'ATM 托管' },
-  { value: 'ambiguous', label: '歧义（多种来源）' },
-  { value: 'unknown', label: '未知' },
-];
-
 const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
   binding, onClose, onSave, currentEnvBindings, currentProfileBindings, profileId, allReservedBindings, envFilePath,
 }) => {
@@ -36,9 +28,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
   const [command, setCommand] = useState(binding.command);
   const [enabled, setEnabled] = useState(binding.enabled !== false);
   const [note, setNote] = useState(binding.notes?.[0] || '');
-  const [commandSource, setCommandSource] = useState<CommandSourceType | 'ambiguous'>(
-    (binding.commandSource as CommandSourceType | 'ambiguous') || 'unknown',
-  );
+  const isProfileBinding = binding.bindingSource === 'active_profile' || binding.bindingSource === 'imported_profile';
 
   // 实时检测结果
   const [validation, setValidation] = useState<HotkeyEditValidation>({
@@ -49,6 +39,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
     isSoftwareDefault: false,
   });
   const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // 推荐可用键位
   const [recommendedKeys, setRecommendedKeys] = useState<KeyRecommendation[]>([]);
@@ -80,7 +71,7 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
 
     // 2. 检查新键是否在 Profile 中被占用
     const occupiedProfileBinding = currentProfileBindings?.find(
-      b => b.key?.toLowerCase() === lowerNewKey && b.type === type
+      b => b.key?.toLowerCase() === lowerNewKey && b.type === type && b.id !== binding.id
     );
     if (occupiedProfileBinding) {
       impacts.push({
@@ -140,9 +131,11 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
 
     const timeout = setTimeout(async () => {
       try {
+        setValidationError(null);
         const w = window as any;
         if (w.atm?.validateHotkeyEdit) {
           const result = await w.atm.validateHotkeyEdit({
+            bindingId: binding.id,
             type,
             key: key.trim(),
             command: command.trim(),
@@ -152,15 +145,27 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
           });
           if (result.success) {
             setValidation(result.data);
+          } else {
+            throw new Error(result.error || '快捷键检测失败');
           }
+        } else {
+          throw new Error('当前版本未提供快捷键检测能力');
         }
-      } catch {} finally {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setValidationError(message);
+        setValidation((current) => ({
+          ...current,
+          valid: false,
+          errors: [`实时检测失败：${message}`],
+        }));
+      } finally {
         setValidating(false);
       }
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [type, key, command, currentEnvBindings, currentProfileBindings, profileId]);
+  }, [binding.id, type, key, command, currentEnvBindings, currentProfileBindings, profileId]);
 
   // ── 加载推荐键位（当 key 变化时，但仅在聚焦时） ──
   const loadRecommendedKeys = useCallback(async () => {
@@ -201,7 +206,6 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
       command: command.trim(),
       enabled,
       note: note.trim(),
-      commandSource,
       profileId,
     });
   };
@@ -211,7 +215,9 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
   return (
     <BusinessDialog
       title={<>编辑快捷键<span className="ui-dialog-title-context"> · {binding.key}</span></>}
-      description="修改键位、命令与来源；保存后仅生成 Apply Plan。"
+      description={isProfileBinding
+        ? '修改当前方案中的键位、命令、启用状态和备注；确认后写入方案文件。'
+        : '修改可写 env 中的键位与命令；确认后写入原始行。'}
       size="lg"
       onClose={onClose}
       bodyClassName="hotkey-edit-dialog-body"
@@ -262,50 +268,41 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
               {/* 原始命令 */}
               <div className="ui-dialog-field ui-dialog-field--code">
                 <label htmlFor="hotkey-edit-command">原始命令</label>
-                <input
+                <HotkeyCommandAssist
                   id="hotkey-edit-command"
-                  className="search-input"
-                  type="text"
                   value={command}
-                  onChange={(e) => setCommand(e.target.value)}
+                  onChange={setCommand}
+                  bindings={[...(currentEnvBindings || []), ...(currentProfileBindings || [])]}
                   placeholder="例: move, add connect, zoom fit"
                 />
               </div>
 
-              {/* 命令来源修正 */}
-              <div className="ui-dialog-field">
-                <label htmlFor="hotkey-edit-source">命令来源</label>
-                <select
-                  id="hotkey-edit-source"
-                  value={commandSource}
-                  onChange={(e) => setCommandSource(e.target.value as any)}
-                >
-                  {SOURCE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              {isProfileBinding ? (
+                <>
+                  <div className="ui-dialog-field">
+                    <span className="ui-dialog-field-label">状态</span>
+                    <label className="ui-dialog-choice hotkey-edit-enabled">
+                      <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> 启用
+                    </label>
+                  </div>
 
-              {/* 启用 */}
-              <div className="ui-dialog-field">
-                <span className="ui-dialog-field-label">状态</span>
-                <label className="ui-dialog-choice hotkey-edit-enabled">
-                  <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> 启用
-                </label>
-              </div>
-
-              {/* 备注 */}
-              <div className="ui-dialog-field">
-                <label htmlFor="hotkey-edit-note">备注</label>
-                <input
-                  id="hotkey-edit-note"
-                  className="search-input"
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="可选备注"
-                />
-              </div>
+                  <div className="ui-dialog-field">
+                    <label htmlFor="hotkey-edit-note">备注</label>
+                    <input
+                      id="hotkey-edit-note"
+                      className="search-input"
+                      type="text"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="可选备注"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="ui-dialog-alert ui-dialog-alert--info">
+                  env 原始行只支持修改类型、按键和命令。启用状态与备注请先接管到当前方案后管理。
+                </div>
+              )}
             </div>
 
             {/* 右栏：推荐可用键位 */}
@@ -415,6 +412,12 @@ const HotkeyEditor: React.FC<HotkeyEditorProps> = ({
           {/* 实时检测结果 */}
           <div className="edit-validation hotkey-edit-validation" aria-live="polite">
             {validating && <span className="ui-dialog-field-hint">正在检测…</span>}
+
+            {validationError && validation.errors.length === 0 ? (
+              <div className="ui-dialog-alert ui-dialog-alert--danger" role="alert">
+                实时检测失败：{validationError}
+              </div>
+            ) : null}
 
             {validation.errors.length > 0 && (
               <div className="ui-dialog-alert ui-dialog-alert--danger" role="alert">

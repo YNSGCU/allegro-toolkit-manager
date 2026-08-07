@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { MenuItemConfig, MenuProfile, MenuProfileStore, MenuIssue, MenuTreeValidationIssue } from '../types/menu';
 import { generateMenuId, validateMenuTree } from '../types/menu';
+import { reorderMenuItem } from '../utils/menuTreeOrder';
 import { showToast } from '../components/common/Toast';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
@@ -591,6 +592,11 @@ const MenuPage: React.FC = () => {
     });
   }, []);
 
+  const handleReorder = useCallback((draggedId: string, targetId: string) => {
+    setItems((prev) => reorderMenuItem(prev, draggedId, targetId));
+    showToast('success', '已调整菜单项顺序，应用前仍可继续预览或撤销');
+  }, [showToast]);
+
   /** 选择命令 */
   const handleOpenCommandSelector = useCallback((itemId: string) => {
     setCommandSelectorTarget(itemId);
@@ -1063,6 +1069,7 @@ const MenuPage: React.FC = () => {
                   onDuplicate={handleDuplicateItem}
                   onMoveUp={handleMoveUp}
                   onMoveDown={handleMoveDown}
+                  onReorder={handleReorder}
                   filterText={search}
                 />
               )}

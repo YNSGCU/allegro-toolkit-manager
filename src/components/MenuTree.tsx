@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight, FileText, Folder, Minus, TerminalSquare } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, FileText, Folder, GripVertical, Minus, TerminalSquare } from 'lucide-react';
 import type { MenuItemConfig } from '../types/menu';
 import { getMenuSourceBadge, isMenuSourceReadOnly } from '../types/menu';
 
@@ -12,6 +12,7 @@ interface MenuTreeProps {
   onDuplicate: (itemId: string) => void;
   onMoveUp: (itemId: string) => void;
   onMoveDown: (itemId: string) => void;
+  onReorder: (draggedId: string, targetId: string) => void;
   filterText?: string;
 }
 
@@ -36,9 +37,12 @@ const MenuTreeItem: React.FC<MenuTreeItemProps> = React.memo(({
   onDuplicate,
   onMoveUp,
   onMoveDown,
+  onReorder,
   filterText,
 }) => {
   const [expanded, setExpanded] = useState(true);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const isSelected = selectedId === item.id;
   const hasChildren = Boolean(item.children?.length);
   const errorCount = item.issues?.filter((issue) => issue.severity === 'error').length || 0;
@@ -58,7 +62,15 @@ const MenuTreeItem: React.FC<MenuTreeItemProps> = React.memo(({
         className={`menu-tree-row${isSelected ? ' is-selected' : ''}${item.enabled ? '' : ' is-disabled'}`}
         style={{ '--menu-depth': depth } as React.CSSProperties}
         onClick={() => onSelect(item)}
+        draggable
+        aria-label={`${item.label || '（未命名）'}，可拖动调整同级位置`}
+        onDragStart={(event) => { setDraggedId(item.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); event.dataTransfer.setData('application/x-atm-menu-parent', item.parentId || ''); }}
+        onDragOver={(event) => { const sourceId = event.dataTransfer.getData('text/plain') || draggedId; const sourceParentId = event.dataTransfer.getData('application/x-atm-menu-parent'); if (!sourceId || sourceId === item.id || sourceParentId !== (item.parentId || '')) return; event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDropTargetId(item.id); }}
+        onDragLeave={() => setDropTargetId(null)}
+        onDrop={(event) => { event.preventDefault(); const sourceId = event.dataTransfer.getData('text/plain') || draggedId; if (sourceId && sourceId !== item.id) onReorder(sourceId, item.id); setDraggedId(null); setDropTargetId(null); }}
+        onDragEnd={() => { setDraggedId(null); setDropTargetId(null); }}
       >
+        <GripVertical className={`menu-tree-drag-handle${dropTargetId === item.id ? ' is-drop-target' : ''}`} aria-hidden="true" />
         <span
           className={`menu-tree-toggle${hasChildren ? '' : ' is-hidden'}`}
           role="button"
@@ -105,6 +117,7 @@ const MenuTreeItem: React.FC<MenuTreeItemProps> = React.memo(({
               onDuplicate={onDuplicate}
               onMoveUp={onMoveUp}
               onMoveDown={onMoveDown}
+              onReorder={onReorder}
               filterText={filterText}
             />
           ))}

@@ -23,11 +23,17 @@
 
 `src/pages/EnvironmentPage.tsx` -> `window.atm.locateEnvironment()` -> `electron/preload.ts` -> `electron/ipc/env.ipc.ts` -> `core/environment/locateEnvironment.ts`
 
+多版本链：`Layout/EnvironmentPage` -> `listAllegroEnvironments/setActiveAllegroEnvironment` -> `env:list-workspaces/env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `%APPDATA%/AllegroToolkitManager/environments.json`。`locateEnvironment()` 统一解析活动环境，快捷键、Skill、菜单 Apply Plan 生成时锁定 `environmentId + pcbenvPath`，执行前拒绝环境漂移。
+
+迁移链：`HotkeyProfileMigrationDialog` -> `profile:check-compatibility/profile:migrate` -> `core/environment/compatibility.ts` + `core/profile/hotkeyProfile.ts` -> 目标环境 `atm_generated/profiles`。
+
 ### Hotkey Management
 
 `src/pages/HotkeyWorkspacePage.tsx` -> `src/services/loadHotkeyWorkspaceData.ts` -> `window.atm.*hotkey/profile/history methods*` -> `electron/preload.ts` -> `electron/ipc/hotkey.ipc.ts` / `history.ipc.ts` -> `core/parser/*`, `core/validator/*`, `core/apply/*`, `core/profile/*`
 
 `HotkeyWorkspacePage` 保持数据与选中状态所有权；`/hotkeys/keys` 和 `/hotkeys/list` 复用 `HotkeyEditorPanel` 的编辑/接管/修正逻辑，仅切换键盘或列表详情布局，`/hotkeys/conflicts` 继续使用独立诊断面板。三个子路由共享一级错误边界，不触发父工作区重载。
+
+命令辅助链由 `HotkeyCommandAssist` 调用 renderer-safe 的 `hotkeyCommandSuggestions.ts`，读取构建时命令词典并合并当前工作区命令，不经过 IPC。提交后的真实编辑链仍使用 `hotkey:generate-add-plan` / `hotkey:generate-edit-plan` / `hotkey:execute-edit-plan`；env 与 Profile 写入都由 `core/apply/hotkeyEditPlan.ts` 校验目标、备份、执行和回滚。
 
 ### Shared Workspace UI
 
@@ -50,3 +56,11 @@ Skill profile apply chain: `SkillPage` -> `skillProfileCreateApplyPlan/skillProf
 ### Menu Management
 
 `src/pages/MenuPage.tsx` -> `window.atm.*menu methods*` -> `electron/preload.ts` -> `electron/ipc/menu.ipc.ts` -> `core/menu/*`, `core/apply/*`
+
+
+菜单树排序链：src/components/MenuTree.tsx -> src/pages/MenuPage.tsx -> src/utils/menuTreeOrder.ts -> 现有 Menu Apply Plan。拖动仅改变同级 order，不直接触发 IPC 写入。
+
+
+### Application Update
+
+src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> electron/ipc/update.ipc.ts -> electron/services/updateService.ts -> electron-updater -> HTTPS generic feed。更新仅在正式 NSIS 安装版启用，下载和安装由用户显式触发。

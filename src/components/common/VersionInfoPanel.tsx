@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle2, ChevronDown, RefreshCw } from 'lucide-react';
 import type { RuntimeInfo, VersionCheckResult } from '../../types/runtime';
+import ApplicationUpdatePanel from './ApplicationUpdatePanel';
 
 interface VersionInfoPanelProps {
   defaultExpanded?: boolean;
@@ -62,6 +63,8 @@ const VersionInfoPanel: React.FC<VersionInfoPanelProps> = ({ defaultExpanded = f
   const statusLabel = loading ? '加载中…' : error ? '读取失败' : unregisteredCount > 0 ? `${unregisteredCount} 个 handler 缺失` : '版本一致';
 
   return (
+    <div className="ui-runtime-stack">
+      <ApplicationUpdatePanel />
     <section className="ui-runtime-panel" aria-label="运行版本信息">
       <button
         type="button"
@@ -126,6 +129,7 @@ const VersionInfoPanel: React.FC<VersionInfoPanelProps> = ({ defaultExpanded = f
         </div>
       ) : null}
     </section>
+    </div>
   );
 };
 

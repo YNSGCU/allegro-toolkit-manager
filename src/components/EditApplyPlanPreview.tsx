@@ -35,6 +35,7 @@ const OP_TYPE_LABELS: Record<string, string> = {
   modify_profile: '修改 Profile',
   add_to_profile: '添加到 Profile',
   override_source: '修正命令来源',
+  add_env_line: '新增 env 行',
 };
 
 const EditApplyPlanPreview: React.FC<EditApplyPlanPreviewProps> = ({

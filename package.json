@@ -1,8 +1,9 @@
 {
   "name": "allegro-toolkit-manager",
-  "version": "0.1.0",
-  "description": "Allegro Personal Config Manager - 个人 Allegro 工作环境配置管理工具",
-  "main": "dist-electron/main.js",
+  "version": "0.2.0",
+  "description": "Allegro Personal Config Manager - 涓汉 Allegro 宸ヤ綔鐜閰嶇疆绠＄悊宸ュ叿",
+  "author": "ATM Contributors",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "node scripts/dev-electron.mjs",
     "dev:vite": "vite",
@@ -10,16 +11,28 @@
     "build": "tsc -p tsconfig.electron.json && vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:renderer": "vite build",
+    "package:dir": "npm run build && electron-builder --win --dir",
+    "package:win": "npm run build && electron-builder --win nsis",
+    "security:check": "node scripts/audit-production.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write \"scripts/**/*.mjs\" \"*.{json,mjs}\" \".github/**/*.yml\"",
+    "format:check": "prettier --check \"scripts/**/*.mjs\" \"*.{json,mjs}\" \".github/**/*.yml\"",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "verify": "npm run security:check && npm run lint && npm run format:check && npm run typecheck && npm test && npm run build",
+    "preview": "vite preview",
+    "package:win:update": "node scripts/package-update.mjs",
+    "verify:update": "vitest run tests/updateService.test.ts",
+    "publish:github": "node scripts/publish-github.mjs"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "iconv-lite": "^0.7.3",
     "lucide-react": "^1.28.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.5.0"
+    "react-router-dom": "7.18.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
@@ -30,9 +43,50 @@
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
     "electron": "^35.7.5",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.8.0",
     "jsdom": "^26.1.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.65.0",
     "vite": "^6.3.2",
     "vitest": "^3.1.1"
+  },
+  "build": {
+    "appId": "com.allegrotoolkitmanager.atm",
+    "productName": "ATM - Allegro Toolkit Manager",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "data/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.svg",
+      "executableName": "ATM",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "ATM-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ATM - Allegro Toolkit Manager"
+    }
   }
 }

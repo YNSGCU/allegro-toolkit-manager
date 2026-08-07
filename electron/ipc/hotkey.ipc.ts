@@ -11,6 +11,8 @@ import { createBackup } from '../../core/backup/createBackup';
 import { createApplyPlan, type PlanAction } from '../../core/apply/createApplyPlan';
 import { applyChanges } from '../../core/apply/applyChanges';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { checkHotkeyProfileCompatibility } from '../../core/environment/compatibility';
+import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
 import { validateSkillReferences } from '../../core/validator/validateSkillRefs';
 import { scanAllSkills } from '../../core/skill/scanSkill';
 import { buildCommandRegistry } from '../../core/skill/commandRegistry';
@@ -22,7 +24,7 @@ import {
   copyProfile, deleteProfile, renameProfile,
   exportProfileToJson, importProfileFromJson,
   diffProfiles, getOrCreateDefaultProfile,
-  bindingToProfileBinding,
+  bindingToProfileBinding, getProfilesDir, getProfileFilePath,
 } from '../../core/profile/hotkeyProfile';
 import type { ApplyPlan, HotkeyBinding, HotkeyEditValidation, ProfileDiff } from '../../src/types/hotkey';
 import type { CommandRegistry } from '../../src/types/skill';
@@ -189,6 +191,8 @@ export function registerHotkeyIpc(): void {
       if (actions.length === 0) return { success: false, error: '没有需要执行的操作' };
       const plan = createApplyPlan(actions, envInfo.pcbenvPath);
       plan.managedBindings = planBindings;
+      plan.environmentId = envInfo.environmentId ?? null;
+      plan.environmentPcbenvPath = envInfo.pcbenvPath;
       return { success: true, data: plan };
     } catch (err) {
       return { success: false, error: `生成 Apply Plan 失败: ${err instanceof Error ? err.message : String(err)}` };
@@ -201,6 +205,8 @@ export function registerHotkeyIpc(): void {
       const plan: ApplyPlan = JSON.parse(planJson);
       const envInfo = locateEnvironment();
       if (!envInfo.pcbenvPath) return { success: false, error: '未找到 pcbenv 路径' };
+      if (plan.environmentId && plan.environmentId !== envInfo.environmentId) return { success: false, error: '当前 Allegro 环境已变化，请重新生成 Apply Plan' };
+      if (plan.environmentPcbenvPath && path.normalize(plan.environmentPcbenvPath).toLowerCase() !== path.normalize(envInfo.pcbenvPath).toLowerCase()) return { success: false, error: 'Apply Plan 目标 pcbenv 已变化，请重新生成计划' };
       const result = applyChanges(plan, plan.managedBindings || [], envInfo.pcbenvPath);
       return result;
     } catch (err) {
@@ -230,10 +236,66 @@ export function registerHotkeyIpc(): void {
     try {
       const { envInfo } = getFullEnvInfo();
       if (!envInfo.pcbenvPath) return { success: false, error: 'pcbenv 路径未设置' };
-      const profile = createProfile(envInfo.pcbenvPath, name, description);
+      const profile = createProfile(envInfo.pcbenvPath, name, description, undefined, {
+        sourceEnvironmentId: envInfo.environmentId ?? null,
+        sourceAllegroVersion: envInfo.allegroVersion ?? null,
+        testedAllegroVersions: envInfo.allegroVersion ? [envInfo.allegroVersion] : [],
+      });
       return { success: !!profile, data: profile };
     } catch (err) {
       return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle('profile:check-compatibility', async (_event, profileId: string, targetEnvironmentId: string) => {
+    try {
+      const { envInfo } = getFullEnvInfo();
+      if (!envInfo.pcbenvPath) return { success: false, error: '当前环境未找到 pcbenv' };
+      const profile = loadProfile(envInfo.pcbenvPath, profileId);
+      const registry = loadEnvironmentRegistry();
+      const target = registry.environments.find((item) => item.id === targetEnvironmentId);
+      if (!profile || !target) return { success: false, error: '来源方案或目标环境不存在' };
+      return { success: true, data: checkHotkeyProfileCompatibility(profile, target) };
+    } catch (err) {
+      return { success: false, error: `兼容性检查失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('profile:migrate', async (_event, profileId: string, targetEnvironmentId: string) => {
+    try {
+      const { envInfo } = getFullEnvInfo();
+      if (!envInfo.pcbenvPath) return { success: false, error: '当前环境未找到 pcbenv' };
+      const profile = loadProfile(envInfo.pcbenvPath, profileId);
+      const registry = loadEnvironmentRegistry();
+      const target = registry.environments.find((item) => item.id === targetEnvironmentId);
+      if (!profile || !target) return { success: false, error: '来源方案或目标环境不存在' };
+      const report = checkHotkeyProfileCompatibility(profile, target);
+      if (report.verdict === 'blocked') return { success: false, error: '兼容性预检发现阻断项，请先处理绝对路径等问题', data: report };
+      if (path.normalize(target.pcbenvPath).toLowerCase() === path.normalize(envInfo.pcbenvPath).toLowerCase()) {
+        return { success: true, data: { profile, report, sharedPcbenv: true } };
+      }
+      const migrated = createProfile(
+        target.pcbenvPath,
+        `${profile.name}（迁移）`,
+        `从 Allegro ${profile.sourceAllegroVersion || envInfo.allegroVersion || '未知版本'} 迁移`,
+        JSON.parse(JSON.stringify(profile.bindings)),
+        {
+          sourceEnvironmentId: profile.sourceEnvironmentId || envInfo.environmentId || null,
+          sourceAllegroVersion: profile.sourceAllegroVersion || envInfo.allegroVersion || null,
+          testedAllegroVersions: profile.testedAllegroVersions || [],
+          targetCompatibility: {
+            intendedEnvironmentId: target.id,
+            intendedAllegroVersion: target.allegroVersion,
+            lastCheckedAt: new Date().toISOString(),
+            lastVerdict: report.verdict,
+          },
+        },
+      );
+      return migrated
+        ? { success: true, data: { profile: migrated, report, sharedPcbenv: false } }
+        : { success: false, error: '无法在目标环境创建方案' };
+    } catch (err) {
+      return { success: false, error: `迁移方案失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 
@@ -367,6 +429,7 @@ export function registerHotkeyIpc(): void {
 
   /** 编辑快捷键时的实时检测 */
   ipcMain.handle('hotkey:validate-edit', async (_event, editData: {
+    bindingId?: string;
     type: 'funckey' | 'alias';
     key: string;
     command: string;
@@ -404,7 +467,7 @@ export function registerHotkeyIpc(): void {
       // 3. 检测 env 是否已有相同按键
       if (editData.currentEnvBindings) {
         const dup = editData.currentEnvBindings.find(
-          (b: any) => b.key?.toLowerCase() === lowerKey && b.type === editData.type,
+          (b: any) => b.id !== editData.bindingId && b.key?.toLowerCase() === lowerKey && b.type === editData.type,
         );
         if (dup) {
           result.duplicateInEnv = true;
@@ -415,7 +478,7 @@ export function registerHotkeyIpc(): void {
       // 4. 检测 Profile 是否已有相同按键
       if (editData.currentProfileBindings) {
         const dup = editData.currentProfileBindings.find(
-          (b: any) => b.key?.toLowerCase() === lowerKey && b.type === editData.type,
+          (b: any) => b.id !== editData.bindingId && b.key?.toLowerCase() === lowerKey && b.type === editData.type,
         );
         if (dup) {
           result.duplicateInProfile = true;
@@ -484,9 +547,14 @@ export function registerHotkeyIpc(): void {
       const { generateEditPlan } = await import('../../core/apply/hotkeyEditPlan');
       const { parseEnvFile } = await import('../../core/parser/parseEnv');
       const { envInfo } = getFullEnvInfo();
-      const overridePath = envInfo.pcbenvPath
-        ? path.join(envInfo.pcbenvPath, 'atm_generated', 'user_command_overrides.json')
-        : undefined;
+      const profileId = editRequest.profileId || currentBinding.profileId;
+      let profileFilePath: string | undefined;
+      if (currentBinding.bindingSource === 'active_profile' || currentBinding.bindingSource === 'imported_profile') {
+        if (!envInfo.pcbenvPath || !profileId) {
+          return { success: false, error: '当前绑定缺少方案信息，无法编辑' };
+        }
+        profileFilePath = getProfileFilePath(getProfilesDir(envInfo.pcbenvPath), profileId);
+      }
 
       // 解析当前 env
       const parseResult = await parseEnvFile(filePath);
@@ -495,8 +563,7 @@ export function registerHotkeyIpc(): void {
         currentBinding,
         filePath,
         parseResult.entries || [],
-        undefined,
-        overridePath,
+        profileFilePath,
       );
 
       return { success: true, data: plan };
@@ -511,15 +578,6 @@ export function registerHotkeyIpc(): void {
       const plan = JSON.parse(planJson);
       const { parseEnvFile } = await import('../../core/parser/parseEnv');
       const parseResult = await parseEnvFile(filePath);
-      // 先备份
-      const { envInfo } = getFullEnvInfo();
-      const backupBase = envInfo.pcbenvPath
-        ? path.join(envInfo.pcbenvPath, 'atm_generated', 'backup')
-        : path.dirname(filePath);
-      if (!fs.existsSync(backupBase)) fs.mkdirSync(backupBase, { recursive: true });
-      const backupName = `env.${Date.now()}.backup`;
-      fs.copyFileSync(filePath, path.join(backupBase, backupName));
-
       const { executeEditPlan } = await import('../../core/apply/hotkeyEditPlan');
       const result = executeEditPlan(JSON.parse(planJson), filePath, parseResult.entries || []);
       return result;

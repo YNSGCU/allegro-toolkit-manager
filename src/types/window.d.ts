@@ -3,16 +3,25 @@
  * 所有页面和组件共享的 window.atm 类型
  */
 import type { ApplyPlan, Conflict, HotkeyBinding, HotkeyProfile } from './hotkey';
-import type { EnvironmentInfo, EnvSourceList, AtmSettings } from './environment';
+import type { EnvironmentInfo, EnvSourceList, AtmSettings, EnvironmentRegistry, AllegroEnvironmentWorkspace, ProfileCompatibilityReport, CompatibilityEvidenceRecord, AllegroRuntimeVerificationResult } from './environment';
 import type { EnvImportPreview, ImportResult, ImportExecuteParams } from './importEnv';
 import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, SkillConfigFile, UsageTreeNode } from './skill';
 import type { RuntimeInfo } from './runtime';
+import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
+import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 
 declare global {
   interface Window {
     atm: {
       // 环境检测
       locateEnvironment: (manualPcbenvPath?: string) => Promise<{ success: boolean; data?: EnvironmentInfo; error?: string }>;
+      listAllegroEnvironments: (refresh?: boolean, manualPcbenvPath?: string) => Promise<{ success: boolean; data?: EnvironmentRegistry; error?: string }>;
+      setActiveAllegroEnvironment: (environmentId: string) => Promise<{ success: boolean; data?: { registry: EnvironmentRegistry; environment?: AllegroEnvironmentWorkspace }; error?: string }>;
+      addAllegroInstallRoot: () => Promise<{ success: boolean; data?: { registry: EnvironmentRegistry; selectedRoot: string } | null; error?: string }>;
+      removeAllegroInstallRoot: (installRoot: string) => Promise<{ success: boolean; data?: EnvironmentRegistry; error?: string }>;
+      listCompatibilityRecords: (filters?: Partial<Pick<CompatibilityEvidenceRecord, 'environmentId' | 'scope' | 'subjectId'>>) => Promise<{ success: boolean; data?: CompatibilityEvidenceRecord[]; error?: string }>;
+      saveCompatibilityRecord: (record: Omit<CompatibilityEvidenceRecord, 'id' | 'checkedAt'>) => Promise<{ success: boolean; data?: CompatibilityEvidenceRecord; error?: string }>;
+      verifyAllegroRuntime: (environmentId: string) => Promise<{ success: boolean; data?: { result: AllegroRuntimeVerificationResult; record: CompatibilityEvidenceRecord }; error?: string }>;
       selectPcbenv: () => Promise<{ success: boolean; data?: string | null; error?: string }>;
       checkFileAccess: (filePath: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       getHealthScore: () => Promise<{ success: boolean; data?: any; error?: string }>;
@@ -46,6 +55,8 @@ declare global {
       saveProfileBindings: (profileId: string, bindings: any[]) => Promise<{ success: boolean; data?: HotkeyProfile; error?: string }>;
       setAppliedHotkeyProfile: (profileId: string) => Promise<{ success: boolean; error?: string }>;
       getAppliedHotkeyProfile: () => Promise<{ success: boolean; data?: { profileId: string }; error?: string }>;
+      checkHotkeyProfileCompatibility: (profileId: string, targetEnvironmentId: string) => Promise<{ success: boolean; data?: ProfileCompatibilityReport; error?: string }>;
+      migrateHotkeyProfile: (profileId: string, targetEnvironmentId: string) => Promise<{ success: boolean; data?: { profile: HotkeyProfile; report: ProfileCompatibilityReport; sharedPcbenv: boolean }; error?: string }>;
 
       // 保留键
       getReservedBindings: () => Promise<{ success: boolean; data?: any; error?: string }>;
@@ -202,9 +213,42 @@ declare global {
       skillProfileCreateApplyPlan: (profileJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       skillProfileExecuteApplyPlan: (planJson: string) => Promise<{ success: boolean; appliedSteps?: number; totalSteps?: number; error?: string }>;
 
+      // ===== Symphony 协同模式适配 =====
+      /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */
+      symphonyCheck: () => Promise<{ success: boolean; data?: any; error?: string }>;
+      /** ?? symphony_skill.txt ??????? Apply Plan? */
+      symphonyGeneratePlan: (optionsJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+      /** 执行 Symphony 登记计划 */
+      symphonyApplyPlan: (planJson: string) => Promise<{ success: boolean; appliedSteps?: number; totalSteps?: number; error?: string }>;
+      /** ?? AXL ??????? */
+      symphonyTableInfo: () => Promise<{ success: boolean; data?: any; error?: string }>;
+
       // ===== V5.4 运行时版本自检 =====
       /** 获取运行时版本信息（三层一致性检测用） */
       getRuntimeInfo: () => Promise<{ success: boolean; data?: RuntimeInfo; error?: string }>;
+      // ===== 閰嶈壊鏂规(配色方案) =====
+      colorCheckBridge: () => Promise<{ success: boolean; data?: ColorBridgeStatus; error?: string }>;
+      colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupStatus; error?: string }>;
+      colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
+      colorExecuteBridgeEnablePlan: (planJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+      colorCapture: () => Promise<{ success: boolean; data?: { snapshot: ColorSchemeSnapshot; bridgeStatus: ColorBridgeStatus }; error?: string }>;
+      colorApply: (schemeId: string, applyVisibility?: boolean) => Promise<{ success: boolean; data?: { result: ColorApplyResult; schemeName: string; sourceAllegroVersion: string | null; targetAllegroVersion: string | null }; error?: string }>;
+      colorLoadSchemes: () => Promise<{ success: boolean; data?: ColorSchemeStore; error?: string }>;
+      colorCreateScheme: (snapshot: ColorSchemeSnapshot, name: string, description?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
+      colorCopyScheme: (schemeId: string, newName?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
+      colorRenameScheme: (schemeId: string, newName: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
+      colorDeleteScheme: (schemeId: string) => Promise<{ success: boolean; error?: string }>;
+      colorSetActiveScheme: (schemeId: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
+      colorUpdateScheme: (schemeId: string, updates: { palette?: ColorSchemeSnapshot['palette']; layers?: ColorSchemeSnapshot['layers'] }) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
+      colorImportCol: () => Promise<{ success: boolean; data?: { palette: ColorSchemeSnapshot['palette']; background: ColorSchemeSnapshot['background']; fileName: string; filePath: string } | null; error?: string }>;
+      colorExportCol: (schemeId: string) => Promise<{ success: boolean; data?: string | null; error?: string }>;
+      getUpdateState: () => Promise<UpdateState>;
+      getUpdateSettings: () => Promise<UpdateSettingsView>;
+      saveUpdateSettings: (settings: UpdateSettings) => Promise<UpdateSettingsView>;
+      checkForUpdates: () => Promise<UpdateState>;
+      downloadUpdate: () => Promise<UpdateState>;
+      installUpdate: () => Promise<void>;
+      onUpdateState: (listener: (state: UpdateState) => void) => () => void;
     };
   }
 }

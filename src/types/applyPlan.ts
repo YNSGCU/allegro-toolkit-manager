@@ -28,6 +28,9 @@ export interface ApplyPlan {
   requiresRestart?: boolean;
   targetFiles: string[];
   status: ApplyPlanStatus;
+  /** 生成计划时锁定的 Allegro 环境 */
+  environmentId?: string | null;
+  environmentPcbenvPath?: string | null;
   /** 兼容旧版 summary 字段 */
   summary?: string;
   /** 兼容旧版 warnings 字段 */
@@ -105,6 +108,8 @@ export interface ApplyPlanBackup {
   sourceFile: string;
   backupFile: string;
   required: boolean;
+  /** 执行前目标是否存在；false 表示撤销/回滚时应删除本次新建文件。 */
+  existedBefore?: boolean;
 }
 
 // ═══════════════════════════════════════════════════

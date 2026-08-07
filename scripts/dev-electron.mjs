@@ -15,11 +15,14 @@ async function waitForVite(port, timeoutMs = 30000) {
       await new Promise((resolve, reject) => {
         const socket = createServer();
         socket.on('error', reject);
-        socket.on('listening', () => { socket.close(); resolve(); });
+        socket.on('listening', () => {
+          socket.close();
+          resolve();
+        });
         socket.listen(port, '127.0.0.1');
       });
       // Port is free — Vite not ready yet
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
     } catch {
       // Port in use — Vite is running
       return;
@@ -48,7 +51,7 @@ async function main() {
   });
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

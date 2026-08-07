@@ -27,6 +27,10 @@ const MODULE_DESC: Record<ApplyPlanModule, string> = {
   environment: '环境',
 };
 
+// 旧快捷键历史使用 { records: [...] } 结构；统一计划使用数组结构，必须分文件存储，
+// 否则两类执行器交替写入时会互相破坏历史数据。
+const APPLY_PLAN_HISTORY_FILE = 'apply_plan_history.json';
+
 /**
  * 创建 ApplyPlan 的工厂函数
  */
@@ -40,6 +44,8 @@ export function createApplyPlan(
     backups?: ApplyPlanBackup[];
     requiresRestart?: boolean;
     targetFiles?: string[];
+    environmentId?: string | null;
+    environmentPcbenvPath?: string | null;
   },
 ): ApplyPlan {
   const now = new Date().toISOString();
@@ -67,6 +73,8 @@ export function createApplyPlan(
     requiresRestart: params.requiresRestart,
     targetFiles,
     status: 'ready',
+    environmentId: params.environmentId,
+    environmentPcbenvPath: params.environmentPcbenvPath,
     summary: `${MODULE_DESC[params.module]}：${params.title} — ${steps.length} 步`,
   };
 }
@@ -113,13 +121,16 @@ export async function executeApplyPlan(
 ): Promise<ApplyResult> {
   let appliedSteps = 0;
   const totalSteps = plan.steps.length;
-  const setUpdates: Array<{ planId: string; stepId: string; status: string }> = [];
 
   try {
     // 1. 创建备份目录
     if (!fs.existsSync(options.backupDir)) {
       fs.mkdirSync(options.backupDir, { recursive: true });
     }
+
+    // 在任何写入前建立完整事务快照。不能只依赖计划中备份步骤的顺序，
+    // 否则新建文件无法撤销，缺失备份步骤的计划也可能直接覆盖用户文件。
+    prepareTransactionBackups(plan, options.backupDir);
 
     // 2. 执行每个步骤
     for (const step of plan.steps) {
@@ -132,7 +143,7 @@ export async function executeApplyPlan(
       } catch (err) {
         options.onStepFail?.(step, err as Error);
         // 尝试回滚
-        await tryRollback(plan, appliedSteps, options.backupDir);
+        await tryRollback(plan);
         return {
           success: false,
           planId: plan.id,
@@ -156,6 +167,9 @@ export async function executeApplyPlan(
       totalSteps,
     };
   } catch (err) {
+    if (appliedSteps > 0) {
+      await tryRollback(plan);
+    }
     return {
       success: false,
       planId: plan.id,
@@ -255,12 +269,26 @@ async function executeStep(
       }
       break;
     }
-    case 'record_history':
-    case 'create_directory':
+    case 'create_directory': {
+      const target = step.targetFile || step.target;
+      if (!target) throw new Error('创建目录步骤缺少目标路径');
+      fs.mkdirSync(target, { recursive: true });
+      break;
+    }
+    case 'delete_file': {
+      const target = step.targetFile || step.target;
+      if (!target) throw new Error('删除文件步骤缺少目标路径');
+      if (!fs.existsSync(target)) break;
+      if (!fs.statSync(target).isFile()) throw new Error(`拒绝删除非文件目标: ${target}`);
+      fs.rmSync(target);
+      break;
+    }
     case 'move_file':
-    case 'delete_file':
     case 'archive_file': {
-      // 预留 — 未来实现
+      throw new Error(`尚未定义安全的 ${step.type} 目标路径协议，已拒绝执行`);
+    }
+    case 'record_history': {
+      // 历史由 executeApplyPlan 在事务成功后统一写入。
       break;
     }
   }
@@ -271,21 +299,74 @@ async function executeStep(
  */
 async function tryRollback(
   plan: ApplyPlan,
-  appliedSteps: number,
-  backupDir: string,
 ): Promise<void> {
-  const applied = plan.steps.slice(0, appliedSteps);
-  for (const step of applied.reverse()) {
-    if (step.backupTo && fs.existsSync(step.backupTo)) {
-      try {
-        if (step.targetFile) {
-          // 备份可能是 GBK 菜单脚本或其他二进制内容，按字节恢复，禁止转码。
-          fs.copyFileSync(step.backupTo, step.targetFile);
-        }
-      } catch {
-        // 回滚失败时静默继续
+  for (const backup of [...plan.backups].reverse()) {
+    try {
+      if (backup.existedBefore === false) {
+        if (fs.existsSync(backup.sourceFile)) fs.rmSync(backup.sourceFile, { force: true });
+      } else if (backup.backupFile && fs.existsSync(backup.backupFile)) {
+        const targetDir = path.dirname(backup.sourceFile);
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        // 备份可能是 GBK 菜单脚本或其他二进制内容，按字节恢复，禁止转码。
+        fs.copyFileSync(backup.backupFile, backup.sourceFile);
       }
+    } catch {
+      // 回滚失败时继续恢复其他目标，备份仍保留供手动处理。
     }
+  }
+}
+
+const MUTATING_STEP_TYPES = new Set<ApplyPlanStepType>([
+  'comment_line',
+  'write_file',
+  'create_file',
+  'generate_loader',
+  'write_skill_loader',
+  'write_bootstrap',
+  'generate_menu',
+  'modify_line',
+  'append_line',
+  'update_json',
+  'ensure_bootstrap',
+  'modify_ilinit',
+  'delete_file',
+  'archive_file',
+  'move_file',
+]);
+
+/** 在第一项修改前补齐并写入每个目标的事务备份。 */
+function prepareTransactionBackups(plan: ApplyPlan, backupDir: string): void {
+  const targets = [...new Set(
+    plan.steps
+      .filter(step => MUTATING_STEP_TYPES.has(step.type))
+      .map(step => step.targetFile || step.target)
+      .filter((target): target is string => Boolean(target)),
+  )];
+
+  for (const target of targets) {
+    const existedBefore = fs.existsSync(target);
+    let backup = plan.backups.find(item => path.resolve(item.sourceFile) === path.resolve(target));
+
+    if (!backup) {
+      backup = {
+        sourceFile: target,
+        backupFile: existedBefore
+          ? path.join(backupDir, `${path.basename(target)}.${Date.now()}_${Math.random().toString(36).slice(2, 8)}.bak`)
+          : '',
+        required: existedBefore,
+      };
+      plan.backups.push(backup);
+    }
+
+    backup.existedBefore = existedBefore;
+    if (!existedBefore) continue;
+
+    if (!backup.backupFile) {
+      throw new Error(`目标文件缺少备份路径: ${target}`);
+    }
+    const backupParent = path.dirname(backup.backupFile);
+    if (!fs.existsSync(backupParent)) fs.mkdirSync(backupParent, { recursive: true });
+    fs.copyFileSync(target, backup.backupFile);
   }
 }
 
@@ -297,7 +378,7 @@ export async function recordHistory(
   historyDir: string,
   backupDir: string,
 ): Promise<void> {
-  const historyFile = path.join(historyDir, 'change_history.json');
+  const historyFile = path.join(historyDir, APPLY_PLAN_HISTORY_FILE);
 
   let history: ChangeHistoryItem[] = [];
   if (fs.existsSync(historyFile)) {
@@ -339,7 +420,7 @@ export async function undoLastChange(
   historyDir: string,
   backupDir: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const historyFile = path.join(historyDir, 'change_history.json');
+  const historyFile = path.join(historyDir, APPLY_PLAN_HISTORY_FILE);
   if (!fs.existsSync(historyFile)) {
     return { success: false, error: '没有可撤销的历史记录' };
   }
@@ -357,7 +438,17 @@ export async function undoLastChange(
 
     // 从备份恢复
     for (const backup of last.backups) {
-      if (fs.existsSync(backup.backupFile)) {
+      if (backup.existedBefore === false) {
+        if (fs.existsSync(backup.sourceFile)) {
+          const currentBackup = path.join(
+            backupDir,
+            `${path.basename(backup.sourceFile)}.${Date.now()}.undo`,
+          );
+          if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+          fs.copyFileSync(backup.sourceFile, currentBackup);
+          fs.rmSync(backup.sourceFile, { force: true });
+        }
+      } else if (backup.backupFile && fs.existsSync(backup.backupFile)) {
         // 先备份当前文件（用于重做）
         const currentBackup = backup.backupFile + '.undo';
         if (fs.existsSync(backup.sourceFile)) {
@@ -384,7 +475,7 @@ export async function undoLastChange(
 export function getChangeHistory(
   historyDir: string,
 ): ChangeHistoryItem[] {
-  const historyFile = path.join(historyDir, 'change_history.json');
+  const historyFile = path.join(historyDir, APPLY_PLAN_HISTORY_FILE);
   if (!fs.existsSync(historyFile)) {
     return [];
   }

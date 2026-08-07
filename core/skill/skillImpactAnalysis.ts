@@ -380,5 +380,10 @@ export function createDeletePlan(
     steps,
     warnings,
     requiresRestart,
+    operation: 'delete',
+    targetSkillPath: targetSkill.path,
+    targetSkillId: targetSkill.id,
+    targetEntryCommands: targetSkill.entryCommands.map(command => command.name),
+    deleteOption: option,
   };
 }

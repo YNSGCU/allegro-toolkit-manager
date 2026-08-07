@@ -3,6 +3,7 @@
  *
  * 菜单数据模型、验证问题、Profile 类型
  */
+import type { ProfileCompatibilityMetadata } from './environment';
 
 // ═══════════════════════════════════════════════════
 // 菜单项
@@ -105,6 +106,10 @@ export interface MenuProfile {
   items: MenuItemConfig[];
   createdAt: string;
   updatedAt: string;
+  sourceEnvironmentId?: string | null;
+  sourceAllegroVersion?: string | null;
+  testedAllegroVersions?: string[];
+  targetCompatibility?: ProfileCompatibilityMetadata;
 }
 
 /** 菜单配置源文件格式（支持多 profile） */

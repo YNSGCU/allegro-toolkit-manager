@@ -3,9 +3,12 @@
  */
 import React, { useState, useMemo } from 'react';
 import { BusinessDialog } from '../shared/ui';
+import type { HotkeyBinding } from '../types/hotkey';
+import HotkeyCommandAssist from './HotkeyCommandAssist';
 
 interface AddHotkeyDialogProps {
   physicalKey: string;
+  currentBindings?: HotkeyBinding[];
   onClose: () => void;
   onConfirm: (draft: { key: string; command: string; type: 'funckey' | 'alias' }) => void;
 }
@@ -36,7 +39,12 @@ function generateRawKey(physicalKey: string, modifiers: string[]): string {
   }).join('+') + '+' + base;
 }
 
-const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose, onConfirm }) => {
+const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({
+  physicalKey,
+  currentBindings = [],
+  onClose,
+  onConfirm,
+}) => {
   const [selectedLayerIdx, setSelectedLayerIdx] = useState(0);
   const [command, setCommand] = useState('');
   const [bindingType, setBindingType] = useState<'funckey' | 'alias'>('funckey');
@@ -52,8 +60,31 @@ const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose,
     return [...mods, physicalKey.toLowerCase()].join('+');
   }, [physicalKey, selectedLayerIdx]);
 
+  const occupiedBinding = useMemo(
+    () => currentBindings.find(
+      (binding) => [
+        'user_env_original',
+        'atm_managed_block',
+        'active_profile',
+        'imported_profile',
+      ].includes(binding.bindingSource)
+        && binding.type === bindingType
+        && binding.key.toLowerCase() === rawKey.toLowerCase(),
+    ),
+    [bindingType, currentBindings, rawKey],
+  );
+
+  const referenceConflict = useMemo(
+    () => currentBindings.find(
+      (binding) => binding !== occupiedBinding
+        && binding.type === bindingType
+        && binding.key.toLowerCase() === rawKey.toLowerCase(),
+    ),
+    [bindingType, currentBindings, occupiedBinding, rawKey],
+  );
+
   const handleConfirm = () => {
-    if (!command.trim()) return;
+    if (!command.trim() || occupiedBinding) return;
     onConfirm({ key: rawKey, command: command.trim(), type: bindingType });
   };
 
@@ -70,7 +101,7 @@ const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose,
             type="button"
             className="btn btn-primary"
             onClick={handleConfirm}
-            disabled={!command.trim()}
+            disabled={!command.trim() || Boolean(occupiedBinding)}
           >
             生成 Apply Plan
           </button>
@@ -117,14 +148,32 @@ const AddHotkeyDialog: React.FC<AddHotkeyDialogProps> = ({ physicalKey, onClose,
 
         <div className="ui-dialog-field ui-dialog-field--code">
           <label htmlFor="add-hotkey-command">原始命令</label>
-          <input
+          <HotkeyCommandAssist
             id="add-hotkey-command"
-            type="text"
             value={command}
-            onChange={(e) => setCommand(e.target.value)}
+            onChange={setCommand}
+            bindings={currentBindings}
+            seedQuery={physicalKey.length === 1 ? physicalKey : ''}
             placeholder="例：move、add connect、zoom fit"
-            data-dialog-initial-focus
+            initialFocus
           />
+        </div>
+
+        {occupiedBinding ? (
+          <div className="ui-dialog-alert ui-dialog-alert--danger" role="alert">
+            {displayKey} 已绑定到“{occupiedBinding.command}”。请更换修饰键层，或返回列表编辑原绑定。
+          </div>
+        ) : null}
+
+        {!occupiedBinding && referenceConflict ? (
+          <div className="ui-dialog-alert ui-dialog-alert--warning">
+            {displayKey} 在“{referenceConflict.bindingSource}”中已有“{referenceConflict.command}”。仍可生成计划，但可能覆盖默认或参考配置。
+          </div>
+        ) : null}
+
+        <div className="ui-dialog-alert ui-dialog-alert--info">
+          <strong>使用建议</strong>
+          <span>Funckey 适合物理键和组合键；Alias 适合命令行中的多字符缩写。复杂命令请先在 Allegro Command 窗口验证。</span>
         </div>
 
         <div className="ui-dialog-preview" aria-live="polite">

@@ -15,6 +15,7 @@ describe('app shell config', () => {
       'hotkeys',
       'skills',
       'menu',
+      'colors',
     ]);
   });
 

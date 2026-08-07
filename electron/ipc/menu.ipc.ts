@@ -237,6 +237,8 @@ export function registerMenuIpc(): void {
         backups: backupEntries.map(entry => entry.backup),
         requiresRestart: true,
         targetFiles: [profilePath, menuIlPath, bootstrapPath, ilinitPath],
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
       });
 
       return { success: true, data: plan };
@@ -254,6 +256,9 @@ export function registerMenuIpc(): void {
       if (plan.module !== 'menu') {
         return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '拒绝执行非菜单 Apply Plan' };
       }
+      const envInfo = locateEnvironment();
+      if (plan.environmentId && plan.environmentId !== envInfo.environmentId) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '当前 Allegro 环境已变化，请重新生成 Apply Plan' };
+      if (plan.environmentPcbenvPath && path.normalize(plan.environmentPcbenvPath).toLowerCase() !== path.normalize(envInfo.pcbenvPath || '').toLowerCase()) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: 'Apply Plan 目标 pcbenv 已变化，请重新生成计划' };
       const atmDir = getAtmDir();
       return await executeApplyPlan(plan, {
         backupDir: path.join(atmDir, 'backups'),
@@ -342,6 +347,13 @@ export function registerMenuIpc(): void {
       const { loadMenuProfileStore, saveMenuProfileStore, createProfile } = require('../../core/menu/menuManager');
       const store = loadMenuProfileStore(atmDir);
       const updated = createProfile(store, name, description);
+      const envInfo = locateEnvironment();
+      const created = updated.profiles[updated.profiles.length - 1];
+      if (created) {
+        created.sourceEnvironmentId = envInfo.environmentId ?? null;
+        created.sourceAllegroVersion = envInfo.allegroVersion ?? null;
+        created.testedAllegroVersions = envInfo.allegroVersion ? [envInfo.allegroVersion] : [];
+      }
       saveMenuProfileStore(atmDir, updated);
       return { success: true, data: { store: updated } };
     } catch (err) {
@@ -466,6 +478,8 @@ export function registerMenuIpc(): void {
         })),
         requiresRestart: true,
         targetFiles: [profilePath, menuIlPath],
+        environmentId: locateEnvironment().environmentId ?? null,
+        environmentPcbenvPath: locateEnvironment().pcbenvPath,
       });
 
       return { success: true, data: plan };

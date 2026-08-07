@@ -51,7 +51,7 @@ describe('locateEnvironment', () => {
     process.env.HOME = emptyDir;
     process.env.USERPROFILE = emptyDir;
 
-    const envInfo = locateEnvironment();
+    const envInfo = locateEnvironment(emptyDir);
     // 在所有候选路径都没有 pcbenv 时，pcbenvPath 应为 null
     expect(envInfo.warnings.length).toBeGreaterThan(0);
     // 不严格判断 pcbenvPath 是否为 null，因为有 os.userInfo() 回退

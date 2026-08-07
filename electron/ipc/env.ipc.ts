@@ -11,8 +11,106 @@ import {
   loadSettings, saveSettings, setActiveEnvPath,
   addReferenceEnvPath, removeReferenceEnvPath,
 } from '../../core/settings/atmSettings';
+import {
+  loadEnvironmentRegistry,
+  refreshEnvironmentRegistry,
+  setActiveEnvironment,
+  addManualInstallRoot,
+  removeManualInstallRoot,
+} from '../../core/environment/environmentRegistry';
+import { listCompatibilityRecords, saveCompatibilityRecord } from '../../core/environment/compatibilityRecords';
+import { verifyAllegroRuntimeViaVibeBridge } from '../../core/environment/vibeBridgeProbe';
 
 export function registerEnvIpc(): void {
+  ipcMain.handle('env:list-workspaces', (_event, refresh = false, manualPcbenvPath?: string) => {
+    try {
+      const stored = loadEnvironmentRegistry();
+      const registry = refresh || manualPcbenvPath || stored.environments.length === 0
+        ? refreshEnvironmentRegistry(manualPcbenvPath)
+        : stored;
+      return { success: true, data: registry };
+    } catch (err) {
+      return { success: false, error: `扫描 Allegro 环境失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('env:set-active-workspace', (_event, environmentId: string) => {
+    try {
+      const registry = setActiveEnvironment(environmentId);
+      const environment = registry.environments.find((item) => item.id === environmentId);
+      return { success: true, data: { registry, environment } };
+    } catch (err) {
+      return { success: false, error: `切换 Allegro 环境失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+    // 手动添加 Allegro 安装根目录（新电脑上自动扫描找不到时用）
+  ipcMain.handle('env:add-install-root', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: '选择 Allegro 安装根目录（SPB_xx.x / Allegro_xx.x）',
+        properties: ['openDirectory'],
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null };
+      }
+      const selectedRoot = result.filePaths[0];
+      const registry = addManualInstallRoot(selectedRoot);
+      return { success: true, data: { registry, selectedRoot } };
+    } catch (err) {
+      return { success: false, error: `添加安装目录失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 移除手动安装目录
+  ipcMain.handle('env:remove-install-root', (_event, installRoot: string) => {
+    try {
+      const registry = removeManualInstallRoot(installRoot);
+      return { success: true, data: registry };
+    } catch (err) {
+      return { success: false, error: `移除安装目录失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+ipcMain.handle('env:list-compatibility-records', (_event, filters?: any) => {
+    try {
+      return { success: true, data: listCompatibilityRecords(filters) };
+    } catch (err) {
+      return { success: false, error: `读取兼容记录失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('env:save-compatibility-record', (_event, record: any) => {
+    try {
+      return { success: true, data: saveCompatibilityRecord(record) };
+    } catch (err) {
+      return { success: false, error: `保存兼容记录失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('env:verify-vibe-runtime', async (_event, environmentId: string) => {
+    try {
+      const registry = loadEnvironmentRegistry();
+      const environment = registry.environments.find((item) => item.id === environmentId);
+      if (!environment) return { success: false, error: '目标 Allegro 环境不存在' };
+      const result = await verifyAllegroRuntimeViaVibeBridge(environment);
+      const record = saveCompatibilityRecord({
+        environmentId: environment.id,
+        allegroVersion: environment.allegroVersion,
+        scope: 'environment',
+        subjectId: environment.id,
+        subjectType: 'environment',
+        status: result.status,
+        evidenceSource: 'vibe_bridge',
+        summary: result.message,
+        details: JSON.stringify({ actualVersion: result.actualVersion, fullVersion: result.fullVersion, programName: result.programName }),
+      });
+      return { success: true, data: { result, record } };
+    } catch (err) {
+      return { success: false, error: `Vibe Bridge 验证失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
   // 定位 Allegro 配置环境
   ipcMain.handle('env:locate', (_event, manualPcbenvPath?: string) => {
     try {

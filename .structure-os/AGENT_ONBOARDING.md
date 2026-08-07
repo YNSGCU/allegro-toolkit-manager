@@ -12,6 +12,8 @@
 
 ```bash
 npm test
+npm run verify
+npm run package:dir
 npx.cmd tsc --noEmit
 npx.cmd tsc -p tsconfig.electron.json --noEmit
 npx.cmd electron --version

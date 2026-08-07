@@ -1,0 +1,56 @@
+name: 发布 Windows 安装包并构建软件内更新
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+# 需要 contents: write 才能创建 GitHub Release 上传资产
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装锁定依赖
+        run: npm ci
+
+      - name: 对应版本与 tag 一致性检查
+        shell: pwsh
+        run: |
+          $tagVersion = $env:GITHUB_REF_NAME.TrimStart('v')
+          $pkgVersion = (Get-Content package.json | ConvertFrom-Json).version
+          if ($tagVersion -ne $pkgVersion) {
+            throw "tag $env:GITHUB_REF_NAME 与 package.json 版本 $pkgVersion 不一致，请修改后重推"
+          }
+          Write-Output "version=$pkgVersion"
+
+      - name: 打包并发布到 GitHub Releases
+        shell: pwsh
+        env:
+          ATM_GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run publish:github
+
+      - name: 确认发布产物
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -LiteralPath release -Filter 'ATM-Setup-*.exe' | Select-Object -First 1
+          $yml = Test-Path -LiteralPath release/latest.yml
+          if (-not $exe) { throw '未找到安装包' }
+          if (-not $yml) { throw '未找到 latest.yml，软件内更新不可用' }
+          Write-Output "RELEASE_ARTIFACT=$($exe.Name)"
+          Write-Output "LATEST_YML=present"

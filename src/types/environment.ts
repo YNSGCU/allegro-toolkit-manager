@@ -14,6 +14,16 @@ export interface FileStatus {
 
 /** 环境检测结果 */
 export interface EnvironmentInfo {
+  /** ATM 环境工作区标识（多版本管理） */
+  environmentId?: string;
+  /** Allegro 版本，例如 17.4、23.1 */
+  allegroVersion?: string | null;
+  /** Allegro 安装根目录 */
+  installRoot?: string | null;
+  /** Allegro 可执行文件路径（如果能定位） */
+  executablePath?: string | null;
+  /** 与当前工作区共享同一个 pcbenv 的其他版本 */
+  sharedEnvironmentIds?: string[];
   homePath: string | null;
   pcbenvPath: string | null;
   envFilePath: string | null;
@@ -128,4 +138,80 @@ export interface AtmSettings {
   activeUserEnvPath: string | null;
   referenceEnvPaths: string[];
   lastScanTime?: string;
+}
+
+/** 一个可被 ATM 选择、扫描和写入的 Allegro 工作区。 */
+export interface AllegroEnvironmentWorkspace {
+  id: string;
+  name: string;
+  allegroVersion: string | null;
+  installRoot: string | null;
+  executablePath: string | null;
+  homePath: string | null;
+  pcbenvPath: string;
+  envFilePath: string;
+  ilinitFilePath: string;
+  writable: boolean;
+  exists: boolean;
+  sharedWithIds: string[];
+  source: 'discovered' | 'manual' | 'imported';
+  lastVerifiedAt?: string;
+}
+
+export interface EnvironmentRegistry {
+  version: number;
+  activeEnvironmentId: string | null;
+  environments: AllegroEnvironmentWorkspace[];
+  /** 手动指定的 Allegro 安装根目录（SPB_xx.x 级别），用于新电脑上自动扫描找不到时的补充 */
+  manualInstallRoots?: string[];
+  updatedAt: string;
+}
+
+export type CompatibilitySeverity = 'info' | 'warning' | 'error';
+
+export interface CompatibilityFinding {
+  severity: CompatibilitySeverity;
+  code: string;
+  title: string;
+  description: string;
+}
+
+export interface ProfileCompatibilityReport {
+  sourceVersion: string | null;
+  targetVersion: string | null;
+  verdict: 'portable' | 'warning' | 'blocked';
+  findings: CompatibilityFinding[];
+}
+
+export interface ProfileCompatibilityMetadata {
+  intendedEnvironmentId?: string | null;
+  intendedAllegroVersion?: string | null;
+  lastCheckedAt?: string;
+  lastVerdict?: ProfileCompatibilityReport['verdict'];
+}
+
+export interface CompatibilityEvidenceRecord {
+  id: string;
+  environmentId: string;
+  allegroVersion: string | null;
+  scope: 'environment' | 'hotkey' | 'skill' | 'menu';
+  subjectId: string;
+  subjectType: 'environment' | 'profile' | 'command' | 'skill' | 'menu';
+  status: 'unverified' | 'static_pass' | 'runtime_pass' | 'warning' | 'blocked';
+  evidenceSource: 'static' | 'vibe_bridge' | 'manual';
+  summary: string;
+  details?: string;
+  checkedAt: string;
+}
+
+export interface AllegroRuntimeVerificationResult {
+  connected: boolean;
+  matchedEnvironment: boolean;
+  expectedVersion: string | null;
+  actualVersion: string | null;
+  fullVersion: string | null;
+  programName: string | null;
+  bridgeWorkspace: string | null;
+  status: 'runtime_pass' | 'warning' | 'unverified';
+  message: string;
 }

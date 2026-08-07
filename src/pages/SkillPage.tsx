@@ -31,6 +31,7 @@ import SkillDeleteImpactDialog from '../components/SkillDeleteImpactDialog';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
+import SymphonyDialog from '../components/SymphonyDialog';
 import { ApplyPlanDialog, formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'list' | 'registry' | 'refs';
@@ -100,9 +101,10 @@ const SkillPage: React.FC = () => {
 
   // ===== Apply Plan =====
   const [pendingPlan, setPendingPlan] = useState<SkillApplyPlan | null>(null);
-  const [pendingPlanExecutor, setPendingPlanExecutor] = useState<'skill' | 'skill-profile'>('skill');
+  const [pendingPlanExecutor, setPendingPlanExecutor] = useState<'skill' | 'skill-profile' | 'symphony'>('skill');
   const [applyResult, setApplyResult] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const [showSymphonyDialog, setShowSymphonyDialog] = useState(false);
 
   // ===== Loader 预览 =====
   const [loaderPreview, setLoaderPreview] = useState<string | null>(null);
@@ -427,7 +429,9 @@ const SkillPage: React.FC = () => {
     try {
       const result = pendingPlanExecutor === 'skill-profile'
         ? await window.atm.skillProfileExecuteApplyPlan(JSON.stringify(pendingPlan))
-        : await window.atm.applySkillChanges(JSON.stringify(pendingPlan));
+        : pendingPlanExecutor === 'symphony'
+          ? await window.atm.symphonyApplyPlan(JSON.stringify(pendingPlan))
+          : await window.atm.applySkillChanges(JSON.stringify(pendingPlan));
       if (result.success) {
         setApplyResult('Apply 成功，请重启 Allegro 生效。');
         setPendingPlan(null);
@@ -519,7 +523,6 @@ const SkillPage: React.FC = () => {
     if (allSkills.length > 0 && Object.keys(skillMetaMap).length < allSkills.length) {
       loadSkillMeta();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSkills.length]);
 
   /** 保存元数据 */
@@ -1185,6 +1188,7 @@ const SkillPage: React.FC = () => {
               { label: '管理 Skill 来源', onClick: () => setShowSourceManager((value) => !value) },
               { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
               { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
+              { label: 'Symphony 协同检查', onClick: () => setShowSymphonyDialog(true) },
               { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
             ]}
           />
@@ -1296,6 +1300,17 @@ const SkillPage: React.FC = () => {
         confirmLabel="确认执行计划"
         onConfirm={handleApplyPlan}
         onCancel={handleCancelPlan}
+      />
+
+      <SymphonyDialog
+        open={showSymphonyDialog}
+        onClose={() => setShowSymphonyDialog(false)}
+        onPlanReady={(plan) => {
+          setPendingPlan(plan);
+          setPendingPlanExecutor('symphony');
+          setApplyResult(null);
+          setShowSymphonyDialog(false);
+        }}
       />
 
       {applyResult && (

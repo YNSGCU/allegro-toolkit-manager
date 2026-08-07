@@ -14,6 +14,18 @@ afterEach(() => {
 });
 
 describe('菜单 Apply Plan 执行引擎', () => {
+  it('将生成计划绑定到环境元数据', () => {
+    const plan = createApplyPlan({
+      title: '绑定环境',
+      module: 'menu',
+      environmentId: 'env-174',
+      environmentPcbenvPath: 'C:\\Users\\test\\pcbenv',
+      steps: [],
+    });
+    expect(plan.environmentId).toBe('env-174');
+    expect(plan.environmentPcbenvPath).toContain('pcbenv');
+  });
+
   it('真实写入菜单脚本、bootstrap 和 allegro.ilinit，并保留备份与历史', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-menu-plan-'));
     tempDirs.push(root);
@@ -77,6 +89,6 @@ describe('菜单 Apply Plan 执行引擎', () => {
     expect(fs.readFileSync(bootstrapPath, 'utf8')).toContain('generated_menu.il');
     expect(fs.readFileSync(ilinitPath, 'utf8')).toContain('bootstrap.il');
     expect(fs.readFileSync(backupPath, 'utf8')).toBe('{"old":true}');
-    expect(fs.existsSync(path.join(root, 'history', 'change_history.json'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'history', 'apply_plan_history.json'))).toBe(true);
   });
 });

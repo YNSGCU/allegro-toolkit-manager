@@ -15,6 +15,8 @@
 - `foundations/workspace.css`：页头、状态条、页面状态和各工作区布局。
 - `foundations/dialogs.css`：统一 Apply Plan、确认框、Toast 和菜单预览对话框。
 
+`controls.css` 同时是表单文字契约：单行输入与选择控件使用 13px、1.4 行高和 10px 水平内边距；`::placeholder` 必须继承控件字体并显式设置颜色与不透明度。业务页面不得在 `App.css` 或组件局部把占位文字设置得比控件正文更小。
+
 公共组件：
 
 - `WorkspacePage`：页面尺寸、密度和滚动策略。
@@ -80,4 +82,9 @@ UI 重置不授权任何直接写文件行为。Hotkey、Skill 和 Menu 的写�
 - `npm run build:renderer`
 - 1220×820、1360×920、1600×856 三档浏览器检查，无页面级横向溢出且可见文字不小于 12px
 
-本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别约为 129.80kB、84.82kB、52.77kB，原 500kB 主包告警未复发。
+本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别约为 163.70kB、84.82kB、52.77kB。快捷键包新增构建时命令词典和辅助组件，原 500kB 主包告警未复发。
+
+
+## Menu tree drag reorder
+
+MenuTree 使用原生 HTML5 drag-and-drop 事件，将拖动项 ID 与 parent ID 放入 DataTransfer。eorderMenuItem() 在纯函数中递归查找同级列表，目标项必须与拖动项拥有相同 parentId，随后重排数组并重新计算各节点 order 与 updatedAt。MenuPage 只更新本地草稿并沿用现有 Apply Plan 持久化链路。
