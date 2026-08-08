@@ -291,6 +291,36 @@ describe('restoreBackupFile', () => {
     const result = restoreBackupFile(pcbenv, backup, { sections: ['pcbenv', 'app', 'ui'] });
     expect(result.restoredFiles).toEqual([]);
   });
+
+  it('只恢复配色分区时不触碰 pcbenv 现有配置', () => {
+    seedPcbenvData();
+    // 预置应用级配色数据，让备份包含 app 分区
+    fs.mkdirSync(path.dirname(getColorSchemeStorePath()), { recursive: true });
+    fs.writeFileSync(
+      getColorSchemeStorePath(),
+      JSON.stringify({ version: '1.0', activeSchemeId: 's1', schemes: [{ id: 's1', name: '板A配色', palette: [], layers: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }], updatedAt: '2026-01-01T00:00:00.000Z' }),
+      'utf-8',
+    );
+    const backup = createBackupFile(pcbenv);
+
+    // 目标 pcbenv 已有用户自己的快捷键方案，恢复前记录现状
+    const userProfilePath = path.join(pcbenv, 'atm_generated', 'profiles', 'user.profile.json');
+    fs.writeFileSync(
+      userProfilePath,
+      JSON.stringify({ id: 'user', name: '用户自己的方案', bindings: [], createdAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
+      'utf-8',
+    );
+
+    const result = restoreBackupFile(pcbenv, backup, { sections: ['app'] });
+
+    // 只恢复应用级（配色/窗口状态），pcbenv 的 profile 文件保持用户原有内容
+    expect(result.restoredSections).toEqual(['app']);
+    expect(fs.existsSync(userProfilePath)).toBe(true);
+    expect(JSON.parse(fs.readFileSync(userProfilePath, 'utf-8')).id).toBe('user');
+    // 配色方案已恢复到应用配置目录
+    expect(fs.existsSync(getColorSchemeStorePath())).toBe(true);
+    expect(JSON.parse(fs.readFileSync(getColorSchemeStorePath(), 'utf-8')).activeSchemeId).toBe('s1');
+  });
 });
 
 describe('collectAppSection', () => {
