@@ -15,6 +15,14 @@
 - Electron 实机巡检已通过 CDP 完成（preload 154 API / 113 条快捷键 / 配色 ceshi 方案 / 备份页）。
 - 阻塞点（需用户桌面会话）：Allegro 已打开 A10_pcb_4DDR3_MID.brd，但 Vibe Bridge 未加载。请在 Allegro 命令窗执行：skill load("C:/Users/89539/.codex/skills/allegro-vibe-bridge/vibe_server.il")，随后可做真实捕获/自定义颜色/应用/撤销/重捕获验证。
 - 安装包安装与升级 E2E、GitHub Release 发布（v0.3.0 Beta）也需用户确认执行。
+
+## 2026-08-08 追加：统一工作区 M1-M3 完成
+
+- M1 数据模型与 CRUD：core/workspace/workspaceManager.ts + workspace.ipc.ts 六通道，默认工作区删除保护。
+- M2 统一预览：core/workspace/buildWorkspacePreview.ts + workspace:preview，环境 + 四类子方案存在性/摘要。
+- M3 规划层：core/workspace/planWorkspaceApply.ts，Skill→菜单→快捷键→配色 顺序 + 环境锁 + 缺失方案跳过。
+- 测试：365 全绿（新增 11 个工作区测试）。版本已提升 0.3.0，NSIS 安装包 ATM-Setup-0.3.0-x64.exe 就绪。
+- 剩余：M3 实际执行链 + M4 页面入口（v0.3.0 后）；真实 Allegro 验证（待用户加载 bridge）。
 ## 待用户桌面会话手动验证
 
 1. Electron 窗口级实机巡检（当前自动化会话无法创建窗口）。
