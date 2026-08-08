@@ -12,6 +12,7 @@ import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
 import type { WorkspaceProfile, WorkspaceProfileStore } from './workspaceProfile';
+import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 
 declare global {
   interface Window {
@@ -265,6 +266,7 @@ declare global {
       workspaceRename: (workspaceId: string, newName: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspaceDelete: (workspaceId: string) => Promise<{ success: boolean; error?: string }>;
       workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
+      workspacePreview: (workspaceId: string) => Promise<{ success: boolean; data?: { preview: WorkspacePreview }; error?: string }>;
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;
       saveUpdateSettings: (settings: UpdateSettings) => Promise<UpdateSettingsView>;

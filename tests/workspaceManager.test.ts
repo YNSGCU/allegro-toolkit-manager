@@ -17,6 +17,7 @@ import {
   renameWorkspace,
   setActiveWorkspace,
 } from '../core/workspace/workspaceManager';
+import { buildWorkspacePreview } from '../core/workspace/buildWorkspacePreview';
 
 let configHome = '';
 
@@ -85,5 +86,74 @@ describe('workspaceManager', () => {
     const store = loadWorkspaceStore();
     expect(store.workspaces.some((item) => item.name === '项目B')).toBe(true);
     expect(JSON.parse(fs.readFileSync(getWorkspaceStorePath(), 'utf-8')).version).toBe('1.0');
+  });
+});
+
+describe('buildWorkspacePreview', () => {
+  const workspace = {
+    id: 'ws_1',
+    name: '项目A',
+    environmentId: 'env_1',
+    hotkeyProfileId: 'hk_1',
+    skillProfileId: 'sk_1',
+    menuProfileId: 'mn_1',
+    colorSchemeId: 'color_1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  it('汇总四类子方案与环境信息', () => {
+    const preview = buildWorkspacePreview(
+      workspace,
+      { environmentId: 'env_1', name: '17.4 环境', pcbenvPath: 'C:/pcbenv', allegroVersion: '17.4' },
+      {
+        hotkeyProfiles: [{ id: 'hk_1', name: '我的快捷键', bindingCount: 42 }],
+        skillProfiles: [{ id: 'sk_1', name: '我的 Skill', itemCount: 5 }],
+        menuProfiles: [{ id: 'mn_1', name: '我的菜单', itemCount: 3 }],
+        colorSchemes: [{ id: 'color_1', name: '板A配色', layerCount: 498, colorCount: 192 }],
+      },
+    );
+
+    expect(preview.workspaceName).toBe('项目A');
+    expect(preview.environment?.allegroVersion).toBe('17.4');
+    expect(preview.hotkey).toMatchObject({ exists: true, name: '我的快捷键', detail: '42 条绑定' });
+    expect(preview.skill).toMatchObject({ exists: true, detail: '5 个条目' });
+    expect(preview.menu).toMatchObject({ exists: true, detail: '3 个菜单项' });
+    expect(preview.color).toMatchObject({ exists: true, detail: '498 个图层 · 192 色调色板' });
+    expect(preview.totalItems).toBe(4);
+  });
+
+  it('缺失的方案标记为不存在并提示', () => {
+    const preview = buildWorkspacePreview(
+      { ...workspace, colorSchemeId: 'missing_color' },
+      null,
+      {
+        hotkeyProfiles: [{ id: 'hk_1', name: '我的快捷键', bindingCount: 1 }],
+        skillProfiles: [{ id: 'sk_1', name: '我的 Skill', itemCount: 1 }],
+        menuProfiles: [{ id: 'mn_1', name: '我的菜单', itemCount: 1 }],
+        colorSchemes: [],
+      },
+    );
+
+    expect(preview.color?.exists).toBe(false);
+    expect(preview.color?.missing).toContain('配色方案不存在');
+    expect(preview.totalItems).toBe(3);
+  });
+
+  it('未绑定的子方案不进入预览', () => {
+    const preview = buildWorkspacePreview(
+      { ...workspace, colorSchemeId: undefined, skillProfileId: '' },
+      null,
+      {
+        hotkeyProfiles: [{ id: 'hk_1', name: '我的快捷键', bindingCount: 1 }],
+        skillProfiles: [],
+        menuProfiles: [{ id: 'mn_1', name: '我的菜单', itemCount: 1 }],
+        colorSchemes: [],
+      },
+    );
+
+    expect(preview.color).toBeNull();
+    expect(preview.skill).toBeNull();
+    expect(preview.totalItems).toBe(2);
   });
 });

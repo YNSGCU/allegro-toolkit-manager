@@ -14,11 +14,20 @@ import {
   copyWorkspace,
   createWorkspace,
   deleteWorkspace,
+  getWorkspace,
   listWorkspaces,
   loadWorkspaceStore,
   renameWorkspace,
   setActiveWorkspace,
 } from '../../core/workspace/workspaceManager';
+import { buildWorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
+import { loadAllProfiles } from '../../core/profile/hotkeyProfile';
+import { loadSkillProfileStore } from '../../core/skill/skillProfileManager';
+import { loadMenuProfileStore } from '../../core/menu/menuManager';
+import { loadColorSchemeStore } from '../../core/color/colorSchemeManager';
+import { loadEnvironmentRegistry, getActiveEnvironment } from '../../core/environment/environmentRegistry';
+import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import path from 'path';
 import type { WorkspaceProfile } from '../../src/types/workspaceProfile';
 
 export function registerWorkspaceIpc(): void {
@@ -80,6 +89,70 @@ export function registerWorkspaceIpc(): void {
       return { success: true, data: workspace };
     } catch (err) {
       return { success: false, error: `设置激活工作区失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('workspace:preview', (_event, workspaceId: string) => {
+    try {
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) return { success: false, error: '工作区不存在' };
+
+      // 环境：优先按工作区绑定的 environmentId，回退到当前激活环境
+      const registry = loadEnvironmentRegistry();
+      const environmentId = workspace.environmentId || getActiveEnvironment()?.id;
+      const environment = environmentId
+        ? registry.environments.find((item) => item.id === environmentId) ?? null
+        : null;
+      let pcbenvPath: string | undefined;
+      let allegroVersion: string | null = null;
+      try {
+        const envInfo = locateEnvironment(environment?.pcbenvPath);
+        pcbenvPath = envInfo.pcbenvPath ?? undefined;
+        allegroVersion = envInfo.allegroVersion ?? null;
+      } catch {
+        // 环境不可用时预览仍可展示子方案存在性
+      }
+      const envPreview = {
+        environmentId: environmentId ?? undefined,
+        name: environment?.name,
+        pcbenvPath,
+        allegroVersion: allegroVersion ?? undefined,
+      };
+
+      const atmDir = pcbenvPath ? path.join(pcbenvPath, 'atm_generated') : null;
+      const preview = buildWorkspacePreview(workspace, envPreview, {
+        hotkeyProfiles: pcbenvPath
+          ? loadAllProfiles(pcbenvPath).map((profile) => ({
+              id: profile.id,
+              name: profile.name,
+              bindingCount: profile.bindings?.length,
+            }))
+          : [],
+        skillProfiles: atmDir
+          ? loadSkillProfileStore(atmDir).profiles.map((profile) => ({
+              id: profile.id,
+              name: profile.name,
+              itemCount: profile.skillStates?.length ?? profile.loadOrder?.length,
+            }))
+          : [],
+        menuProfiles: atmDir
+          ? (loadMenuProfileStore(atmDir).profiles ?? []).map((profile) => ({
+              id: profile.id,
+              name: profile.name,
+              itemCount: profile.items?.length,
+            }))
+          : [],
+        colorSchemes: loadColorSchemeStore().schemes.map((scheme) => ({
+          id: scheme.id,
+          name: scheme.name,
+          layerCount: scheme.layers?.length,
+          colorCount: scheme.palette?.length,
+        })),
+      });
+
+      return { success: true, data: { preview } };
+    } catch (err) {
+      return { success: false, error: `生成工作区预览失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 }
