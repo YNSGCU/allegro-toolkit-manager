@@ -47,7 +47,9 @@ const run = (command, args) => {
     shell: process.platform === 'win32',
   });
   if (result.status !== 0) {
-    process.stderr.write(`\n命令执行失败: ${command} ${args.join(' ')}，退出码 ${result.status ?? 'unknown'}\n`);
+    process.stderr.write(
+      `\n命令执行失败: ${command} ${args.join(' ')}，退出码 ${result.status ?? 'unknown'}\n`,
+    );
     process.exit(result.status ?? 1);
   }
 };
@@ -56,7 +58,9 @@ const run = (command, args) => {
 {
   const check = spawnSync('gh', ['--version'], { encoding: 'utf-8', windowsHide: true });
   if (check.status !== 0) {
-    process.stderr.write('未找到 GitHub CLI (gh)。请先安装：winget install GitHub.cli 或访问 https://cli.github.com/\n');
+    process.stderr.write(
+      '未找到 GitHub CLI (gh)。请先安装：winget install GitHub.cli 或访问 https://cli.github.com/\n',
+    );
     process.exit(1);
   }
   process.stdout.write(`使用 ${check.stdout.trim().split('\n')[0]}\n`);
@@ -113,7 +117,11 @@ try {
   // electron-builder 创建的 release 默认是 draft，且大文件上传可能在 job 结束前被中断。
   // 这里显式等待资产齐全，再把 release 公开为 latest（与 PiAgent 发布流程一致）。
   const tag = `v${version}`;
-  const expectAssets = [`ATM-Setup-${version}-x64.exe`, `ATM-Setup-${version}-x64.exe.blockmap`, 'latest.yml'];
+  const expectAssets = [
+    `ATM-Setup-${version}-x64.exe`,
+    `ATM-Setup-${version}-x64.exe.blockmap`,
+    'latest.yml',
+  ];
   let ready = false;
   for (let attempt = 0; attempt < 24; attempt += 1) {
     const view = spawnSync('gh', ['release', 'view', tag, '--repo', repo, '--json', 'assets,isDraft'], {
@@ -123,7 +131,11 @@ try {
     });
     if (view.status === 0 && view.stdout) {
       let parsed;
-      try { parsed = JSON.parse(view.stdout); } catch { parsed = null; }
+      try {
+        parsed = JSON.parse(view.stdout);
+      } catch {
+        parsed = null;
+      }
       if (parsed?.assets) {
         const names = new Set(parsed.assets.map((asset) => asset.name));
         ready = expectAssets.every((name) => names.has(name));
