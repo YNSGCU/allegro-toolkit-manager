@@ -10,3 +10,6 @@
 | multi-allegro-environments | complete | `docs/user/features/multi-allegro-environments.md` | `docs/dev/features/multi-allegro-environments.md` | 2026-08-04 |
 | menu-tree-drag-reorder | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-ui-architecture.md` | 2026-08-06 |
 | application-updates | partial | `docs/user/features/application-updates.md` | `docs/dev/features/application-updates.md` | 2026-08-06 |
+| color-schemes | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
+| settings-backup-restore | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
+| workspace-unified-profile | design | N/A | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
