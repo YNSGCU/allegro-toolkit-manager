@@ -33,6 +33,14 @@
 - Safe fix: 按 `createCustomLayerColorPlan` 优先级：匹配 RGB 复用 → 当前索引独占时安全改写 → 占用未使用索引 → 无安全空位时拒绝并提示。
 - Avoid: 无防护地直接覆盖调色板条目。
 
+## PIT-2026-08-08-05: Electron 实机巡检可用 CDP 端口替代可见窗口
+
+- Area: Electron 实机巡检、渲染进程验证
+- Symptom: 打包版 ATM.exe 在非交互会话中启动后进程存在但没有可见窗口，`MainWindowHandle` 为 0，无法用 UIAutomation 读窗口树。
+- Cause: 会话没有交互桌面，窗口创建后不可见；但渲染进程与内嵌 HTTP 服务仍正常运行。
+- Safe fix: 以 `--remote-debugging-port=9333 --force-renderer-accessibility` 启动，通过 CDP `/json` 找到 page target，检查 `window.atm` 注入、路由标题、真实业务数据与控制台错误。本次已确认：preload 注入 154 个 API、快捷键页 113 条真实绑定、配色页 ceshi 方案加载、备份页按钮正常。
+- Avoid: 仅凭 `MainWindowHandle` 或截图判断应用是否可用；也避免在窗口不可见时重复 UIAutomation 尝试。
+
 # Pitfalls
 
 ## PIT-2026-08-01-10: 不同历史 JSON 结构不能共用同一个文件
