@@ -8,6 +8,13 @@
 - 提交：master 上 9 个主题提交（配色/备份/运行时/文档/测试/style），工作区干净；60 文件 / 353 测试全绿；npm run verify 全绿；Windows 解包版 release/win-unpacked/ATM.exe 已生成。
 - 生产巡检：6 个路由页面渲染、asar 内容、备份页降级提示、配色预览/撤销完整流程均通过浏览器验证。
 
+
+## 2026-08-08 追加：发布产物与阻塞点
+
+- NSIS 安装包已生成：release/ATM-Setup-0.2.0-x64.exe（87,295,327 bytes）+ blockmap（electron-builder 打包链路完整）。
+- Electron 实机巡检已通过 CDP 完成（preload 154 API / 113 条快捷键 / 配色 ceshi 方案 / 备份页）。
+- 阻塞点（需用户桌面会话）：Allegro 已打开 A10_pcb_4DDR3_MID.brd，但 Vibe Bridge 未加载。请在 Allegro 命令窗执行：skill load("C:/Users/89539/.codex/skills/allegro-vibe-bridge/vibe_server.il")，随后可做真实捕获/自定义颜色/应用/撤销/重捕获验证。
+- 安装包安装与升级 E2E、GitHub Release 发布（v0.3.0 Beta）也需用户确认执行。
 ## 待用户桌面会话手动验证
 
 1. Electron 窗口级实机巡检（当前自动化会话无法创建窗口）。
