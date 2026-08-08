@@ -40,7 +40,7 @@ afterEach(() => {
 function makeSnapshot(overrides?: Partial<ColorSchemeSnapshot>): ColorSchemeSnapshot {
   return {
     palette: [
-      { index: 1, rgb: { r: 255, g: 255, b: 255 } },
+      { index: 1, name: 'White', rgb: { r: 255, g: 255, b: 255 } },
       { index: 2, rgb: { r: 0, g: 0, b: 255 } },
     ],
     background: { r: 0, g: 0, b: 0 },
@@ -131,7 +131,9 @@ describe('updateColorScheme', () => {
     });
     expect(updated).not.toBeNull();
     expect(updated!.palette.find((e) => e.index === 1)?.rgb).toEqual({ r: 10, g: 20, b: 30 });
+    expect(updated!.palette.find((e) => e.index === 1)?.name).toBe('White');
     expect(updated!.layers.find((l) => l.subclassName === 'TOP')?.colorIndex).toBe(9);
+    expect(updated!.layers.find((l) => l.subclassName === 'TOP')?.visible).toBe(true);
     // 其他层不受影响
     expect(updated!.layers.find((l) => l.subclassName === 'BOTTOM')?.colorIndex).toBe(1);
   });

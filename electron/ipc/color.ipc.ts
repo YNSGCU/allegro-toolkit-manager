@@ -210,7 +210,7 @@ ipcMain.handle('color:import-col', async () => {
       return { success: false, error: `导出 .col 文件失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
-  // ?????????????????? / ilinit ??????????
+  // 检查桥接安装状态（自动加载是否已配置到 ilinit）
   ipcMain.handle('color:bridge-setup-status', () => {
     try {
       const envInfo = locateEnvironment();
@@ -220,30 +220,30 @@ ipcMain.handle('color:import-col', async () => {
       }
       return { success: true, data: checkBridgeSetup(ilinitPath) };
     } catch (err) {
-      return { success: false, error: `??????????: ${err instanceof Error ? err.message : String(err)}` };
+      return { success: false, error: `检查桥接安装状态失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 
-  // ??"????????"? Apply Plan
+  // 生成「启用桥接自动加载」的 Apply Plan
   ipcMain.handle('color:bridge-enable-plan', () => {
     try {
       const envInfo = locateEnvironment();
       const ilinitPath = envInfo.ilinitFilePath || (envInfo.pcbenvPath ? path.join(envInfo.pcbenvPath, 'allegro.ilinit') : null);
-      if (!ilinitPath) return { success: false, error: '??? allegro.ilinit ??' };
+    if (!ilinitPath) return { success: false, error: '未找到 allegro.ilinit 路径' };
       const serverFile = findBridgeServerFile();
-      if (!serverFile) return { success: false, error: '??? vibe_server.il????? Vibe Bridge' };
+    if (!serverFile) return { success: false, error: '未找到 vibe_server.il，无法启用 Vibe Bridge' };
 
       const currentContent = fs.existsSync(ilinitPath) ? fs.readFileSync(ilinitPath, 'utf-8') : '';
       const backupBase = path.join(envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated'), 'backup', new Date().toISOString().replace(/[:.]/g, '-'));
       const plan = buildBridgeEnablePlan(ilinitPath, currentContent, serverFile, backupBase);
-      if (!plan) return { success: true, data: null, info: '????????????' };
+    if (!plan) return { success: true, data: null, info: '桥接已配置，无需重复启用' };
       return { success: true, data: plan };
     } catch (err) {
-      return { success: false, error: `????????: ${err instanceof Error ? err.message : String(err)}` };
+      return { success: false, error: `生成启用桥接计划失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 
-  // ??"????????"? Apply Plan
+  // 执行启用桥接自动加载的 Apply Plan
   ipcMain.handle('color:bridge-execute-plan', async (_event, planJson: string) => {
     try {
       const { executeApplyPlan } = await import('../../core/apply/applyPlanEngine');
@@ -253,7 +253,7 @@ ipcMain.handle('color:import-col', async () => {
       const result = await executeApplyPlan(plan, { backupDir: path.join(atmDir, 'backup', new Date().toISOString().replace(/[:.]/g, '-')) });
       return { success: result.appliedSteps === result.totalSteps && result.totalSteps > 0, data: result };
     } catch (err) {
-      return { success: false, error: `????????: ${err instanceof Error ? err.message : String(err)}` };
+      return { success: false, error: `执行启用桥接计划失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 }

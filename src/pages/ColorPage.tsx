@@ -11,11 +11,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Camera, RefreshCw } from 'lucide-react';
 import type {
   ColorBridgeStatus,
+  ColorLayerEntry,
+  ColorPaletteEntry,
+  ColorRgb,
   ColorScheme,
   ColorSchemeSnapshot,
   ColorSchemeStore,
 } from '../types/color';
-import { createDefaultPalette } from '../../core/color/colorPalette';
+import {
+  createCustomLayerColorPlan,
+  createDefaultPalette,
+  hexToRgb,
+} from '../../core/color/colorPalette';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu, { type ActionItem } from '../components/MoreActionsMenu';
@@ -91,21 +98,21 @@ const ColorPage: React.FC = () => {
   }, [reload]);
 
   // ===== 捕获 =====
-  // ===== ?????? =====
+  // ===== 启用桥接 =====
   const handleBridgeEnable = async () => {
     try {
       const res = await window.atm.colorCreateBridgeEnablePlan();
       if (!res.success) {
-        addToast('error', res.error || '????????');
+        addToast('error', res.error || '启用桥接失败');
         return;
       }
       if (!res.data) {
-        addToast('info', res.info || '????????????');
+        addToast('info', res.info || '桥接已配置，无需重复启用');
         return;
       }
       setBridgeEnablePlan(res.data);
     } catch (err) {
-      addToast('error', formatUserError(err, '????????'));
+      addToast('error', formatUserError(err, '启用桥接失败'));
     }
   };
 
@@ -115,14 +122,14 @@ const ColorPage: React.FC = () => {
     try {
       const res = await window.atm.colorExecuteBridgeEnablePlan(JSON.stringify(bridgeEnablePlan));
       if (res.success) {
-        addToast('success', '??? Vibe Bridge ??????? Allegro ?????');
+        addToast('success', '已启用 Vibe Bridge 自动加载，请重启 Allegro 使其生效');
         setBridgeEnablePlan(null);
         await reload();
       } else {
-        addToast('error', res.error || '??????');
+        addToast('error', res.error || '启用失败');
       }
     } catch (err) {
-      addToast('error', formatUserError(err, '??????'));
+      addToast('error', formatUserError(err, '启用失败'));
     } finally {
       setBridgeEnabling(false);
     }
@@ -253,8 +260,11 @@ const ColorPage: React.FC = () => {
   };
 
 
-  // ===== ???? =====
-  const applySchemePatch = async (updates: { palette?: any[]; layers?: any[] }) => {
+  // ===== 方案更新 =====
+  const applySchemePatch = async (updates: {
+    palette?: ColorPaletteEntry[];
+    layers?: ColorLayerEntry[];
+  }) => {
     if (!activeScheme) return;
     setSaving(true);
     try {
@@ -278,19 +288,69 @@ const ColorPage: React.FC = () => {
     }
   };
 
-  const handlePaletteChange = async (index: number, rgb: any) => {
-    const ok = await applySchemePatch({ palette: [{ index, rgb }] });
+  const handlePaletteChange = async (index: number, rgb: ColorRgb) => {
+    const current = activeScheme?.palette.find((entry) => entry.index === index);
+    if (!current) {
+      addToast('error', `调色板中不存在颜色 #${index}`);
+      return;
+    }
+    const ok = await applySchemePatch({ palette: [{ ...current, rgb }] });
     if (ok) addToast('success', `已更新颜色 #${index}`);
   };
 
   const handleLayerColorChange = async (className: string, subclassName: string, colorIndex: number) => {
-    const ok = await applySchemePatch({ layers: [{ className, subclassName, colorIndex }] });
+    const current = activeScheme?.layers.find(
+      (layer) => layer.className === className && layer.subclassName === subclassName,
+    );
+    if (!current) {
+      addToast('error', `方案中不存在图层 ${className}/${subclassName}`);
+      return;
+    }
+    const ok = await applySchemePatch({ layers: [{ ...current, colorIndex }] });
     if (ok) addToast('success', `已将 ${className}/${subclassName} 设为颜色 #${colorIndex}`);
+  };
+
+  const handleLayerCustomColor = async (layer: ColorLayerEntry, hex: string): Promise<boolean> => {
+    if (!activeScheme) return false;
+    const rgb = hexToRgb(hex);
+    if (!rgb) {
+      addToast('error', '请输入完整的 6 位 Hex 色值');
+      return false;
+    }
+
+    const plan = createCustomLayerColorPlan(
+      activeScheme.palette,
+      activeScheme.layers,
+      layer,
+      rgb,
+    );
+    if (!plan) {
+      addToast('error', '没有可安全使用的调色板索引；请先释放一个未使用颜色槽');
+      return false;
+    }
+
+    const ok = await applySchemePatch({
+      palette: plan.palettePatch ? [plan.palettePatch] : undefined,
+      layers: [plan.layerPatch],
+    });
+    if (ok) {
+      const allocationText = plan.allocation === 'matching'
+        ? '匹配现有颜色'
+        : plan.allocation === 'current'
+          ? '复用当前独立索引'
+          : '分配未使用索引';
+      addToast(
+        'success',
+        `${layer.className}/${layer.subclassName} 已设为 ${hex.toUpperCase()}（#${plan.colorIndex}，${allocationText}）`,
+      );
+    }
+    return Boolean(ok);
   };
 
   const handleSwitch = async (schemeId: string) => {
     const res = await window.atm.colorSetActiveScheme(schemeId);
     if (res.success && res.data) {
+      setLastApplyResult(null); // 切换方案后清除旧应用结果
       await reload();
     } else {
       addToast('error', res.error || '切换方案失败');
@@ -526,6 +586,7 @@ const ColorPage: React.FC = () => {
             layers={activeScheme.layers}
             palette={activeScheme.palette}
             onLayerColorChange={(cls, sub, idx) => void handleLayerColorChange(cls, sub, idx)}
+            onLayerCustomColor={handleLayerCustomColor}
             saving={saving}
           />
         </div>

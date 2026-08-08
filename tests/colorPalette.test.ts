@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import {
   COLOR_PALETTE_SIZE,
   clampRgbValue,
+  createCustomLayerColorPlan,
   createDefaultPalette,
   generateColorColFile,
   groupLayersByColor,
@@ -123,5 +124,63 @@ describe('groupLayersByColor', () => {
     expect(map.get(7)?.map((l) => l.subclassName)).toEqual(['TOP', 'TOP', 'OUTLINE']);
     expect(map.get(125)?.map((l) => l.subclassName)).toEqual(['BOTTOM']);
     expect(map.get(99)).toBeUndefined();
+  });
+});
+
+describe('createCustomLayerColorPlan', () => {
+  const palette = [
+    { index: 1, name: 'White', rgb: { r: 255, g: 255, b: 255 } },
+    { index: 2, name: 'Blue', rgb: { r: 0, g: 0, b: 255 } },
+    { index: 3, name: 'Unused', rgb: { r: 120, g: 120, b: 120 } },
+  ];
+
+  it('共享当前索引时占用未使用索引，避免改变其他图层', () => {
+    const target = { className: 'ETCH', subclassName: 'TOP', colorIndex: 1, visible: true };
+    const layers = [
+      target,
+      { className: 'PIN', subclassName: 'TOP', colorIndex: 1, visible: true },
+      { className: 'ETCH', subclassName: 'BOTTOM', colorIndex: 2, visible: true },
+    ];
+
+    const plan = createCustomLayerColorPlan(palette, layers, target, { r: 18, g: 52, b: 86 });
+
+    expect(plan).toMatchObject({ colorIndex: 3, allocation: 'unused' });
+    expect(plan?.palettePatch).toMatchObject({
+      index: 3,
+      name: 'Custom #123456',
+      rgb: { r: 18, g: 52, b: 86 },
+    });
+    expect(plan?.layerPatch).toMatchObject({ className: 'ETCH', subclassName: 'TOP', colorIndex: 3 });
+  });
+
+  it('相同 RGB 已存在时直接复用对应索引', () => {
+    const target = { className: 'ETCH', subclassName: 'TOP', colorIndex: 1, visible: true };
+    const layers = [target, { className: 'PIN', subclassName: 'TOP', colorIndex: 1, visible: true }];
+
+    const plan = createCustomLayerColorPlan(palette, layers, target, { r: 0, g: 0, b: 255 });
+
+    expect(plan).toMatchObject({ colorIndex: 2, allocation: 'matching' });
+    expect(plan?.palettePatch).toBeUndefined();
+  });
+
+  it('当前索引仅由目标图层使用时安全复用当前索引', () => {
+    const target = { className: 'ETCH', subclassName: 'TOP', colorIndex: 1, visible: true };
+
+    const plan = createCustomLayerColorPlan(palette, [target], target, { r: 17, g: 34, b: 51 });
+
+    expect(plan).toMatchObject({ colorIndex: 1, allocation: 'current' });
+    expect(plan?.palettePatch?.rgb).toEqual({ r: 17, g: 34, b: 51 });
+  });
+
+  it('所有索引均被占用时拒绝覆盖其他图层颜色', () => {
+    const target = { className: 'ETCH', subclassName: 'TOP', colorIndex: 1, visible: true };
+    const layers = [
+      target,
+      { className: 'PIN', subclassName: 'TOP', colorIndex: 1, visible: true },
+      { className: 'ETCH', subclassName: 'BOTTOM', colorIndex: 2, visible: true },
+      { className: 'PIN', subclassName: 'BOTTOM', colorIndex: 3, visible: true },
+    ];
+
+    expect(createCustomLayerColorPlan(palette, layers, target, { r: 17, g: 34, b: 51 })).toBeNull();
   });
 });

@@ -36,6 +36,8 @@ describe('buildCaptureSkill', () => {
     expect(skill).toContain('axlConductorBottomLayer()');
     expect(skill).toContain('lp = errset(axlLayerGet(strcat(nth(2 classEntry) "/" subp)) t)');
     expect(skill).toContain('lp->color');
+    expect(skill).toContain('axlIsVisibleLayer(strcat(nth(2 classEntry) "/" subp))');
+    expect(skill).not.toContain('lp->visibility');
     expect(skill).toContain('axlDBGetLayerType(strcat(nth(2 classEntry) "/" subp))');
     expect(skill).toContain('layerData = reverse(layerData)');
     expect(skill).not.toContain('axlCurrentDesign()->name');
@@ -112,7 +114,7 @@ describe('buildApplySkill (legacy name matching)', () => {
       layers: [],
     };
     const skill = buildApplySkill(snapshot, 192);
-    // 192 ???????????????? axlColorSet('all ...) ??
+    // 192 个颜色全部写入 axlColorSet('all ...) 调用
     const allLine = skill.split('\n').find((line) => line.includes("axlColorSet('all"));
     const rgbCount = (allLine?.match(/\(\d+ \d+ \d+\)/g) || []).length;
     expect(rgbCount).toBe(192);
@@ -163,7 +165,7 @@ describe('isPlaneLayer', () => {
 
 describe('computeColorRoleMapping', () => {
   it('excludes ALL plane layers from inner sequence (mode color for planes)', () => {
-    // ????6 ?????????66 x4, 86 x2??6 ????
+    // 源板 6 个平面层：颜色 66 出现 4 次、86 出现 2 次，共 6 个平面层
     const snapshot: ColorSchemeSnapshot = {
       palette: [],
       background: { r: 0, g: 0, b: 0 },
@@ -185,7 +187,7 @@ describe('computeColorRoleMapping', () => {
     expect(mapping.topColor).toBe(7);
     expect(mapping.bottomColor).toBe(125);
     expect(mapping.planeColors).toEqual([66, 66, 66, 86, 86]); // 平面层按叠顺序保持颜色序列
-    // ?????????????????
+    // 内部信号层不包含平面层颜色
     expect(mapping.innerColors).toEqual([14, 16, 38]);
     expect(mapping.innerColors).not.toContain(66);
     expect(mapping.innerColors).not.toContain(86);

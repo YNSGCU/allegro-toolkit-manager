@@ -107,6 +107,73 @@ export function groupLayersByColor(
   return result;
 }
 
+export interface CustomLayerColorPlan {
+  colorIndex: number;
+  layerPatch: ColorLayerEntry;
+  palettePatch?: ColorPaletteEntry;
+  allocation: 'matching' | 'current' | 'unused';
+}
+
+function sameRgb(left: ColorRgb, right: ColorRgb): boolean {
+  return left.r === right.r && left.g === right.g && left.b === right.b;
+}
+
+/**
+ * 为单个图层规划自定义颜色，保证不会改变其他图层当前使用的颜色。
+ *
+ * 优先级：
+ * 1. 调色板已有相同 RGB：直接复用该索引；
+ * 2. 当前索引仅由目标图层使用：安全改写当前索引；
+ * 3. 分配一个未被任何图层使用的索引；
+ * 4. 没有安全索引时返回 null，不覆盖其他图层正在使用的颜色。
+ */
+export function createCustomLayerColorPlan(
+  palette: ColorPaletteEntry[],
+  layers: ColorLayerEntry[],
+  targetLayer: ColorLayerEntry,
+  requestedRgb: ColorRgb,
+): CustomLayerColorPlan | null {
+  const rgb = normalizeRgb(requestedRgb);
+  const exactMatch = palette.find((entry) => sameRgb(normalizeRgb(entry.rgb), rgb));
+  if (exactMatch) {
+    return {
+      colorIndex: exactMatch.index,
+      layerPatch: { ...targetLayer, colorIndex: exactMatch.index },
+      allocation: 'matching',
+    };
+  }
+
+  const currentEntry = palette.find((entry) => entry.index === targetLayer.colorIndex);
+  const currentUsageCount = layers.filter((layer) => layer.colorIndex === targetLayer.colorIndex).length;
+  if (currentEntry && currentUsageCount <= 1) {
+    return {
+      colorIndex: currentEntry.index,
+      palettePatch: {
+        ...currentEntry,
+        name: `Custom ${rgbToHex(rgb)}`,
+        rgb,
+      },
+      layerPatch: { ...targetLayer, colorIndex: currentEntry.index },
+      allocation: 'current',
+    };
+  }
+
+  const usedIndexes = new Set(layers.map((layer) => layer.colorIndex));
+  const unusedEntry = palette.find((entry) => !usedIndexes.has(entry.index));
+  if (!unusedEntry) return null;
+
+  return {
+    colorIndex: unusedEntry.index,
+    palettePatch: {
+      ...unusedEntry,
+      name: `Custom ${rgbToHex(rgb)}`,
+      rgb,
+    },
+    layerPatch: { ...targetLayer, colorIndex: unusedEntry.index },
+    allocation: 'unused',
+  };
+}
+
 /**
  * 解析 .col 文件内容
  * @returns 调色板（1-24）+ 背景色；解析失败时抛出错误

@@ -155,7 +155,7 @@ export function buildCaptureSkill(): string {
     'when(lp',
     'lp = car(lp)',
     'when(lp',
-    'layerData = cons(list(nth(2 classEntry) subp lp->color lp->visibility car(errset(axlDBGetLayerType(strcat(nth(2 classEntry) "/" subp)) t))) layerData)',
+    'layerData = cons(list(nth(2 classEntry) subp lp->color axlIsVisibleLayer(strcat(nth(2 classEntry) "/" subp)) car(errset(axlDBGetLayerType(strcat(nth(2 classEntry) "/" subp)) t))) layerData)',
     ')',
     ')',
     ')',
@@ -384,10 +384,10 @@ export async function applyColorScheme(
 }
 
 // ============================================================================
-// ??????????????
+// 目标板叠层查询与按角色智能配色
 // ============================================================================
 
-/** ????????????? Bridge ??? */
+/** 目标板层叠信息（通过 Vibe Bridge 查询） */
 /** 调色板颜色上限（Allegro 17.4 支持 192 色，留余量取 512） */
 const MAX_COLOR_INDEX = 512;
 
@@ -396,11 +396,11 @@ export interface TargetLayerInfo {
   bottomLayerName: string | null;
   /** 调色板颜色数量（axlColorGet('count)） */
   colorCount: number;
-  /** ETCH class ??????????? */
+  /** ETCH class 的叠层清单（按叠层顺序） */
   layers: Array<{ name: string; layerType: string | null }>;
 }
 
-/** ???????????? */
+/** 颜色角色映射结果 */
 export interface ColorRoleMapping {
   topColor: number;
   bottomColor: number;
@@ -410,16 +410,16 @@ export interface ColorRoleMapping {
   innerColors: number[];
 }
 
-/** ????????layerType ????????? */
+/** 平面层名称兜底模式（layerType 缺失时使用） */
 const PLANE_NAME_PATTERN = /^(gnd|vcc|vss|vdd|power|pwr|plane|agnd|dgnd|avcc|dvdd|vssa|vssd)([0-9]*)$/i;
 
-/** ?????????? layerType??????? */
+/** 判断是否为平面层：优先 layerType，缺失时按名称兜底 */
 export function isPlaneLayer(layerType: string | null | undefined, subclassName: string): boolean {
   if (layerType) return layerType.toUpperCase() === 'PLANE';
   return PLANE_NAME_PATTERN.test(subclassName);
 }
 
-/** ???????????? SKILL ?? */
+/** 查询目标板层叠结构的 SKILL 代码 */
 export function buildTargetLayerQuerySkill(): string {
   return [
     'let((topName bottomName layers g colorCount lt)',
@@ -443,7 +443,7 @@ export function buildTargetLayerQuerySkill(): string {
 export function parseTargetLayersOutput(raw: string): TargetLayerInfo {
   const value = parseSkillLisp(raw);
   if (!Array.isArray(value)) {
-    throw new Error('??????????????');
+    throw new Error('目标板层叠查询结果格式不正确');
   }
   const topLayerName = value[0] === null ? null : String(value[0]);
   const bottomLayerName = value[1] === null ? null : String(value[1]);
@@ -466,7 +466,7 @@ export function parseTargetLayersOutput(raw: string): TargetLayerInfo {
   };
 }
 
-/** ???????????? */
+/** 提取源板按角色区分的颜色序列 */
 export function computeColorRoleMapping(snapshot: ColorSchemeSnapshot): ColorRoleMapping {
   const etchLayers = snapshot.layers.filter((layer) => layer.className === 'ETCH');
   const topName = snapshot.source?.topLayerName || 'TOP';
@@ -503,10 +503,10 @@ export function computeColorRoleMapping(snapshot: ColorSchemeSnapshot): ColorRol
   };
 }
 
-/** ????? */
+/** 目标层角色 */
 type TargetRole = 'top' | 'bottom' | 'plane' | 'inner';
 
-/** ???? ETCH ????????????? */
+/** 将目标板 ETCH 叠层按角色分类 */
 export function classifyTargetLayers(target: TargetLayerInfo): Array<{ name: string; role: TargetRole }> {
   const topName = target.topLayerName || 'TOP';
   const bottomName = target.bottomLayerName || 'BOTTOM';
@@ -526,11 +526,11 @@ export function classifyTargetLayers(target: TargetLayerInfo): Array<{ name: str
 }
 
 /**
- * ??????????????
+ * 生成按角色智能应用配色的 SKILL 代码
  *
- * ? ETCH ????/??/?????????????????????
- * ????????????????????? ETCH ???????????
- * ?????????????
+ * 将 ETCH 层分为顶层/底层/平面层/内部信号层，分别取色：
+ * 顶层、底层使用各自颜色；平面层按源板平面序列循环；
+ * 内部信号层按叠层顺序依次取色（超出循环）。
  */
 export function buildSmartApplySkill(
   snapshot: ColorSchemeSnapshot,
@@ -666,4 +666,3 @@ export async function applyColorSchemeSmart(
     rawOutput: applyResult.output,
   };
 }
-

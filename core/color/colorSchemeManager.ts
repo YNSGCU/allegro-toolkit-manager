@@ -210,7 +210,10 @@ export function updateColorScheme(
 
   if (updates.palette && updates.palette.length > 0) {
     const byIndex = new Map(updates.palette.map((entry) => [entry.index, entry]));
-    scheme.palette = scheme.palette.map((entry) => byIndex.get(entry.index) ?? entry);
+    scheme.palette = scheme.palette.map((entry) => {
+      const patch = byIndex.get(entry.index);
+      return patch ? { ...entry, ...patch, index: entry.index } : entry;
+    });
     for (const entry of updates.palette) {
       if (!scheme.palette.some((item) => item.index === entry.index)) {
         scheme.palette.push(entry);
@@ -222,7 +225,23 @@ export function updateColorScheme(
   if (updates.layers && updates.layers.length > 0) {
     const key = (layer: ColorLayerEntry) => `${layer.className}/${layer.subclassName}`;
     const byKey = new Map(updates.layers.map((layer) => [key(layer), layer]));
-    scheme.layers = scheme.layers.map((layer) => byKey.get(key(layer)) ?? layer);
+    scheme.layers = scheme.layers.map((layer) => {
+      const patch = byKey.get(key(layer));
+      return patch
+        ? {
+            ...layer,
+            ...patch,
+            className: layer.className,
+            subclassName: layer.subclassName,
+          }
+        : layer;
+    });
+    // 新图层追加（与 palette 合并逻辑一致）
+    for (const layer of updates.layers) {
+      if (!scheme.layers.some((item) => key(item) === key(layer))) {
+        scheme.layers.push(layer);
+      }
+    }
   }
 
   scheme.updatedAt = new Date().toISOString();
