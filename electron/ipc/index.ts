@@ -20,6 +20,7 @@ import { registerSkillProfileIpc } from './skill.profile.ipc';
 import { registerColorIpc } from './color.ipc';
 import { registerUpdateIpc } from './update.ipc';
 import { registerBackupIpc } from './backup.ipc';
+import { registerWorkspaceIpc } from './workspace.ipc';
 import type { UpdateService } from '../services/updateService';
 
 export function registerIpcHandlers(updateService?: UpdateService): void {
@@ -43,5 +44,6 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerSkillProfileIpc();
   registerColorIpc();
   registerBackupIpc();
+  registerWorkspaceIpc();
   if (updateService) registerUpdateIpc(updateService);
 }

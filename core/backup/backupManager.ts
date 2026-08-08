@@ -20,6 +20,7 @@ import { loadFavorites, getFavoritesPath } from '../dictionary/hotkeyFavorites';
 import { loadUserOverrides, getOverrideFilePath } from '../dictionary/userCommandOverrides';
 import { loadAllSkillMeta } from '../skill/skillMeta';
 import { loadColorSchemeStore, getColorSchemeStorePath } from '../color/colorSchemeManager';
+import { loadWorkspaceStore, getWorkspaceStorePath } from '../workspace/workspaceManager';
 import { getWindowStatePath, loadWindowState } from '../settings/windowState';
 import { loadEnvironmentRegistry, saveEnvironmentRegistry, getEnvironmentRegistryPath } from '../environment/environmentRegistry';
 import { locateEnvironment } from '../environment/locateEnvironment';
@@ -150,6 +151,12 @@ export function collectAppSection(options: Pick<CreateBackupOptions, 'updateSett
   const windowState = loadWindowState();
   if (windowState) {
     section.windowState = windowState;
+  }
+
+  const workspaces = loadWorkspaceStore();
+  // 默认工作区是系统初始状态，无需迁移；仅备份用户创建的工作区
+  if (workspaces.workspaces.length > 1) {
+    section.workspaces = workspaces;
   }
 
   const registry = loadEnvironmentRegistry();
@@ -376,6 +383,9 @@ function buildRestorePlan(
     }
     if (app.windowState) {
       push(getWindowStatePath(), app.windowState);
+    }
+    if (app.workspaces) {
+      push(getWorkspaceStorePath(), app.workspaces);
     }
     if (options.includeEnvironments && app.environments) {
       push(getEnvironmentRegistryPath(), app.environments);

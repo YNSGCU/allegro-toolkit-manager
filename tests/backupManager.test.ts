@@ -20,6 +20,7 @@ import { getOverrideFilePath } from '../core/dictionary/userCommandOverrides';
 import { getColorSchemeStorePath } from '../core/color/colorSchemeManager';
 import { getEnvironmentRegistryPath } from '../core/environment/environmentRegistry';
 import { getWindowStatePath, saveWindowState } from '../core/settings/windowState';
+import { createWorkspace, getWorkspaceStorePath } from '../core/workspace/workspaceManager';
 import { loadMenuProfileStore } from '../core/menu/menuManager';
 import { loadSkillProfileStore } from '../core/skill/skillProfileManager';
 import { loadAllProfiles } from '../core/profile/hotkeyProfile';
@@ -336,5 +337,21 @@ describe('collectAppSection', () => {
     expect(section.updateSettings?.feedUrl).toBe('x');
     // 空配置时不携带空 store
     expect(section.colorSchemes).toBeUndefined();
+  });
+
+  it('用户创建的工作区随备份收集与恢复', () => {
+    createWorkspace('项目A', { hotkeyProfileId: 'hk_1', colorSchemeId: 'color_1' });
+    const backup = createBackupFile(pcbenv);
+
+    expect(backup.sections.app?.workspaces?.workspaces.some((w) => w.name === '项目A')).toBe(true);
+
+    // 清空配置目录模拟新电脑
+    fs.rmSync(configHome, { recursive: true, force: true });
+    fs.mkdirSync(configHome, { recursive: true });
+
+    restoreBackupFile(pcbenv, backup, { sections: ['app'] });
+    expect(fs.existsSync(getWorkspaceStorePath())).toBe(true);
+    const restored = JSON.parse(fs.readFileSync(getWorkspaceStorePath(), 'utf-8'));
+    expect(restored.workspaces.some((w: { name: string }) => w.name === '项目A')).toBe(true);
   });
 });

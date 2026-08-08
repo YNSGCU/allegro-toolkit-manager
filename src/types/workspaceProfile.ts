@@ -5,9 +5,13 @@ export interface WorkspaceProfile {
   id: string;
   name: string;
   description?: string;
+  /** 目标 Allegro 环境（environmentId → pcbenv / 版本）；可选，旧工作区不绑定环境 */
+  environmentId?: string;
   hotkeyProfileId: string;
   skillProfileId: string;
   menuProfileId: string;
+  /** 配色方案（V6.1 全局资源）；可选，旧工作区不绑定配色 */
+  colorSchemeId?: string;
   createdAt: string;
   updatedAt: string;
 }

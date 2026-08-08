@@ -11,6 +11,7 @@ import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
+import type { WorkspaceProfile, WorkspaceProfileStore } from './workspaceProfile';
 
 declare global {
   interface Window {
@@ -257,6 +258,13 @@ declare global {
       colorUpdateScheme: (schemeId: string, updates: { palette?: ColorSchemeSnapshot['palette']; layers?: ColorSchemeSnapshot['layers'] }) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
       colorImportCol: () => Promise<{ success: boolean; data?: { palette: ColorSchemeSnapshot['palette']; background: ColorSchemeSnapshot['background']; fileName: string; filePath: string } | null; error?: string }>;
       colorExportCol: (schemeId: string) => Promise<{ success: boolean; data?: string | null; error?: string }>;
+      // ===== 统一工作区方案（V6.2） =====
+      workspaceLoadAll: () => Promise<{ success: boolean; data?: WorkspaceProfileStore; error?: string }>;
+      workspaceCreate: (name: string, options?: Partial<Pick<WorkspaceProfile, 'description' | 'environmentId' | 'hotkeyProfileId' | 'skillProfileId' | 'menuProfileId' | 'colorSchemeId'>>) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
+      workspaceCopy: (workspaceId: string, newName?: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
+      workspaceRename: (workspaceId: string, newName: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
+      workspaceDelete: (workspaceId: string) => Promise<{ success: boolean; error?: string }>;
+      workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;
       saveUpdateSettings: (settings: UpdateSettings) => Promise<UpdateSettingsView>;

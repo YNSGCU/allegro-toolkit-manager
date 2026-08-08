@@ -593,6 +593,24 @@ contextBridge.exposeInMainWorld('atm', {
   /** 导出 .col 文件 */
   colorExportCol: (schemeId: string) =>
     ipcRenderer.invoke('color:export-col', schemeId),
+  // ===== 统一工作区方案（V6.2） =====
+  /** 加载全部工作区 */
+  workspaceLoadAll: () => ipcRenderer.invoke('workspace:load-all'),
+  /** 创建工作区 */
+  workspaceCreate: (name: string, options?: any) =>
+    ipcRenderer.invoke('workspace:create', name, options),
+  /** 复制工作区 */
+  workspaceCopy: (workspaceId: string, newName?: string) =>
+    ipcRenderer.invoke('workspace:copy', workspaceId, newName),
+  /** 重命名工作区 */
+  workspaceRename: (workspaceId: string, newName: string) =>
+    ipcRenderer.invoke('workspace:rename', workspaceId, newName),
+  /** 删除工作区 */
+  workspaceDelete: (workspaceId: string) =>
+    ipcRenderer.invoke('workspace:delete', workspaceId),
+  /** 设置激活工作区 */
+  workspaceSetActive: (workspaceId: string) =>
+    ipcRenderer.invoke('workspace:set-active', workspaceId),
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
   saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>

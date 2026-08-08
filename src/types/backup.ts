@@ -10,6 +10,7 @@ import type { HotkeyProfile } from './hotkey';
 import type { MenuProfileStore } from './menu';
 import type { SkillProfileStore } from './skillProfile';
 import type { ColorSchemeStore } from './color';
+import type { WorkspaceProfileStore } from './workspaceProfile';
 
 /** 备份文件格式标识 */
 export const BACKUP_FORMAT = 'atm-backup';
@@ -70,6 +71,8 @@ export interface BackupAppSection {
   colorSchemes?: ColorSchemeStore;
   /** 主窗口大小/位置/最大化状态 */
   windowState?: BackupWindowState;
+  /** 统一工作区方案定义（组合关系，不复制子方案内容） */
+  workspaces?: WorkspaceProfileStore;
   /** Allegro 环境注册表（路径随电脑变化，默认不恢复） */
   environments?: EnvironmentRegistry;
   /** 更新源配置（默认不恢复） */

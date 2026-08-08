@@ -195,6 +195,13 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'backup:open',
     'backup:inspect',
     'backup:restore',
+    // workspace V6.2
+    'workspace:load-all',
+    'workspace:create',
+    'workspace:copy',
+    'workspace:rename',
+    'workspace:delete',
+    'workspace:set-active',
   ];
 
   return knownHandlers.map((channel) => ({
