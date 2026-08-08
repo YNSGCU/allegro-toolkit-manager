@@ -453,6 +453,45 @@
   user-select: all;
 }
 
+.color-bridge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(180, 116, 18, 0.28);
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #7c5a0c;
+  font-size: 12px;
+}
+
+.color-bridge-banner-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.color-bridge-banner-text strong {
+  color: #6d4d09;
+  font-size: 12px;
+}
+
+.color-bridge-banner-text .color-bridge-setup-hint {
+  align-self: flex-start;
+  margin-top: 2px;
+  background: rgba(0, 0, 0, 0.07);
+}
+
+@media (max-width: 720px) {
+  .color-bridge-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .color-apply-options {
   margin-bottom: 14px;
   display: flex;

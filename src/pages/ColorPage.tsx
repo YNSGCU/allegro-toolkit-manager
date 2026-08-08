@@ -593,40 +593,46 @@ const ColorPage: React.FC = () => {
         </div>
       )}
 
+      {/* 桥接状态常驻横幅：无论是否有方案都显示，避免入口藏在空状态里 */}
+      {!bridgeStatus?.connected && (
+        <div className="color-bridge-banner" role="status">
+          {bridgeSetup?.canEnable ? (
+            <>
+              <div className="color-bridge-banner-text">
+                <strong>Vibe Bridge 已安装，但尚未配置自动加载</strong>
+                <span>点击按钮将加载命令写入 allegro.ilinit，重启 Allegro 后每次启动自动生效，无需手动执行。</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => void handleBridgeEnable()}
+              >
+                自动启用桥接
+              </button>
+            </>
+          ) : bridgeSetup?.configured ? (
+            <>
+              <div className="color-bridge-banner-text">
+                <strong>桥接已配置自动加载，但当前 Allegro 会话尚未运行</strong>
+                <span>请重启 Allegro 使其生效；或在当前会话命令窗执行：</span>
+                <code className="color-bridge-setup-hint">skill load("C:/Users/89539/.codex/skills/allegro-vibe-bridge/vibe_server.il")</code>
+              </div>
+            </>
+          ) : (
+            <div className="color-bridge-banner-text">
+              <strong>未找到 Vibe Bridge 服务文件</strong>
+              <span>请先安装 allegro-vibe-bridge 技能，或检查 ATM_VIBE_WORKSPACE 配置。</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="color-page-empty">正在加载配色方案…</div>
       ) : !activeScheme ? (
         <div className="color-page-empty">
           <p>还没有配色方案。</p>
           <p>点击「从 Allegro 捕获」复制当前板子的配色，或通过「更多操作 → 导入 .col 文件」从文件导入。</p>
-          {bridgeSetup?.canEnable ? (
-            <div className="color-bridge-setup">
-              <p>检测到 Vibe Bridge 已安装但未配置自动加载。点击下方按钮将加载命令写入 allegro.ilinit，重启 Allegro 后自动生效，无需手动执行。</p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => void handleBridgeEnable()}
-              >
-                自动启用桥接
-              </button>
-            </div>
-          ) : bridgeSetup?.configured && !bridgeStatus?.connected ? (
-            <div className="color-bridge-setup">
-              <p>桥接已配置自动加载，但当前 Allegro 会话尚未运行桥接服务。</p>
-              <p>请重启 Allegro 使其生效；或在当前会话命令窗执行：</p>
-              <code className="color-bridge-setup-hint">skill load("C:/Users/89539/.codex/skills/allegro-vibe-bridge/vibe_server.il")</code>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => void handleCapture()}
-              disabled={!bridgeStatus?.connected}
-            >
-              <RefreshCw aria-hidden="true" />
-              开始捕获
-            </button>
-          )}
           <button
             type="button"
             className="btn btn-primary"
