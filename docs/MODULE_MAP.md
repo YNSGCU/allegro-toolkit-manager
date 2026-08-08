@@ -64,3 +64,24 @@ Skill profile apply chain: `SkillPage` -> `skillProfileCreateApplyPlan/skillProf
 ### Application Update
 
 src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> electron/ipc/update.ipc.ts -> electron/services/updateService.ts -> electron-updater -> HTTPS generic feed。更新仅在正式 NSIS 安装版启用，下载和安装由用户显式触发。
+
+### Color Scheme（配色方案）
+
+`src/pages/ColorPage.tsx` -> `ColorPaletteGrid` / `ColorLayerList` -> `window.atm.color*` -> `electron/preload.ts` -> `electron/ipc/color.ipc.ts` -> `core/color/*` -> `%APPDATA%/AllegroToolkitManager/color_schemes.json`（跨板子全局）
+
+- 捕获链：Vibe Bridge（`vibe_in.il` / `vibe_out.log`）执行 `axlColorGet` + `axlVisibleGet` + `axlIsVisibleLayer`，经 `parseSkillLisp` 解析为快照。
+- 应用链：`color:apply` -> `core/color/vibeColorBridge.ts` 按角色映射（顶层/底层/平面层/内部信号层）生成 SKILL，写入前经 UI 确认。
+- 单层自定义颜色：`ColorLayerList` 行内 Hex 编辑器 -> `createCustomLayerColorPlan`（复用匹配颜色 / 独立索引 / 空闲索引，绝不连带改其他图层）-> `colorUpdateScheme` 合并写回，且保留图层可见性、层类型等元数据。
+- 调色板与图层结构：`core/color/colorPalette.ts`（24 色默认 / .col 解析生成）、`core/color/colorSchemeManager.ts`（方案 CRUD 持久化）。
+
+### Settings Backup & Restore（备份与恢复）
+
+`src/pages/BackupPage.tsx` -> `window.atm.*backup methods*` -> `electron/preload.ts` -> `electron/ipc/backup.ipc.ts` -> `core/backup/backupManager.ts` -> 单文件 `.atmbak`（JSON）
+
+- 收集链：pcbenv 级（快捷键/Skill/菜单方案、收藏、命令来源修正、Skill 元数据、已应用状态、多 env 来源设置）+ 应用级（配色方案、窗口状态）+ 界面偏好（localStorage `atm_` 前缀）。
+- 恢复链：选择文件 -> `backup:inspect` 摘要预览 -> 勾选分区 -> `backup:restore` 前自动备份现有配置到 `atm_generated/backups/pre-restore-<时间戳>/`，原子写入并记录 change_history。
+- 窗口状态：`electron/windowState.ts` + `core/settings/windowState.ts` 持久化大小/位置/最大化；恢复时校验显示器可见区域，外接屏拔掉不会恢复到屏幕外。
+
+### IPC Runtime Diagnostics（通道注册表）
+
+`electron/ipc/channelRegistry.ts` 在 `registerIpcHandlers` 入口包装 `ipcMain.handle`，把实际注册通道记入 `registeredChannels`；`app:getRuntimeInfo` 用该集合替代 `ipcMain.listenerCount()`（后者对 handle 注册恒为 0），从而让版本自检准确报告缺失 handler。

@@ -3,6 +3,36 @@
 - 规则：拖动只接受同一 parentId 下的目标项；跨层级拖动忽略。层级变更必须使用显式编辑动作并经过菜单验证。
 - 持久化：拖动只修改草稿，仍必须生成并执行菜单 Apply Plan。
 
+## PIT-2026-08-08-01: 配色图层列表的 flex 容器会压缩子项
+
+- Area: 配色页面、图层列表、CSS
+- Symptom: 图层多（498 行）时右侧列表行全部变细条，滚动区 `scrollHeight === clientHeight`，看起来像内容被折叠。
+- Cause: `.color-layers-groups` 是 `flex-direction: column + max-height + overflow-y: auto`，子项默认 `flex-shrink: 1` 被压进容器。
+- Safe fix: 子项 `.color-layer-group` 加 `flex-shrink: 0`；验证 `scrollHeight > clientHeight` 和子项真实高度。
+- Avoid: 只检查横向溢出；不要用固定像素高度猜测内容。
+
+## PIT-2026-08-08-02: 捕获可见性必须用 axlIsVisibleLayer
+
+- Area: 配色捕获、Vibe Bridge、SKILL
+- Symptom: `lp->visibility`（axlLayerGet 返回对象属性）实测全部返回 nil，方案中 498 个图层全部显示"隐藏"。
+- Cause: layer DBID 上未经验证的字段名不可靠。
+- Safe fix: 捕获脚本使用 `axlIsVisibleLayer("CLASS/SUBCLASS")`，`axlLayerGet` 只用于颜色等属性。
+- Avoid: 依赖 layer 对象的未验证属性名。
+
+## PIT-2026-08-08-03: 配色局部更新必须保留元数据
+
+- Area: 配色方案、IPC 更新、图层/调色板合并
+- Symptom: 只提交 `{className, subclassName, colorIndex}` 会把图层的 `visible/layerType` 覆盖丢失；只提交 `{index, rgb}` 会丢掉调色板 `name`。
+- Safe fix: 以已有条目为基底合并：图层保留 `className/subclassName`，调色板保留 `index`；页面传完整条目。
+- Avoid: 在 IPC 合并层只做浅展开覆盖。
+
+## PIT-2026-08-08-04: 单层自定义颜色不能改写共享索引
+
+- Area: 配色页面、自定义颜色、调色板索引
+- Symptom: 直接改写图层当前 `colorIndex` 对应的调色板颜色，会让所有共享该索引的图层一起变色。
+- Safe fix: 按 `createCustomLayerColorPlan` 优先级：匹配 RGB 复用 → 当前索引独占时安全改写 → 占用未使用索引 → 无安全空位时拒绝并提示。
+- Avoid: 无防护地直接覆盖调色板条目。
+
 # Pitfalls
 
 ## PIT-2026-08-01-10: 不同历史 JSON 结构不能共用同一个文件
