@@ -1,12 +1,11 @@
 # Current State
 
 ## Snapshot
-
-- Last updated: 2026-08-01
-- Current branch: Git repository initialized; UI reset baseline commit `c95a222`
-- App status: 四个侧栏入口使用共享工作区 UI；快捷键新增/编辑支持中英文命令建议，env/Profile 修改使用真实 Apply Plan；Hotkey/Skill/Menu 写入具备备份、失败回滚和可撤销历史
-- Test status: 45 files / 238 tests pass；新增多 Allegro 环境注册、切换、共享 pcbenv、跨版本预检、兼容证据、Vibe Bridge 只读版本查询与 Apply Plan 环境锁覆盖
-- Validation status: security audit, ESLint, Prettier config check, frontend/Electron TypeScript, tests, renderer build, Windows packaging and a real Allegro 17.4 read-only Vibe Bridge smoke pass
+- Last updated: 2026-08-08
+- Current branch: master；v0.3.0 Beta 收口中，最近提交为配色预览/撤销与备份恢复测试
+- App status: 六个侧栏入口（快捷键/Skill/菜单/配色/备份与恢复/系统状态）；配色支持捕获、单层自定义颜色、应用预览与一键撤销；设置支持 .atmbak 备份/分区恢复；窗口状态持久化；IPC 通道注册表自检
+- Test status: 60 files / 353 tests pass；覆盖配色预览与撤销、备份分区隔离、窗口状态、环境注册、Apply Plan 环境锁
+- Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认
 
 ## Implemented Behavior
 
