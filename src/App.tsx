@@ -17,6 +17,7 @@ const SkillPage = lazy(routePageLoaders.skills);
 const MenuPage = lazy(routePageLoaders.menu);
 const ColorPage = lazy(routePageLoaders.colors);
 const BackupPage = lazy(routePageLoaders.backup);
+const UnifiedWorkspacePage = lazy(routePageLoaders.workspace);
 
 function RouteLoadingFallback() {
   return (
@@ -54,6 +55,7 @@ function RoutedWorkspace() {
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/colors" element={<ColorPage />} />
           <Route path="/backup" element={<BackupPage />} />
+          <Route path="/workspace" element={<UnifiedWorkspacePage />} />
           <Route
             path="*"
             element={<Navigate to={getDefaultWorkspaceRoute()} replace />}

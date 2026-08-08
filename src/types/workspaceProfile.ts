@@ -47,3 +47,26 @@ export function createEmptyWorkspaceStore(): WorkspaceProfileStore {
     updatedAt: now,
   };
 }
+
+/** 统一应用计划的执行步骤 */
+export interface WorkspaceApplyStepView {
+  module: 'skill' | 'menu' | 'hotkey' | 'color';
+  label: string;
+}
+
+/** workspace:apply-plan 返回的视图模型 */
+export interface WorkspaceApplyPlanView {
+  sequence: {
+    order: WorkspaceApplyStepView[];
+    warnings: string[];
+    blocked: boolean;
+    blockedReason?: string;
+  };
+  env: {
+    environmentId?: string;
+    pcbenvPath?: string | null;
+    envFilePath?: string | null;
+  };
+  applyOrder: WorkspaceApplyStepView[];
+  applyVisibility: boolean;
+}

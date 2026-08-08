@@ -1,0 +1,199 @@
+/* 统一工作区方案页面 */
+.workspace-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 56px 24px;
+  color: var(--text-secondary, #5f5a52);
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: var(--radius, 18px);
+  text-align: center;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 5fr) minmax(240px, 3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workspace-list {
+  display: grid;
+  gap: 10px;
+}
+
+.workspace-card {
+  padding: 12px 14px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.workspace-card:hover {
+  border-color: var(--accent-blue, #0d9488);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.workspace-card.is-active {
+  border-color: var(--accent-blue, #0d9488);
+  background: rgba(13, 148, 136, 0.04);
+}
+
+.workspace-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-card-head strong {
+  font-size: 14px;
+  color: var(--text-primary, #171717);
+}
+
+.workspace-active-badge {
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-green, #0f766e);
+  font-size: 11px;
+}
+
+.workspace-card-meta {
+  margin: 5px 0 9px;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+}
+
+.workspace-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.workspace-apply-panel {
+  padding: 14px 16px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 12px;
+}
+
+.workspace-apply-panel h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-primary, #171717);
+}
+
+.workspace-apply-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f5a52);
+  cursor: pointer;
+  user-select: none;
+}
+
+.workspace-apply-option input {
+  accent-color: var(--accent-blue, #0d9488);
+}
+
+.workspace-apply-note {
+  margin: 10px 0 0;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* 预览弹窗 */
+.workspace-preview-body {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-preview-env {
+  padding: 9px 11px;
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 8px;
+  background: var(--bg-input, #f8f5ef);
+  color: var(--text-secondary, #5f5a52);
+  font-size: 12px;
+}
+
+.workspace-preview-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.workspace-preview-label {
+  flex: none;
+  width: 92px;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+}
+
+.workspace-preview-row .is-missing {
+  color: #b91c1c;
+}
+
+.workspace-preview-row .is-muted {
+  color: var(--text-muted, #8d877f);
+}
+
+.workspace-preview-total {
+  margin: 4px 0 0;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+}
+
+/* 应用弹窗 */
+.workspace-apply-steps {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-apply-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg-input, #f8f5ef);
+  font-size: 13px;
+  color: var(--text-primary, #171717);
+}
+
+.workspace-apply-index {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(13, 148, 136, 0.12);
+  color: var(--accent-green, #0f766e);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.workspace-apply-warning,
+.workspace-apply-blocked {
+  margin: 4px 0 0;
+  color: #8a5a0a;
+  font-size: 12px;
+  line-height: 1.5;
+}

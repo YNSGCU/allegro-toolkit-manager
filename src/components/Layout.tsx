@@ -4,6 +4,7 @@ import {
   Blocks,
   CircuitBoard,
   Gauge,
+  LayoutGrid,
   Keyboard,
   Menu,
   Palette,
@@ -25,6 +26,7 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   colors: Palette,
   overview: Gauge,
   backup: Archive,
+  workspace: LayoutGrid,
 };
 
 export default function Layout({ children }: LayoutProps) {

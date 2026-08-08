@@ -27,6 +27,7 @@ import { loadMenuProfileStore } from '../../core/menu/menuManager';
 import { loadColorSchemeStore } from '../../core/color/colorSchemeManager';
 import { loadEnvironmentRegistry, getActiveEnvironment } from '../../core/environment/environmentRegistry';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { planWorkspaceApplySequence, WORKSPACE_APPLY_ORDER } from '../../core/workspace/planWorkspaceApply';
 import path from 'path';
 import type { WorkspaceProfile } from '../../src/types/workspaceProfile';
 
@@ -153,6 +154,67 @@ export function registerWorkspaceIpc(): void {
       return { success: true, data: { preview } };
     } catch (err) {
       return { success: false, error: `生成工作区预览失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('workspace:apply-plan', (_event, workspaceId: string, options?: { applyVisibility?: boolean }) => {
+    try {
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) return { success: false, error: '工作区不存在' };
+
+      const registry = loadEnvironmentRegistry();
+      const currentEnvironmentId = getActiveEnvironment()?.id ?? null;
+      const environment = workspace.environmentId || currentEnvironmentId
+        ? registry.environments.find((item) => item.id === (workspace.environmentId || currentEnvironmentId)) ?? null
+        : null;
+      let pcbenvPath: string | null = null;
+      let envFilePath: string | null = null;
+      try {
+        const envInfo = locateEnvironment(environment?.pcbenvPath);
+        pcbenvPath = envInfo.pcbenvPath ?? null;
+        envFilePath = envInfo.envFilePath ?? null;
+      } catch {
+        // 环境不可用时由序列校验提示
+      }
+
+      // 模块可用性：方案是否存在
+      const atmDir = pcbenvPath ? path.join(pcbenvPath, 'atm_generated') : null;
+      const skillAvailable = Boolean(atmDir && workspace.skillProfileId
+        && loadSkillProfileStore(atmDir).profiles.some((p) => p.id === workspace.skillProfileId));
+      const menuAvailable = Boolean(atmDir && workspace.menuProfileId
+        && (loadMenuProfileStore(atmDir).profiles ?? []).some((p) => p.id === workspace.menuProfileId));
+      const hotkeyAvailable = Boolean(pcbenvPath && workspace.hotkeyProfileId
+        && loadAllProfiles(pcbenvPath).some((p) => p.id === workspace.hotkeyProfileId));
+      const colorAvailable = Boolean(workspace.colorSchemeId
+        && loadColorSchemeStore().schemes.some((s) => s.id === workspace.colorSchemeId));
+
+      const sequence = planWorkspaceApplySequence(workspace, currentEnvironmentId, {
+        skill: skillAvailable,
+        menu: menuAvailable,
+        hotkey: hotkeyAvailable,
+        color: colorAvailable,
+      });
+
+      return {
+        success: true,
+        data: {
+          sequence: {
+            order: sequence.order,
+            warnings: sequence.warnings,
+            blocked: sequence.blocked,
+            blockedReason: sequence.blockedReason,
+          },
+          env: {
+            environmentId: workspace.environmentId ?? currentEnvironmentId ?? undefined,
+            pcbenvPath,
+            envFilePath,
+          },
+          applyOrder: WORKSPACE_APPLY_ORDER,
+          applyVisibility: options?.applyVisibility ?? false,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `生成工作区应用计划失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 }

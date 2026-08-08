@@ -11,6 +11,7 @@ export const routePageLoaders = {
   menu: () => import('../pages/MenuPage'),
   colors: () => import('../pages/ColorPage'),
   backup: () => import('../pages/BackupPage'),
+  workspace: () => import('../pages/UnifiedWorkspacePage'),
 } satisfies Record<string, RoutePageLoader>;
 
 const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
@@ -21,6 +22,7 @@ const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
   ['/menu', routePageLoaders.menu],
   ['/colors', routePageLoaders.colors],
   ['/backup', routePageLoaders.backup],
+  ['/workspace', routePageLoaders.workspace],
 ];
 
 const preloadRequests = new Map<RoutePageLoader, Promise<void>>();

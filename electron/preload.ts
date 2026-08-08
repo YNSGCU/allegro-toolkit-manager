@@ -614,6 +614,9 @@ contextBridge.exposeInMainWorld('atm', {
   /** 生成工作区统一预览 */
   workspacePreview: (workspaceId: string) =>
     ipcRenderer.invoke('workspace:preview', workspaceId),
+  /** 生成工作区应用计划（环境锁 + 执行序列） */
+  workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) =>
+    ipcRenderer.invoke('workspace:apply-plan', workspaceId, options),
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
   saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>

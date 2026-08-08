@@ -11,7 +11,7 @@ import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
-import type { WorkspaceProfile, WorkspaceProfileStore } from './workspaceProfile';
+import type { WorkspaceApplyPlanView, WorkspaceProfile, WorkspaceProfileStore } from './workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 
 declare global {
@@ -267,6 +267,7 @@ declare global {
       workspaceDelete: (workspaceId: string) => Promise<{ success: boolean; error?: string }>;
       workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspacePreview: (workspaceId: string) => Promise<{ success: boolean; data?: { preview: WorkspacePreview }; error?: string }>;
+      workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) => Promise<{ success: boolean; data?: WorkspaceApplyPlanView; error?: string }>;
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;
       saveUpdateSettings: (settings: UpdateSettings) => Promise<UpdateSettingsView>;

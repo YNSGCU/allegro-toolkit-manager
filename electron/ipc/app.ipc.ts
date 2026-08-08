@@ -202,6 +202,8 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'workspace:rename',
     'workspace:delete',
     'workspace:set-active',
+    'workspace:preview',
+    'workspace:apply-plan',
   ];
 
   return knownHandlers.map((channel) => ({

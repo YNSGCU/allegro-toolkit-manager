@@ -12,6 +12,7 @@ describe('app shell config', () => {
 
   it('keeps hotkeys, skills and menu as primary workspaces', () => {
     expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual([
+      'workspace',
       'hotkeys',
       'skills',
       'menu',

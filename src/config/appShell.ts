@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview' | 'backup';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview' | 'backup' | 'workspace';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -10,6 +10,14 @@ export interface AppNavItem {
 }
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
+  {
+    key: 'workspace',
+    label: '工作区',
+    path: '/workspace',
+    group: 'primary',
+    shortLabel: 'WS',
+    summary: '绑定环境与快捷键 / Skill / 菜单 / 配色方案，统一应用',
+  },
   {
     key: 'hotkeys',
     label: '快捷键',
