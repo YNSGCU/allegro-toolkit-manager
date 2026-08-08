@@ -279,12 +279,19 @@ describe('restoreBackupFile', () => {
     seedPcbenvData();
     const backup = createBackupFile(pcbenv);
 
+    // 记录恢复前 settings 文件内容，用于验证自动回滚
+    const settingsPath = path.join(pcbenv, 'atm_generated', 'settings', 'atm_settings.json');
+    const beforeContent = fs.readFileSync(settingsPath, 'utf-8');
+
     // 将目标 profile 文件位置预先占为目录，使 rename 阶段失败
     const blockedDir = path.join(pcbenv, 'atm_generated', 'profiles', 'p1.profile.json');
     fs.rmSync(blockedDir, { force: true });
     fs.mkdirSync(blockedDir, { recursive: true });
 
-    expect(() => restoreBackupFile(pcbenv, backup, { sections: ['pcbenv'] })).toThrow(/部分文件写入失败/);
+    expect(() => restoreBackupFile(pcbenv, backup, { sections: ['pcbenv'] })).toThrow(/已自动回滚/);
+
+    // 自动回滚后，已成功写入的 settings 文件恢复到恢复前内容
+    expect(fs.readFileSync(settingsPath, 'utf-8')).toBe(beforeContent);
   });
   it('空备份返回空结果', () => {
     const backup = createBackupFile(pcbenv);

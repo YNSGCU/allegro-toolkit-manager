@@ -428,21 +428,41 @@ export function restoreBackupFile(
 
   // 2. 原子写入；单文件失败不阻断其余文件，最终给出明确的部分成功信息
   const failedWrites: string[] = [];
+  const writtenTargets: string[] = [];
   for (const write of writes) {
     try {
       writeJsonAtomic(write.target, write.data);
+      writtenTargets.push(write.target);
     } catch {
       failedWrites.push(path.basename(write.target));
     }
   }
   if (failedWrites.length > 0) {
+    // 3. 自动回滚：把 pre-restore 现场备份复制回原位，恢复恢复前状态
+    let rolledBackCount = 0;
+    for (const target of writtenTargets) {
+      const rel = relativeToBackupRoot(target, pcbenvPath);
+      const backupFile = path.join(preRestoreDir, rel);
+      try {
+        if (fs.existsSync(backupFile)) {
+          fs.mkdirSync(path.dirname(target), { recursive: true });
+          fs.copyFileSync(backupFile, target);
+        } else {
+          // 原文件不存在，回滚即删除本次写入的产物
+          fs.rmSync(target, { force: true });
+        }
+        rolledBackCount += 1;
+      } catch {
+        // 单个文件回滚失败时保留 pre-restore 目录供手动回退
+      }
+    }
     throw new Error(
       `部分文件写入失败（成功 ${writes.length - failedWrites.length}/${writes.length}），` +
-      `失败文件：${failedWrites.join('、')}。` +
-      `恢复前备份位于 ${preRestoreDir}，可手动回退。`
+      `已自动回滚 ${rolledBackCount} 个文件，失败文件：${failedWrites.join('、')}。` +
+      `回退备份位于 ${preRestoreDir}，如需手工核对可查看该目录。`
     );
   }
-  // 3. 记录变更历史
+  // 4. 记录变更历史
   try {
     addChangeRecord(pcbenvPath, {
       operation: 'restore',
