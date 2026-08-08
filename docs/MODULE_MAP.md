@@ -92,4 +92,6 @@ src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> elect
 
 - 数据模型：`WorkspaceProfile` 绑定 environmentId + hotkey/skill/menu/color 四类子方案；存储于应用级配置目录，随设置备份迁移（默认工作区不迁移）。
 - 预览链：`workspace:preview` 从各模块加载摘要，环境优先按工作区绑定、回退当前激活。
-- 应用规划：`planWorkspaceApplySequence` 按 Skill → 菜单 → 快捷键 → 配色 顺序编排；环境锁不一致或无可应用方案时拒绝执行。M3 实际执行链与 M4 页面入口在 v0.3.0 后实施。
+- 应用规划：`planWorkspaceApplySequence` 按 Skill → 菜单 → 快捷键 → 配色 顺序编排；环境锁不一致或无可应用方案时拒绝执行。
+- 执行链：`workspace:apply-plan` 校验环境锁与模块可用性并返回执行序列；页面按序列串联各模块既有 Apply Plan API（skill-profile / menu / hotkey / color），不绕过既有写入链路。
+- 页面：`UnifiedWorkspacePage`（`/workspace`）承载工作区 CRUD、统一预览、应用选项与执行结果汇总；侧栏「工作区」为主分组首位。
