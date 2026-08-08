@@ -70,7 +70,7 @@ src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> elect
 `src/pages/ColorPage.tsx` -> `ColorPaletteGrid` / `ColorLayerList` -> `window.atm.color*` -> `electron/preload.ts` -> `electron/ipc/color.ipc.ts` -> `core/color/*` -> `%APPDATA%/AllegroToolkitManager/color_schemes.json`（跨板子全局）
 
 - 捕获链：Vibe Bridge（`vibe_in.il` / `vibe_out.log`）执行 `axlColorGet` + `axlVisibleGet` + `axlIsVisibleLayer`，经 `parseSkillLisp` 解析为快照。
-- 应用链：`color:apply` -> `core/color/vibeColorBridge.ts` 按角色映射（顶层/底层/平面层/内部信号层）生成 SKILL，写入前经 UI 确认。
+- 应用链：`color:apply-preview` 查询目标板叠层并生成最终颜色映射预览 -> `ColorApplyPreviewDialog` 确认 -> `color:apply` 按角色映射（顶层/底层/平面层/内部信号层）生成 SKILL 写入，应用前自动保存当前板子快照（`core/color/colorUndo.ts`），应用后可 `color:undo-apply` 一键撤销。
 - 单层自定义颜色：`ColorLayerList` 行内 Hex 编辑器 -> `createCustomLayerColorPlan`（复用匹配颜色 / 独立索引 / 空闲索引，绝不连带改其他图层）-> `colorUpdateScheme` 合并写回，且保留图层可见性、层类型等元数据。
 - 调色板与图层结构：`core/color/colorPalette.ts`（24 色默认 / .col 解析生成）、`core/color/colorSchemeManager.ts`（方案 CRUD 持久化）。
 
