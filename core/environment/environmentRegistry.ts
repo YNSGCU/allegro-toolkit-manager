@@ -95,7 +95,7 @@ function installRoots(): string[] {
     // 常见自定义安装位置（嵌套层级更深，如 D:\\application\\Cadence\\Cadence17_2\\Cadence\\SPB_17.2）
     'C:\\application\\Cadence',
     'D:\\application\\Cadence',
-    // ??/????????????????????
+    // ATM_CADENCE_BASES 环境变量可追加更多安装基础目录（分号分隔）
     ...(process.env.ATM_CADENCE_BASES ? process.env.ATM_CADENCE_BASES.split(';').filter(Boolean) : []),
   ];
   for (const base of bases) {
@@ -181,20 +181,29 @@ export function discoverEnvironmentWorkspaces(manualPcbenvPath?: string): Allegr
     : null;
   if (manual) add(workspaceFromPcbenv(manual, null, 'manual'));
 
-  for (const root of installRoots()) {
+  const roots = installRoots();
+  // 防止把其他版本共享的 SPB_Data 目录误判为独立 HOME，Cadence 多版本安装时
+  // 常见：17.4 的 root 旁边就是 17.2 的 SPB_Data，不能当作额外环境
+  const siblingDataByRoot = new Map(
+    roots.map((root) => [root, path.join(path.dirname(root), 'SPB_Data')]),
+  );
+  const otherSiblingData = new Set(roots.map((root) => siblingDataByRoot.get(root)).filter(Boolean));
+  for (const root of roots) {
     const homeCandidates = [
       process.env.HOME,
       process.env.USERPROFILE,
       process.env.HOMEDRIVE && process.env.HOMEPATH ? `${process.env.HOMEDRIVE}${process.env.HOMEPATH}` : undefined,
       process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'Cadence', 'SPB_Data') : undefined,
       process.env.USERPROFILE ? path.join(process.env.USERPROFILE, '..', 'Cadence', 'SPB_Data') : undefined,
-      // ??????????????? SPB_Data?Cadence ??????
+      // 某些安装布局会把 HOME 直接指向 Cadence/SPB_Data，而真正的 Cadence 安装根在上级目录：
       //   D:\application\Cadence\Cadence17_2\Cadence\SPB_17.2
       //   D:\application\Cadence\Cadence17_2\Cadence\SPB_Data
       root ? path.join(path.dirname(root), 'SPB_Data') : undefined,
     ].filter(Boolean) as string[];
     for (const home of homeCandidates) {
       const candidate = home.toLowerCase().endsWith('pcbenv') ? home : path.join(home, 'pcbenv');
+      // 如果候选 HOME 是其他版本安装根的 SPB_Data，则跳过，避免重复注册
+      if (home !== siblingDataByRoot.get(root) && otherSiblingData.has(home)) continue;
       if (fs.existsSync(candidate)) add(workspaceFromPcbenv(candidate, root, 'discovered'));
     }
     if (!workspaces.some((item) => item.installRoot && normalize(item.installRoot) === normalize(root))) {
@@ -294,4 +303,3 @@ export function removeManualInstallRoot(installRoot: string): EnvironmentRegistr
   saveEnvironmentRegistry(registry);
   return refreshEnvironmentRegistry();
 }
-

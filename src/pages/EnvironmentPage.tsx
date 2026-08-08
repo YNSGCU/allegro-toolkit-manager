@@ -222,15 +222,15 @@ const EnvironmentPage: React.FC = () => {
           <span className="environment-shared-warning">当前 pcbenv 还被其他 Allegro 版本共享，修改会同时生效</span>
         ) : null}
         <div className="environment-runtime-verification">
-          <button className="btn btn-sm" onClick={() => void handleVerifyRuntime()} disabled={!registry?.activeEnvironmentId || switchingEnvironment}>???? Allegro ??</button>
-          <span>{runtimeVerification || '??? Vibe Bridge ??????????????????'}</span>
+          <button className="btn btn-sm" onClick={() => void handleVerifyRuntime()} disabled={!registry?.activeEnvironmentId || switchingEnvironment}>验证 Allegro 版本</button>
+          <span>{runtimeVerification || '尚未通过 Vibe Bridge 验证'}</span>
         </div>
 
         {registry?.manualInstallRoots?.length ? (
           <div className="environment-manual-roots">
             <div className="environment-manual-roots-head">
-              <strong>?????????</strong>
-              <span className="environment-manual-roots-hint">???????????????????? SPB ???</span>
+              <strong>手动安装目录</strong>
+              <span className="environment-manual-roots-hint">手动添加的 Allegro 安装根目录；同版本常见 SPB_Data 共享目录不会重复注册</span>
             </div>
             <ul className="environment-manual-roots-list">
               {registry.manualInstallRoots.map((root) => (

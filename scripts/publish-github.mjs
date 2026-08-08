@@ -46,8 +46,21 @@ const run = (command, args) => {
     windowsHide: true,
     shell: process.platform === 'win32',
   });
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  if (result.status !== 0) {
+    process.stderr.write(`\n命令执行失败: ${command} ${args.join(' ')}，退出码 ${result.status ?? 'unknown'}\n`);
+    process.exit(result.status ?? 1);
+  }
 };
+
+// 检查 gh CLI 可用，发布流程依赖它创建 GitHub Release
+{
+  const check = spawnSync('gh', ['--version'], { encoding: 'utf-8', windowsHide: true });
+  if (check.status !== 0) {
+    process.stderr.write('未找到 GitHub CLI (gh)。请先安装：winget install GitHub.cli 或访问 https://cli.github.com/\n');
+    process.exit(1);
+  }
+  process.stdout.write(`使用 ${check.stdout.trim().split('\n')[0]}\n`);
+}
 
 run('npm', ['run', 'build']);
 

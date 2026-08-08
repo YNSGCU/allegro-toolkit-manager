@@ -73,11 +73,11 @@ describe('manual install roots', () => {
     const added = addManualInstallRoot(fakeRoot);
     expect(added.manualInstallRoots).toContain(fakeRoot);
 
-    // ?????????????
+    // 手动安装根目录持久化后可重新加载
     const reloaded = loadEnvironmentRegistry();
     expect(reloaded.manualInstallRoots).toContain(fakeRoot);
 
-    // ?????
+    // 移除手动安装根目录
     const removed = removeManualInstallRoot(fakeRoot);
     expect(removed.manualInstallRoots).toEqual([]);
   });

@@ -2,6 +2,7 @@
  * ATM - IPC 处理器注册入口
  * V5.4：拆分 skill.ipc.ts 为多个子模块，分别注册
  */
+import { patchIpcMainHandle } from './channelRegistry';
 import { registerAppIpc } from './app.ipc';
 import { registerEnvIpc } from './env.ipc';
 import { registerHotkeyIpc } from './hotkey.ipc';
@@ -18,9 +19,11 @@ import { registerMenuIpc } from './menu.ipc';
 import { registerSkillProfileIpc } from './skill.profile.ipc';
 import { registerColorIpc } from './color.ipc';
 import { registerUpdateIpc } from './update.ipc';
+import { registerBackupIpc } from './backup.ipc';
 import type { UpdateService } from '../services/updateService';
 
 export function registerIpcHandlers(updateService?: UpdateService): void {
+  patchIpcMainHandle();
   // app:getRuntimeInfo 必须在最前注册，以便其他模块能检测到它
   registerAppIpc();
   registerEnvIpc();
@@ -39,5 +42,6 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerMenuIpc();
   registerSkillProfileIpc();
   registerColorIpc();
+  registerBackupIpc();
   if (updateService) registerUpdateIpc(updateService);
 }

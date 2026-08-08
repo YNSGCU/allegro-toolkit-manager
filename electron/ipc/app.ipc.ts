@@ -5,6 +5,7 @@
  * 当用户遇到 "No handler registered" 错误时，此模块提供明确的中文诊断信息。
  */
 import { app, ipcMain } from 'electron';
+import { registeredChannels } from './channelRegistry';
 import fs from 'fs';
 import path from 'path';
 import type { RuntimeInfo, IpcHandlerInfo } from '../../src/types/runtime';
@@ -43,6 +44,9 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'env:read-raw-line',
     'env:copy-raw-line',
     'env:file-preview',
+    'env:open-source-folder',
+    'env:add-install-root',
+    'env:remove-install-root',
     // hotkey
     'hotkey:parse-env',
     'hotkey:validate',
@@ -68,6 +72,8 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'profile:import',
     'profile:diff',
     'profile:save-bindings',
+    'profile:set-applied',
+    'profile:get-applied',
     'profile:check-compatibility',
     'profile:migrate',
     // command
@@ -106,8 +112,22 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'skill:loader-order',
     'skill:export-package',
     'skill:find-unused',
+    // skill symphony
+    'skill:symphony-check',
+    'skill:symphony-generate',
+    'skill:symphony-apply',
+    'skill:symphony-table-info',
     // skill profile V5.5+
     'skill-profile:create-apply-plan',
+    'skill-profile:load-all',
+    'skill-profile:save-draft',
+    'skill-profile:create',
+    'skill-profile:copy',
+    'skill-profile:rename',
+    'skill-profile:delete',
+    'skill-profile:set-active',
+    'skill-profile:build-snapshot',
+    'skill-profile:compute-diff',
     'skill-profile:execute-apply-plan',
     // skillMeta V5.0
     'skillMeta:getAll',
@@ -127,20 +147,62 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'import:parse-file',
     'import:compute-conflicts',
     'import:execute',
+    // menu V5.5
+    'menu:load-profiles',
+    'menu:save-draft',
+    'menu:validate',
+    'menu:generate-preview',
+    'menu:create-apply-plan',
+    'menu:execute-apply-plan',
+    'menu:get-linked-commands',
+    'menu:get-linked-skills',
+    'menu:check-status',
+    'menu:recommend-from-commands',
+    'menu:profile-create',
+    'menu:profile-copy',
+    'menu:profile-rename',
+    'menu:profile-delete',
+    'menu:profile-set-active',
+    'menu:load',
+    'menu:save',
+    'menu:preview-il',
+    'menu:generate-plan',
+    'menu:check-bootstrap',
     // favorite
     'favorite:toggle',
+    // color V6
+    'color:check-bridge',
+    'color:capture',
+    'color:apply',
+    'color:schemes',
+    'color:scheme-create',
+    'color:scheme-copy',
+    'color:scheme-rename',
+    'color:scheme-delete',
+    'color:scheme-set-active',
+    'color:scheme-update',
+    'color:bridge-setup-status',
+    'color:bridge-enable-plan',
+    'color:bridge-execute-plan',
+    'color:import-col',
+    'color:export-col',
     'favorite:load',
     'favorite:get-bindings',
+    // backup V5.7
+    'backup:create',
+    'backup:open',
+    'backup:inspect',
+    'backup:restore',
   ];
 
   return knownHandlers.map((channel) => ({
     channel,
-    registered: ipcMain.listenerCount(channel) > 0,
+    registered: registeredChannels.has(channel),
   }));
 }
 
 export function registerAppIpc(): void {
-  ipcMain.handle('app:getRuntimeInfo', async (): Promise<RuntimeInfo> => {
+  ipcMain.handle('app:getRuntimeInfo', async (): Promise<{ success: true; data: RuntimeInfo }> => {
     let appVersion = '0.1.0';
     try {
       const pkgPath = path.join(app.getAppPath(), 'package.json');
@@ -156,15 +218,18 @@ export function registerAppIpc(): void {
     const handlers = collectRegisteredHandlers();
 
     return {
-      appVersion,
-      mainBuildTime: MAIN_START_TIME,
-      preloadBuildTime: '', // 由 preload 自行填充
-      rendererBuildTime: '', // 由 renderer 自行填充
-      registeredIpcHandlers: handlers,
-      preloadApiVersion: '5.4.0',
-      platform: process.platform,
-      nodeVersion: process.version,
-      electronVersion: process.versions.electron,
+      success: true,
+      data: {
+        appVersion,
+        mainBuildTime: MAIN_START_TIME,
+        preloadBuildTime: '', // 由 preload 自行填充
+        rendererBuildTime: '', // 由 renderer 自行填充
+        registeredIpcHandlers: handlers,
+        preloadApiVersion: '5.4.0',
+        platform: process.platform,
+        nodeVersion: process.version,
+        electronVersion: process.versions.electron,
+      },
     };
   });
 }

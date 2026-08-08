@@ -1,13 +1,13 @@
 {
- "description": "Allegro AXL API Symphony ????????? Cadence 17.2-2016 Symphony SKILL Development Guide Appendix 3: AXL Function Support?",
+ "description": "Allegro AXL API Symphony 支持度分类，依据 Cadence 17.2-2016 Symphony SKILL Development Guide Appendix 3: AXL Function Support",
  "version": "17.2-2016",
  "source": "D:/application/Cadence/Cadence17_2/Cadence/SPB_17.2/doc/symSkill/appB.html",
  "categories": {
-  "R": "ReadOnly - ??????????",
-  "S": "Supported - ???????",
-  "I": "Changes Ignored - ??? Symphony ??",
-  "U": "Unsupported - ????????????",
-  "B": "Obsolete - ???"
+  "R": "ReadOnly - 只读支持",
+  "S": "Supported - 完全支持",
+  "I": "Changes Ignored - Symphony 会话中修改被忽略",
+  "U": "Unsupported - 不支持",
+  "B": "Obsolete - 已废弃"
  },
  "functions": {
   "axl_ol_ol": {

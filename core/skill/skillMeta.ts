@@ -443,7 +443,7 @@ export function analyzeSkillMeta(
         if (nonAscii > 10) isReadable = false;
       }
     } else {
-      isReadable = fileContent.length > 0 && !fileContent.includes(' ');
+      isReadable = fileContent.length > 0 && !fileContent.includes('\u0000');
     }
   } catch {
     isReadable = false;
