@@ -18,6 +18,7 @@ import type {
   ColorSchemeSnapshot,
   ColorSchemeStore,
 } from '../types/color';
+import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import {
   createCustomLayerColorPlan,
   createDefaultPalette,
@@ -26,13 +27,13 @@ import {
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu, { type ActionItem } from '../components/MoreActionsMenu';
-import ConfirmDialog from '../components/common/ConfirmDialog';
 import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
 import { formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 import ApplyPlanDialog, { type ApplyPlanViewModel } from '../shared/ui/overlays/ApplyPlanDialog';
 import ColorPaletteGrid from '../components/color/ColorPaletteGrid';
 import ColorLayerList from '../components/color/ColorLayerList';
+import ColorApplyPreviewDialog from '../components/color/ColorApplyPreviewDialog';
 import './color-page.css';
 
 const ColorPage: React.FC = () => {
@@ -53,10 +54,19 @@ const ColorPage: React.FC = () => {
   const [captureName, setCaptureName] = useState('');
 
   // 应用确认
-  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
+  const [applyPreviewOpen, setApplyPreviewOpen] = useState(false);
+  const [applyPreview, setApplyPreview] = useState<ColorApplyPreview | null>(null);
+  const [applyPreviewLoading, setApplyPreviewLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [applyVisibility, setApplyVisibility] = useState(false);
-  const [lastApplyResult, setLastApplyResult] = useState<{ schemeName: string; appliedLayerCount: number; skippedLayerCount: number; skippedLayers?: string[] } | null>(null);
+  const [lastApplyResult, setLastApplyResult] = useState<{
+    schemeName: string;
+    appliedLayerCount: number;
+    skippedLayerCount: number;
+    skippedLayers?: string[];
+    undoSnapshotId?: string;
+  } | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   const activeScheme = useMemo<ColorScheme | null>(() => {
     if (!store) return null;
@@ -173,19 +183,41 @@ const ColorPage: React.FC = () => {
   };
 
   // ===== 应用 =====
+  const handleApplyOpen = async () => {
+    if (!activeScheme) return;
+    setApplyPreviewLoading(true);
+    setApplyPreviewOpen(true);
+    setApplyPreview(null);
+    try {
+      const res = await window.atm.colorApplyPreview(activeScheme.id, applyVisibility);
+      if (res.success && res.data) {
+        setApplyPreview(res.data.preview);
+      } else {
+        addToast('error', res.error || '生成应用预览失败');
+        setApplyPreviewOpen(false);
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '生成应用预览失败'));
+      setApplyPreviewOpen(false);
+    } finally {
+      setApplyPreviewLoading(false);
+    }
+  };
+
   const handleApplyConfirm = async () => {
     if (!activeScheme) return;
     setApplying(true);
-    setApplyConfirmOpen(false);
+    setApplyPreviewOpen(false);
     try {
       const res = await window.atm.colorApply(activeScheme.id, applyVisibility);
       if (res.success && res.data) {
-        const { result, schemeName, sourceAllegroVersion, targetAllegroVersion } = res.data;
+        const { result, schemeName, sourceAllegroVersion, targetAllegroVersion, undoSnapshotId } = res.data;
         setLastApplyResult({
           schemeName,
           appliedLayerCount: result.appliedLayerCount,
           skippedLayerCount: result.skippedLayerCount,
           skippedLayers: result.skippedLayers,
+          undoSnapshotId,
         });
         const versionNote =
           sourceAllegroVersion && targetAllegroVersion && sourceAllegroVersion !== targetAllegroVersion
@@ -205,6 +237,24 @@ const ColorPage: React.FC = () => {
       addToast('error', formatUserError(err, '操作失败'));
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleUndoApply = async () => {
+    if (!lastApplyResult?.undoSnapshotId) return;
+    setUndoing(true);
+    try {
+      const res = await window.atm.colorUndoApply(lastApplyResult.undoSnapshotId);
+      if (res.success && res.data) {
+        addToast('success', `已撤销「${lastApplyResult.schemeName}」，恢复应用前的板子配色`);
+        setLastApplyResult(null);
+      } else {
+        addToast('error', res.error || '撤销配色失败');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '撤销配色失败'));
+    } finally {
+      setUndoing(false);
     }
   };
 
@@ -492,7 +542,7 @@ const ColorPage: React.FC = () => {
           onRename={(schemeId, name) => void handleRename(schemeId, name)}
           onDelete={(schemeId) => void handleDelete(schemeId)}
           onSwitch={(schemeId) => void handleSwitch(schemeId)}
-          onApply={() => setApplyConfirmOpen(true)}
+          onApply={() => void handleApplyOpen()}
           onImport={() => void handleImportCol()}
           onExport={(schemeId) => void handleExportCol(schemeId)}
           applyLabel="应用到板子"
@@ -515,17 +565,31 @@ const ColorPage: React.FC = () => {
         </div>
       )}
 
-      {lastApplyResult && lastApplyResult.skippedLayers && lastApplyResult.skippedLayers.length > 0 && (
+      {lastApplyResult && (
         <div className="color-apply-detail">
-          <h4>已应用「{lastApplyResult.schemeName}」：{lastApplyResult.appliedLayerCount} 个层已设置，{lastApplyResult.skippedLayerCount} 个层跳过（目标板不存在）</h4>
-          <div className="color-apply-skipped-list">
-            {lastApplyResult.skippedLayers.slice(0, 60).map((name) => (
-              <span key={name} className="color-apply-skipped-item">{name}</span>
-            ))}
-            {lastApplyResult.skippedLayers.length > 60 && (
-              <span className="color-apply-skipped-more">等共 {lastApplyResult.skippedLayers.length} 个…</span>
+          <div className="color-apply-detail-head">
+            <h4>已应用「{lastApplyResult.schemeName}」：{lastApplyResult.appliedLayerCount} 个层已设置，{lastApplyResult.skippedLayerCount} 个层跳过（目标板不存在）</h4>
+            {lastApplyResult.undoSnapshotId && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => void handleUndoApply()}
+                disabled={undoing}
+              >
+                {undoing ? '撤销中…' : '撤销本次配色'}
+              </button>
             )}
           </div>
+          {lastApplyResult.skippedLayers && lastApplyResult.skippedLayers.length > 0 && (
+            <div className="color-apply-skipped-list">
+              {lastApplyResult.skippedLayers.slice(0, 60).map((name) => (
+                <span key={name} className="color-apply-skipped-item">{name}</span>
+              ))}
+              {lastApplyResult.skippedLayers.length > 60 && (
+                <span className="color-apply-skipped-more">等共 {lastApplyResult.skippedLayers.length} 个…</span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -647,28 +711,14 @@ const ColorPage: React.FC = () => {
         )}
       </BusinessDialog>
 
-      {/* 应用确认 */}
-      <ConfirmDialog
-        open={applyConfirmOpen}
-        title="应用配色方案"
-        message={
-          activeScheme
-            ? `将「${activeScheme.name}」应用到当前打开的板子？`
-            : '当前没有可应用的方案'
-        }
-        detail={
-          activeScheme
-            ? `包含 ${activeScheme.palette.length} 个调色板颜色、背景色与 ${activeScheme.layers.length} 个图层分配。按层角色智能分配：顶层、底层使用各自颜色，平面层按源板平面层顺序循环取色，内部信号层按层叠顺序依次取色（超出循环）。目标板子中不存在的图层将自动跳过。` +
-              (activeScheme.source?.allegroVersion && bridgeStatus?.allegroVersion && activeScheme.source.allegroVersion !== bridgeStatus.allegroVersion
-                ? `\n注意：方案来自 Allegro ${activeScheme.source.allegroVersion}，当前为 ${bridgeStatus.allegroVersion}，跨版本图层的可用性以目标版本为准。`
-                : '')
-            : undefined
-        }
-        variant="warning"
-        confirmLabel={applying ? '应用中…' : '确认应用'}
-        cancelLabel="取消"
+      {/* 应用预览与确认 */}
+      <ColorApplyPreviewDialog
+        open={applyPreviewOpen}
+        preview={applyPreview}
+        schemeName={activeScheme?.name ?? ''}
+        applying={applying}
         onConfirm={() => void handleApplyConfirm()}
-        onCancel={() => setApplyConfirmOpen(false)}
+        onCancel={() => setApplyPreviewOpen(false)}
       />
 
       {/* 启用桥接 Apply Plan */}

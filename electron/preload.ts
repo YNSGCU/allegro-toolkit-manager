@@ -552,6 +552,14 @@ contextBridge.exposeInMainWorld('atm', {
   colorApply: (schemeId: string, applyVisibility?: boolean) =>
     ipcRenderer.invoke('color:apply', schemeId, applyVisibility),
 
+  /** 生成配色应用预览（目标板叠层 + 最终颜色映射） */
+  colorApplyPreview: (schemeId: string, applyVisibility?: boolean) =>
+    ipcRenderer.invoke('color:apply-preview', schemeId, applyVisibility),
+
+  /** 撤销本次配色（恢复应用前保存的快照） */
+  colorUndoApply: (undoSnapshotId: string) =>
+    ipcRenderer.invoke('color:undo-apply', undoSnapshotId),
+
   /** 加载全部配色方案 */
   colorLoadSchemes: () => ipcRenderer.invoke('color:schemes'),
 

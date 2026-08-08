@@ -20,7 +20,7 @@ import type {
   ColorRgb,
   ColorSchemeSnapshot,
 } from '../../src/types/color';
-import { COLOR_PALETTE_SIZE, createDefaultPalette, normalizeRgb } from './colorPalette';
+import { COLOR_PALETTE_SIZE, createDefaultPalette, normalizeRgb, rgbToHex } from './colorPalette';
 import { parseSkillLisp, type LispValue } from './parseSkillLisp';
 
 /** 探测候选 Vibe Bridge workspace */
@@ -635,11 +635,7 @@ export async function applyColorSchemeSmart(
   }
 
   // 第一步：查询目标板层叠结构
-  const queryResult = await executeSkillViaBridge(workspace, buildTargetLayerQuerySkill(), options.timeoutMs ?? 15000);
-  if (!queryResult.success) {
-    throw new Error(queryResult.error || '查询目标板层叠失败');
-  }
-  const target = parseTargetLayersOutput(queryResult.output || '');
+  const target = await queryTargetLayerInfo({ workspace, timeoutMs: options.timeoutMs });
 
   // 第二步：按角色映射生成应用脚本并执行
   const skill = buildSmartApplySkill(snapshot, target, {
@@ -664,5 +660,149 @@ export async function applyColorSchemeSmart(
     ...counts,
     roleSummary,
     rawOutput: applyResult.output,
+  };
+}
+
+/**
+ * 查询当前打开板子的叠层结构（独立于应用，供预览使用）。
+ */
+export async function queryTargetLayerInfo(
+  options: { workspace?: string; timeoutMs?: number } = {},
+): Promise<TargetLayerInfo> {
+  const workspace = options.workspace || findBridgeWorkspace();
+  if (!workspace) {
+    throw new Error('未找到 Vibe Bridge workspace，请先安装并配置 ATM_VIBE_WORKSPACE');
+  }
+  const queryResult = await executeSkillViaBridge(
+    workspace,
+    buildTargetLayerQuerySkill(),
+    options.timeoutMs ?? 15000,
+  );
+  if (!queryResult.success) {
+    throw new Error(queryResult.error || '查询目标板层叠失败');
+  }
+  return parseTargetLayersOutput(queryResult.output || '');
+}
+
+/** 预览中的单个 ETCH 叠层条目 */
+export interface ColorApplyPreviewLayer {
+  name: string;
+  role: 'top' | 'bottom' | 'plane' | 'inner';
+  colorIndex: number;
+  colorName: string | null;
+  hex: string | null;
+  /** 是否复制源方案中该层的可见性 */
+  visible: boolean;
+}
+
+/** 预览中的非 ETCH 层（按层名精确匹配） */
+export interface ColorApplyPreviewOtherLayer {
+  name: string;
+  colorIndex: number;
+  colorName: string | null;
+  hex: string | null;
+  visible: boolean;
+}
+
+/** 配色应用预览结果 */
+export interface ColorApplyPreview {
+  targetTop: string | null;
+  targetBottom: string | null;
+  colorCount: number;
+  applyVisibility: boolean;
+  /** 目标板 ETCH 叠层最终颜色映射（按叠层顺序） */
+  etchLayers: ColorApplyPreviewLayer[];
+  /** 非 ETCH 层按名称匹配列表 */
+  otherLayers: ColorApplyPreviewOtherLayer[];
+  /** 将写入目标板的调色板（规范化后 1..colorCount） */
+  paletteChanges: Array<{ index: number; name: string; hex: string }>;
+  /** 角色统计 */
+  roleSummary: { top: number; bottom: number; plane: number; inner: number };
+}
+
+/**
+ * 生成配色应用预览（纯函数，可测试）。
+ *
+ * 与 buildSmartApplySkill 使用相同的角色映射规则，保证预览与实际应用一致：
+ * 顶层/底层用各自颜色；平面层按源板平面序列循环；内部信号层按叠层顺序取色。
+ */
+export function buildColorApplyPreview(
+  snapshot: ColorSchemeSnapshot,
+  target: TargetLayerInfo,
+  options: { applyVisibility?: boolean } = {},
+): ColorApplyPreview {
+  const applyVisibility = options.applyVisibility ?? false;
+  const mapping = computeColorRoleMapping(snapshot);
+  const classified = classifyTargetLayers(target);
+  const palette = normalizePalette(snapshot.palette, target.colorCount);
+  const paletteByIndex = new Map(palette.map((entry) => [entry.index, entry]));
+
+  const roleSummary = { top: 0, bottom: 0, plane: 0, inner: 0 };
+  let innerIndex = 0;
+  let planeIndex = 0;
+
+  const etchLayers: ColorApplyPreviewLayer[] = classified.map((item) => {
+    let colorIndex: number;
+    switch (item.role) {
+      case 'top':
+        colorIndex = mapping.topColor;
+        break;
+      case 'bottom':
+        colorIndex = mapping.bottomColor;
+        break;
+      case 'plane':
+        colorIndex = mapping.planeColors.length > 0
+          ? mapping.planeColors[planeIndex % mapping.planeColors.length]
+          : mapping.innerColors[innerIndex % mapping.innerColors.length];
+        planeIndex += 1;
+        if (mapping.planeColors.length === 0) innerIndex += 1;
+        break;
+      default:
+        colorIndex = mapping.innerColors[innerIndex % mapping.innerColors.length];
+        innerIndex += 1;
+        break;
+    }
+    roleSummary[item.role] += 1;
+
+    const sourceEntry = snapshot.layers.find(
+      (layer) => layer.className === 'ETCH' && layer.subclassName === item.name,
+    );
+    const entry = paletteByIndex.get(colorIndex);
+    return {
+      name: item.name,
+      role: item.role,
+      colorIndex,
+      colorName: entry?.name ?? null,
+      hex: entry ? rgbToHex(entry.rgb) : null,
+      visible: applyVisibility ? (sourceEntry?.visible ?? true) : false,
+    };
+  });
+
+  const otherLayers: ColorApplyPreviewOtherLayer[] = snapshot.layers
+    .filter((layer) => layer.className !== 'ETCH')
+    .map((layer) => {
+      const entry = paletteByIndex.get(layer.colorIndex);
+      return {
+        name: `${layer.className}/${layer.subclassName}`,
+        colorIndex: layer.colorIndex,
+        colorName: entry?.name ?? null,
+        hex: entry ? rgbToHex(entry.rgb) : null,
+        visible: applyVisibility ? layer.visible : false,
+      };
+    });
+
+  return {
+    targetTop: target.topLayerName,
+    targetBottom: target.bottomLayerName,
+    colorCount: target.colorCount,
+    applyVisibility,
+    etchLayers,
+    otherLayers,
+    paletteChanges: palette.map((entry) => ({
+      index: entry.index,
+      name: entry.name ?? '',
+      hex: rgbToHex(entry.rgb),
+    })),
+    roleSummary,
   };
 }

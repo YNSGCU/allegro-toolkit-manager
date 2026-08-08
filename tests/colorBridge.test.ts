@@ -12,6 +12,7 @@ import {
   buildCaptureSkill,
   buildSmartApplySkill,
   buildTargetLayerQuerySkill,
+  buildColorApplyPreview,
   classifyTargetLayers,
   computeColorRoleMapping,
   isPlaneLayer,
@@ -346,6 +347,67 @@ describe('buildSmartApplySkill plane sequence', () => {
     expect(skill).toContain('("ETCH/L5_SIG2" 16 t)');
     expect(skill).toContain('("ETCH/L10_SIG3" 38 t)');
     expect(skill).toContain('("ETCH/L12_SIG4" 144 t)');
+  });
+});
+
+describe('buildColorApplyPreview', () => {
+  const snapshot: ColorSchemeSnapshot = {
+    palette: [
+      { index: 7, name: 'Red', rgb: { r: 255, g: 0, b: 0 } },
+      { index: 14, name: 'Green', rgb: { r: 0, g: 255, b: 106 } },
+      { index: 66, name: 'PlaneBlue', rgb: { r: 0, g: 0, b: 255 } },
+      { index: 125, name: 'BottomColor', rgb: { r: 255, g: 255, b: 0 } },
+    ],
+    background: { r: 0, g: 0, b: 0 },
+    layers: [
+      { className: 'ETCH', subclassName: 'TOP', colorIndex: 7, visible: true, layerType: 'CONDUCTOR' },
+      { className: 'ETCH', subclassName: 'L2_GND1', colorIndex: 66, visible: false, layerType: 'PLANE' },
+      { className: 'ETCH', subclassName: 'L3_SIG1', colorIndex: 14, visible: true, layerType: 'CONDUCTOR' },
+      { className: 'ETCH', subclassName: 'BOTTOM', colorIndex: 125, visible: true, layerType: 'CONDUCTOR' },
+      { className: 'BOARD GEOMETRY', subclassName: 'OUTLINE', colorIndex: 7, visible: false },
+    ],
+    source: { topLayerName: 'TOP', bottomLayerName: 'BOTTOM' },
+  };
+
+  const target = {
+    topLayerName: 'TOP',
+    bottomLayerName: 'BOTTOM',
+    colorCount: 192,
+    layers: [
+      { name: 'TOP', layerType: 'CONDUCTOR' },
+      { name: 'L2_GND1', layerType: 'PLANE' },
+      { name: 'L3_SIG1', layerType: 'CONDUCTOR' },
+      { name: 'L4_SIG2', layerType: 'CONDUCTOR' },
+      { name: 'BOTTOM', layerType: 'CONDUCTOR' },
+    ],
+  };
+
+  it('maps every target layer with the same role/color rule as apply', () => {
+    const preview = buildColorApplyPreview(snapshot, target, { applyVisibility: true });
+
+    expect(preview.etchLayers).toHaveLength(5);
+    expect(preview.etchLayers[0]).toMatchObject({ name: 'TOP', role: 'top', colorIndex: 7 });
+    expect(preview.etchLayers[1]).toMatchObject({ name: 'L2_GND1', role: 'plane', colorIndex: 66 });
+    expect(preview.etchLayers[2]).toMatchObject({ name: 'L3_SIG1', role: 'inner', colorIndex: 14 });
+    // 目标板新增信号层按内部信号层序列取色（14 是唯一内部色，循环复用）
+    expect(preview.etchLayers[3]).toMatchObject({ name: 'L4_SIG2', role: 'inner', colorIndex: 14 });
+    expect(preview.etchLayers[4]).toMatchObject({ name: 'BOTTOM', role: 'bottom', colorIndex: 125 });
+    expect(preview.roleSummary).toEqual({ top: 1, bottom: 1, plane: 1, inner: 2 });
+    expect(preview.paletteChanges).toHaveLength(192);
+    expect(preview.paletteChanges[0]).toEqual({ index: 1, name: 'White', hex: '#FFFFFF' });
+  });
+
+  it('keeps visibility flags off unless applyVisibility is requested', () => {
+    const preview = buildColorApplyPreview(snapshot, target, { applyVisibility: false });
+    expect(preview.applyVisibility).toBe(false);
+    expect(preview.etchLayers.every((layer) => layer.visible === false)).toBe(true);
+  });
+
+  it('lists non-ETCH layers by exact name', () => {
+    const preview = buildColorApplyPreview(snapshot, target, { applyVisibility: true });
+    expect(preview.otherLayers).toEqual([
+      expect.objectContaining({ name: 'BOARD GEOMETRY/OUTLINE', colorIndex: 7, colorName: 'Red' }),
+    ]);
   });
 });
 

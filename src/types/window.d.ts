@@ -7,6 +7,7 @@ import type { EnvironmentInfo, EnvSourceList, AtmSettings, EnvironmentRegistry, 
 import type { EnvImportPreview, ImportResult, ImportExecuteParams } from './importEnv';
 import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, SkillConfigFile, UsageTreeNode } from './skill';
 import type { RuntimeInfo } from './runtime';
+import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
@@ -242,7 +243,11 @@ declare global {
       colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
       colorExecuteBridgeEnablePlan: (planJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       colorCapture: () => Promise<{ success: boolean; data?: { snapshot: ColorSchemeSnapshot; bridgeStatus: ColorBridgeStatus }; error?: string }>;
-      colorApply: (schemeId: string, applyVisibility?: boolean) => Promise<{ success: boolean; data?: { result: ColorApplyResult; schemeName: string; sourceAllegroVersion: string | null; targetAllegroVersion: string | null }; error?: string }>;
+      colorApply: (schemeId: string, applyVisibility?: boolean) => Promise<{ success: boolean; data?: { result: ColorApplyResult; schemeName: string; sourceAllegroVersion: string | null; targetAllegroVersion: string | null; undoSnapshotId?: string }; error?: string }>;
+      /** 生成配色应用预览（目标板叠层 + 最终颜色映射） */
+      colorApplyPreview: (schemeId: string, applyVisibility?: boolean) => Promise<{ success: boolean; data?: { preview: ColorApplyPreview; schemeName: string; sourceAllegroVersion: string | null; targetAllegroVersion: string | null }; error?: string }>;
+      /** 撤销本次配色（恢复应用前保存的快照） */
+      colorUndoApply: (undoSnapshotId: string) => Promise<{ success: boolean; data?: { result: ColorApplyResult; schemeName: string; restoredSnapshotId: string }; error?: string }>;
       colorLoadSchemes: () => Promise<{ success: boolean; data?: ColorSchemeStore; error?: string }>;
       colorCreateScheme: (snapshot: ColorSchemeSnapshot, name: string, description?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
       colorCopyScheme: (schemeId: string, newName?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;

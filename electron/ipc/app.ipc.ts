@@ -174,6 +174,8 @@ function collectRegisteredHandlers(): IpcHandlerInfo[] {
     'color:check-bridge',
     'color:capture',
     'color:apply',
+    'color:apply-preview',
+    'color:undo-apply',
     'color:schemes',
     'color:scheme-create',
     'color:scheme-copy',

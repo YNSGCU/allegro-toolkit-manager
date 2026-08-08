@@ -10,9 +10,16 @@ import path from 'path';
 import {
   captureColorScheme,
   applyColorSchemeSmart,
+  buildColorApplyPreview,
+  queryTargetLayerInfo,
   checkColorBridge,
 } from '../../core/color/vibeColorBridge';
 import { parseColorColFile, generateColorColFile } from '../../core/color/colorPalette';
+import {
+  deleteColorUndoSnapshot,
+  loadColorUndoSnapshot,
+  saveColorUndoSnapshot,
+} from '../../core/color/colorUndo';
 import {
   checkBridgeSetup,
   buildBridgeEnablePlan,
@@ -72,6 +79,13 @@ export function registerColorIpc(): void {
       if (!bridgeStatus.connected) {
         return { success: false, error: bridgeStatus.message };
       }
+
+      // 应用前自动保存当前板子配色快照，用于"撤销本次配色"
+      const beforeSnapshot = await captureColorScheme({
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+      });
+      const undo = saveColorUndoSnapshot(beforeSnapshot, scheme.name);
+
       const result = await applyColorSchemeSmart(scheme, {
         workspace: bridgeStatus.bridgeWorkspace ?? undefined,
         applyVisibility: applyVisibility ?? false,
@@ -83,10 +97,71 @@ export function registerColorIpc(): void {
           schemeName: scheme.name,
           sourceAllegroVersion: scheme.source?.allegroVersion ?? null,
           targetAllegroVersion: bridgeStatus.allegroVersion ?? null,
+          undoSnapshotId: undo.id,
         },
       };
     } catch (err) {
       return { success: false, error: `应用配色失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 生成应用预览（查询目标板叠层并计算最终颜色映射）
+  ipcMain.handle('color:apply-preview', async (_event, schemeId: string, applyVisibility?: boolean) => {
+    try {
+      const scheme = getColorScheme(schemeId);
+      if (!scheme) {
+        return { success: false, error: '配色方案不存在' };
+      }
+      const bridgeStatus = await checkColorBridge();
+      if (!bridgeStatus.connected) {
+        return { success: false, error: bridgeStatus.message };
+      }
+      const target = await queryTargetLayerInfo({
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+      });
+      const preview = buildColorApplyPreview(scheme, target, {
+        applyVisibility: applyVisibility ?? false,
+      });
+      return {
+        success: true,
+        data: {
+          preview,
+          schemeName: scheme.name,
+          sourceAllegroVersion: scheme.source?.allegroVersion ?? null,
+          targetAllegroVersion: bridgeStatus.allegroVersion ?? null,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `生成配色应用预览失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 撤销本次配色（把应用前保存的快照恢复回去）
+  ipcMain.handle('color:undo-apply', async (_event, undoSnapshotId: string) => {
+    try {
+      const undo = loadColorUndoSnapshot(undoSnapshotId);
+      if (!undo) {
+        return { success: false, error: '撤销快照不存在或已失效' };
+      }
+      const bridgeStatus = await checkColorBridge();
+      if (!bridgeStatus.connected) {
+        return { success: false, error: bridgeStatus.message };
+      }
+      const result = await applyColorSchemeSmart(undo.snapshot, {
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+        applyVisibility: true,
+      });
+      deleteColorUndoSnapshot(undoSnapshotId);
+      return {
+        success: true,
+        data: {
+          result,
+          schemeName: undo.schemeName,
+          restoredSnapshotId: undoSnapshotId,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `撤销配色失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 
