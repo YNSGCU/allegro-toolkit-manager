@@ -85,3 +85,11 @@ src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> elect
 ### IPC Runtime Diagnostics（通道注册表）
 
 `electron/ipc/channelRegistry.ts` 在 `registerIpcHandlers` 入口包装 `ipcMain.handle`，把实际注册通道记入 `registeredChannels`；`app:getRuntimeInfo` 用该集合替代 `ipcMain.listenerCount()`（后者对 handle 注册恒为 0），从而让版本自检准确报告缺失 handler。
+
+### Workspace Unified Profile（统一工作区方案）
+
+`core/workspace/workspaceManager.ts`（CRUD）-> `core/workspace/buildWorkspacePreview.ts`（统一预览）-> `core/workspace/planWorkspaceApply.ts`（应用顺序与环境锁规划）-> `electron/ipc/workspace.ipc.ts` -> `%APPDATA%/AllegroToolkitManager/workspaces.json`
+
+- 数据模型：`WorkspaceProfile` 绑定 environmentId + hotkey/skill/menu/color 四类子方案；存储于应用级配置目录，随设置备份迁移（默认工作区不迁移）。
+- 预览链：`workspace:preview` 从各模块加载摘要，环境优先按工作区绑定、回退当前激活。
+- 应用规划：`planWorkspaceApplySequence` 按 Skill → 菜单 → 快捷键 → 配色 顺序编排；环境锁不一致或无可应用方案时拒绝执行。M3 实际执行链与 M4 页面入口在 v0.3.0 后实施。

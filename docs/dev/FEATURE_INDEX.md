@@ -12,4 +12,4 @@
 | application-updates | partial | `docs/user/features/application-updates.md` | `docs/dev/features/application-updates.md` | 2026-08-06 |
 | color-schemes | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
 | settings-backup-restore | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
-| workspace-unified-profile | design | N/A | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
+| workspace-unified-profile | partial（M1/M2/M3 规划完成） | N/A | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |

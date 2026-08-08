@@ -18,6 +18,7 @@ import {
   setActiveWorkspace,
 } from '../core/workspace/workspaceManager';
 import { buildWorkspacePreview } from '../core/workspace/buildWorkspacePreview';
+import { planWorkspaceApplySequence } from '../core/workspace/planWorkspaceApply';
 
 let configHome = '';
 
@@ -155,5 +156,66 @@ describe('buildWorkspacePreview', () => {
     expect(preview.color).toBeNull();
     expect(preview.skill).toBeNull();
     expect(preview.totalItems).toBe(2);
+  });
+});
+
+describe('planWorkspaceApplySequence', () => {
+  const workspace = {
+    id: 'ws_1',
+    name: '项目A',
+    environmentId: 'env_1',
+    hotkeyProfileId: 'hk_1',
+    skillProfileId: 'sk_1',
+    menuProfileId: 'mn_1',
+    colorSchemeId: 'color_1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  it('按 Skill → 菜单 → 快捷键 → 配色 顺序排列', () => {
+    const sequence = planWorkspaceApplySequence(workspace, 'env_1', {
+      skill: true,
+      menu: true,
+      hotkey: true,
+      color: true,
+    });
+
+    expect(sequence.blocked).toBe(false);
+    expect(sequence.order.map((step) => step.module)).toEqual(['skill', 'menu', 'hotkey', 'color']);
+  });
+
+  it('环境锁不匹配时拒绝执行', () => {
+    const sequence = planWorkspaceApplySequence(workspace, 'env_2', {
+      skill: true,
+      menu: true,
+      hotkey: true,
+      color: true,
+    });
+
+    expect(sequence.blocked).toBe(true);
+    expect(sequence.blockedReason).toContain('环境');
+  });
+
+  it('缺失的快捷键/Skill/菜单方案警告并跳过，配色未绑定可忽略', () => {
+    const sequence = planWorkspaceApplySequence(
+      { ...workspace, colorSchemeId: undefined },
+      'env_1',
+      { skill: true, menu: false, hotkey: false, color: false },
+    );
+
+    expect(sequence.order.map((step) => step.module)).toEqual(['skill']);
+    expect(sequence.warnings.some((w) => w.includes('菜单方案未绑定或不存在'))).toBe(true);
+    expect(sequence.warnings.some((w) => w.includes('快捷键方案未绑定或不存在'))).toBe(true);
+    expect(sequence.blocked).toBe(false);
+  });
+
+  it('没有任何可应用方案时标记阻塞', () => {
+    const sequence = planWorkspaceApplySequence(
+      { ...workspace, skillProfileId: '', menuProfileId: '', hotkeyProfileId: '', colorSchemeId: undefined },
+      'env_1',
+      { skill: false, menu: false, hotkey: false, color: false },
+    );
+
+    expect(sequence.blocked).toBe(true);
   });
 });
