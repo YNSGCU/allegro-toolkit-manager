@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import {
+  Archive,
   Blocks,
   CircuitBoard,
   Gauge,
@@ -23,6 +24,7 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   menu: Menu,
   colors: Palette,
   overview: Gauge,
+  backup: Archive,
 };
 
 export default function Layout({ children }: LayoutProps) {

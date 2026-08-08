@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview' | 'backup';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -41,6 +41,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'primary',
     shortLabel: 'CL',
     summary: '复制板子配色方案并可视化，跨板子应用',
+  },
+  {
+    key: 'backup',
+    label: '备份与恢复',
+    path: '/backup',
+    group: 'utility',
+    shortLabel: 'BK',
+    summary: '备份软件设置并在新电脑 / 新板子复用',
   },
   {
     key: 'overview',

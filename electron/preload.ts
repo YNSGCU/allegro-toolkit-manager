@@ -502,22 +502,37 @@ contextBridge.exposeInMainWorld('atm', {
   // ===== Symphony 协同模式适配 =====
   /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */
   symphonyCheck: () => ipcRenderer.invoke('skill:symphony-check'),
-  /** ?? symphony_skill.txt ??????? Apply Plan? */
+  /** 基于 symphony_skill.txt 生成登记方案的 Apply Plan */
   symphonyGeneratePlan: (optionsJson: string) =>
     ipcRenderer.invoke('skill:symphony-generate', optionsJson),
   /** 执行 Symphony 登记计划 */
   symphonyApplyPlan: (planJson: string) =>
     ipcRenderer.invoke('skill:symphony-apply', planJson),
-  /** ?? AXL ??????? */
+  /** 查询 AXL 命令登记表信息 */
   symphonyTableInfo: () => ipcRenderer.invoke('skill:symphony-table-info'),
 
   // ===== V5.4 运行时版本自检 =====
   /** 获取运行时版本信息（三层一致性检测用） */
   getRuntimeInfo: () => ipcRenderer.invoke('app:getRuntimeInfo'),
+  // ===== 备份与恢复（V5.7） =====
+  /** 创建 ATM 设置备份（.atmbak），uiPrefsJson 为渲染进程收集的界面偏好 */
+  createSettingsBackup: (uiPrefsJson?: string, appVersion?: string) =>
+    ipcRenderer.invoke('backup:create', uiPrefsJson, appVersion),
+
+  /** 选择 ATM 备份文件 */
+  openSettingsBackup: () => ipcRenderer.invoke('backup:open'),
+
+  /** 解析备份文件并返回摘要 */
+  inspectSettingsBackup: (filePath: string) =>
+    ipcRenderer.invoke('backup:inspect', filePath),
+
+  /** 恢复备份到当前激活 pcbenv */
+  restoreSettingsBackup: (filePath: string, optionsJson?: string) =>
+    ipcRenderer.invoke('backup:restore', filePath, optionsJson),
 
   // ===== 应用内更新 =====
-  // ===== 閰嶈壊鏂规(配色方案) =====
-  /** 妫€鏌?Vibe Bridge 鍙敤鎬?*/
+  // ===== 配色方案 =====
+  /** 检查 Vibe Bridge 可用性 */
   colorCheckBridge: () => ipcRenderer.invoke('color:check-bridge'),
 
   /** 检查桥接安装状态（自动加载是否已配置） */
@@ -530,33 +545,33 @@ contextBridge.exposeInMainWorld('atm', {
   colorExecuteBridgeEnablePlan: (planJson: string) =>
     ipcRenderer.invoke('color:bridge-execute-plan', planJson),
 
-  /** 浠庡綋鍓嶆墦寮€鐨?Allegro 鏉垮瓙鎹曡幏閰嶈壊 */
+  /** 从当前打开的 Allegro 板子捕获配色 */
   colorCapture: () => ipcRenderer.invoke('color:capture'),
 
-  /** 灏嗛厤鑹叉柟妗堝簲鐢ㄥ埌褰撳墠鏉垮瓙锛堥渶 UI 纭锛?*/
+  /** 将配色方案应用到当前板子（需 UI 确认） */
   colorApply: (schemeId: string, applyVisibility?: boolean) =>
     ipcRenderer.invoke('color:apply', schemeId, applyVisibility),
 
-  /** 鍔犺浇鍏ㄩ儴閰嶈壊鏂规 */
+  /** 加载全部配色方案 */
   colorLoadSchemes: () => ipcRenderer.invoke('color:schemes'),
 
-  /** 淇濆瓨鎹曡幏蹇収涓烘柟妗?*/
+  /** 保存捕获快照为方案 */
   colorCreateScheme: (snapshot: any, name: string, description?: string) =>
     ipcRenderer.invoke('color:scheme-create', snapshot, name, description),
 
-  /** 澶嶅埗鏂规 */
+  /** 复制方案 */
   colorCopyScheme: (schemeId: string, newName?: string) =>
     ipcRenderer.invoke('color:scheme-copy', schemeId, newName),
 
-  /** 閲嶅懡鍚嶆柟妗?*/
+  /** 重命名方案 */
   colorRenameScheme: (schemeId: string, newName: string) =>
     ipcRenderer.invoke('color:scheme-rename', schemeId, newName),
 
-  /** 鍒犻櫎鏂规 */
+  /** 删除方案 */
   colorDeleteScheme: (schemeId: string) =>
     ipcRenderer.invoke('color:scheme-delete', schemeId),
 
-  /** 璁剧疆娲昏穬鏂规 */
+  /** 设置活跃方案 */
   colorSetActiveScheme: (schemeId: string) =>
     ipcRenderer.invoke('color:scheme-set-active', schemeId),
 
@@ -564,10 +579,10 @@ contextBridge.exposeInMainWorld('atm', {
   colorUpdateScheme: (schemeId: string, updates: any) =>
     ipcRenderer.invoke('color:scheme-update', schemeId, updates),
 
-  /** 瀵煎叆 .col 鏂囦欢 */
+  /** 导入 .col 文件 */
   colorImportCol: () => ipcRenderer.invoke('color:import-col'),
 
-  /** 瀵煎嚭 .col 鏂囦欢 */
+  /** 导出 .col 文件 */
   colorExportCol: (schemeId: string) =>
     ipcRenderer.invoke('color:export-col', schemeId),
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),

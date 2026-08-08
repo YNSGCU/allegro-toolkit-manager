@@ -19,10 +19,10 @@ describe('app shell config', () => {
     ]);
   });
 
-  it('merges overview and environment into one system status entry', () => {
+  it('keeps backup/restore and overview in the system group', () => {
     const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
 
-    expect(utilityItems.map((item) => item.key)).toEqual(['overview']);
-    expect(utilityItems[0].label).toBe('系统状态');
+    expect(utilityItems.map((item) => item.key)).toEqual(['backup', 'overview']);
+    expect(utilityItems[0].label).toBe('备份与恢复');
   });
 });

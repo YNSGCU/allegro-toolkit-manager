@@ -16,6 +16,7 @@ import { initDebug } from '../core/debug';
 import { ATM_WINDOW_BOUNDS } from './windowConfig';
 import { resolveRendererRequest, shouldFallbackToIndexHtml } from './rendererAssetPath';
 import { UpdateService } from './services/updateService';
+import { getWindowInitialState, trackWindowState } from './windowState';
 
 
 let mainWindow: BrowserWindow | null = null;
@@ -93,10 +94,14 @@ function startServer(distDir: string): Promise<number> {
 
 async function createWindow(): Promise<void> {
   const preloadPath = path.join(__dirname, 'preload.js');
+  const initialState = getWindowInitialState();
+  const bounds = initialState?.bounds;
 
   mainWindow = new BrowserWindow({
-    width: ATM_WINDOW_BOUNDS.width,
-    height: ATM_WINDOW_BOUNDS.height,
+    width: bounds?.width ?? ATM_WINDOW_BOUNDS.width,
+    height: bounds?.height ?? ATM_WINDOW_BOUNDS.height,
+    x: bounds?.x,
+    y: bounds?.y,
     minWidth: ATM_WINDOW_BOUNDS.minWidth,
     minHeight: ATM_WINDOW_BOUNDS.minHeight,
     title: 'ATM - Allegro Toolkit Manager',
@@ -107,6 +112,11 @@ async function createWindow(): Promise<void> {
       sandbox: false,
     },
   });
+
+  if (initialState?.isMaximized) {
+    mainWindow.maximize();
+  }
+  trackWindowState(mainWindow);
 
   console.log('[ATM] Preload path:', preloadPath);
 

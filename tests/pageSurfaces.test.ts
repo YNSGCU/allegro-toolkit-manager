@@ -7,10 +7,10 @@ function readPageSource(page: string): string {
 }
 
 describe('页面工作区契约', () => {
-  it('保留快捷键为默认入口并将系统入口合并为四个导航项', () => {
+  it('保留快捷键为默认入口并维护完整导航项', () => {
     expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
     expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual([
-      'hotkeys', 'skills', 'menu', 'colors', 'overview',
+      'hotkeys', 'skills', 'menu', 'colors', 'backup', 'overview',
     ]);
     expect(APP_NAV_ITEMS.find((item) => item.key === 'overview')?.label).toBe('系统状态');
     expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual(['hotkeys', 'skills', 'menu', 'colors']);

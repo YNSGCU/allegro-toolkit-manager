@@ -9,6 +9,7 @@ import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, Skil
 import type { RuntimeInfo } from './runtime';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
+import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
 
 declare global {
   interface Window {
@@ -216,17 +217,26 @@ declare global {
       // ===== Symphony 协同模式适配 =====
       /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */
       symphonyCheck: () => Promise<{ success: boolean; data?: any; error?: string }>;
-      /** ?? symphony_skill.txt ??????? Apply Plan? */
+      /** 基于 symphony_skill.txt 生成登记方案的 Apply Plan */
       symphonyGeneratePlan: (optionsJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       /** 执行 Symphony 登记计划 */
       symphonyApplyPlan: (planJson: string) => Promise<{ success: boolean; appliedSteps?: number; totalSteps?: number; error?: string }>;
-      /** ?? AXL ??????? */
+      /** 查询 AXL 命令登记表信息 */
       symphonyTableInfo: () => Promise<{ success: boolean; data?: any; error?: string }>;
 
       // ===== V5.4 运行时版本自检 =====
       /** 获取运行时版本信息（三层一致性检测用） */
       getRuntimeInfo: () => Promise<{ success: boolean; data?: RuntimeInfo; error?: string }>;
-      // ===== 閰嶈壊鏂规(配色方案) =====
+      // ===== V5.7 备份与恢复 =====
+      /** 创建 ATM 设置备份（.atmbak），uiPrefsJson 为界面偏好 JSON */
+      createSettingsBackup: (uiPrefsJson?: string, appVersion?: string) => Promise<{ success: boolean; data?: { filePath: string; summary: BackupSummary } | null; error?: string; info?: string }>;
+      /** 选择 ATM 备份文件 */
+      openSettingsBackup: () => Promise<{ success: boolean; data?: string | null; error?: string; info?: string }>;
+      /** 解析备份文件并返回摘要 */
+      inspectSettingsBackup: (filePath: string) => Promise<{ success: boolean; data?: { summary: BackupSummary; source: BackupSourceInfo; createdAt: string }; error?: string }>;
+      /** 恢复备份到当前激活 pcbenv */
+      restoreSettingsBackup: (filePath: string, optionsJson?: string) => Promise<{ success: boolean; data?: BackupRestoreResult; error?: string }>;
+      // ===== 配色方案 =====
       colorCheckBridge: () => Promise<{ success: boolean; data?: ColorBridgeStatus; error?: string }>;
       colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupStatus; error?: string }>;
       colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
