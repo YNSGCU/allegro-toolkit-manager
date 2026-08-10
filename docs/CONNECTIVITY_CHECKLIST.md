@@ -44,4 +44,5 @@ npx.cmd electron --version
 
 - [x] Renderer 更新面板、preload、IPC 和 Main 更新服务已连接。
 - [x] 开发模式、未配置源、下载失败和安装前置条件有明确状态。
+- [x] 无安装包元数据时回退到 ATM 官方 GitHub Release；检查阶段立即反馈并有 30 秒超时。
 - [ ] 真实 ATM HTTPS Release、签名安装包和旧版本覆盖升级 E2E 尚未完成。

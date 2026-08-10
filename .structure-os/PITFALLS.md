@@ -348,8 +348,21 @@
 - Area: electron-updater、NSIS 打包、应用内更新
 - Symptom: 客户端显示可更新但下载到错误项目或不存在的安装包。
 - Cause: 复用其他项目的 GitHub Release 地址，或普通本地打包意外生成 publish 元数据。
-- Safe fix: ATM 默认保持未配置；正式构建必须通过 ATM_UPDATE_FEED_URL 显式注入 HTTPS 目录，并同时发布 latest.yml、NSIS 安装包和 .blockmap。
+- Safe fix: 在 ATM 没有真实 Release 时默认保持未配置；正式构建必须显式注入 HTTPS 目录，并同时发布 latest.yml、NSIS 安装包和 .blockmap。官方仓库建立且资产持续可验证后，运行时默认值只能指向本项目官方地址，禁止复用其他项目。
 - Avoid: 复制 PiAgent 更新 URL、在没有真实 Release 时宣称更新可用、默认开启自动下载或自动安装。
+
+## PIT-2026-08-10-02: 检查更新不能在缺少更新源或网络等待时静默返回
+
+- Area: electron-updater、更新源优先级、Renderer 状态反馈、旧安装包升级
+- Symptom: 用户点击“检查更新”后按钮短暂禁用或完全没有可见变化；本机 `userData` 中没有 `update-settings.json`。
+- Root cause: 发布前本地安装包没有 `package.json.atmUpdateFeedUrl`，`UpdateService.check()` 在 feedUrl 为空时直接返回旧状态；网络检查也没有超时上限。
+- Wrong attempts: 只在 UI 修改按钮文字；继续发布同版本导致 semver 判定无更新；把 token 或带查询参数的下载 URL写进客户端。
+- Correct fix: 使用 `ATM_UPDATE_URL -> 已保存设置 -> 安装包元数据 -> ATM 官方 Release` 的明确优先级；检查前发布“正在连接”状态，30 秒超时后返回可重试网络错误；提升补丁版本以便旧客户端检测到真正的新版本。
+- Guardrail: 更新按钮的每条退出路径都必须产生可见状态；正式 Release 必须同时存在 exe、blockmap、latest.yml，且默认源只能是已验证的本项目 HTTPS 地址。
+- Related files: `electron/services/updateService.ts`, `src/components/common/ApplicationUpdatePanel.tsx`, `scripts/publish-github.mjs`, `tests/updateService.test.ts`
+- Detection: 删除 `update-settings.json` 并使用无 `atmUpdateFeedUrl` 的打包元数据，检查仍应配置官方源；模拟悬挂请求应在超时后进入 error。
+- Verification: `tests/updateService.test.ts`、`npm run verify:update`、正式安装包对 GitHub Latest 的检查/下载/安装 E2E。
+- Last seen: 2026-08-10
 
 ## PIT-2026-08-08-06: 工作区确认必须固定用户点击的目标
 

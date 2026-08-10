@@ -1,5 +1,12 @@
 # Handoff
 
+## 2026-08-10：应用内检查更新无反应
+
+- 本机证据：`C:\Users\89539\AppData\Roaming\allegro-toolkit-manager` 无 `update-settings.json`，说明运行的是未内置更新源的发布前 0.3.0；旧 `check()` 对空 feed 静默返回。
+- GitHub 证据：v0.3.0 已是公开 Latest，安装包、blockmap、latest.yml 三项资产齐全。
+- 修复：`OFFICIAL_UPDATE_FEED_URL` 作为最终兜底；检查阶段立即显示连接状态，30 秒超时归类网络错误；版本提升至 0.3.1。
+- 验证：更新服务 5 项测试通过；完整 `npm run verify` 全绿，67 个测试文件 / 403 项测试通过；打包、提交及 v0.3.1 发布待执行。
+
 ## 2026-08-10：菜单切换后草稿消失修复
 
 - 只读核对真实配置：17.4 `menu_profile.json` 的“测试”方案仍包含 6 项；17.2 的两个方案均为空，用户数据未被删除。

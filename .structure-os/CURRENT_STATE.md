@@ -1,5 +1,10 @@
 # Current State
 
+## 2026-08-10 应用内更新无反馈修复
+- 根因：发布前本地 0.3.0 没有内置 feed，且 `UpdateService.check()` 在 feed 为空时直接返回旧状态；本机没有 `update-settings.json`。
+- 修复：更新源增加 ATM 官方 GitHub Release 兜底，检查时立即显示连接状态并设置 30 秒超时；版本提升为 0.3.1。
+- v0.3.0 Release 已公开且 exe/blockmap/latest.yml 齐全；v0.3.1 完整验证已通过，打包与发布待执行。
+
 ## 2026-08-10 菜单保存与跨环境复制修复
 - 实机配置确认：17.4 的“测试”方案仍有 6 项；17.2 的“默认菜单方案”和“副本”均为空，数据未删除而是环境隔离。
 - 菜单方案 CRUD/切换后统一同步编辑状态；切换方案或 Allegro 环境前先保存草稿，失败时阻止切换；关闭/强制刷新有未保存提醒。
@@ -13,10 +18,10 @@
 ## Snapshot
 - 2026-08-09：确认真实 17.2 会把 UTF-8 `allegro.ilinit` 按 CP936/GBK 读取，中文路径因此变成“甯冨眬”并加载失败；已实现 17.2=GBK、17.4=UTF-8 的版本编码策略、旧文件自动识别及 Apply Plan 安全转码，等待真实会话重启复测。
 - 2026-08-09：定位到“打开 17.2 仍显示 17.4 乱码菜单”的根因是 Windows `HOME/CDSROOT` 仍指向 17.4；新增按所选环境隔离启动链路与 HOME 不匹配告警。定向测试和前后端类型检查通过，17.2 实机仍待复测。
-- Last updated: 2026-08-10
+- Last updated: 2026-08-11
 - Current branch: master；v0.3.0 Beta 收口中，统一工作区安全与一致性缺陷已修复（尚未提交）
 - App status: 七个侧栏入口（统一工作区/快捷键/Skill/菜单/配色/备份与恢复/系统状态）；工作区支持环境与四类方案绑定、复制、预览和顺序应用；配色支持捕获、自定义颜色、应用预览与撤销
-- Test status: 67 files / 401 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理和版本编码策略覆盖
+- Test status: 67 files / 403 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
 - Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认
 
 ## Implemented Behavior

@@ -4,6 +4,22 @@ import type { AppUpdater, ProgressInfo } from 'electron-updater';
 import type { UpdateFailure, UpdateSettings, UpdateSettingsView, UpdateState } from '../../src/types/updates';
 
 const SETTINGS_FILE = 'update-settings.json';
+export const OFFICIAL_UPDATE_FEED_URL = 'https://github.com/YNSGCU/allegro-toolkit-manager/releases/latest/download';
+const UPDATE_CHECK_TIMEOUT_MS = 30_000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function classifyFailure(error: unknown): UpdateFailure['code'] {
   const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
@@ -11,7 +27,7 @@ function classifyFailure(error: unknown): UpdateFailure['code'] {
   if (/sha|checksum|integrity|signature|notsigned|unsigned|code signing/.test(message)) return 'integrity';
   if (/latest\.yml|404|not found|metadata|yaml/.test(message)) return 'metadata';
   if (/eacces|eperm|permission|access denied/.test(message)) return 'permission';
-  if (/enet|econn|dns|network|socket|timeout|proxy|tls|certificate/.test(message)) return 'network';
+  if (/enet|econn|dns|network|socket|timeout|proxy|tls|certificate|超时|网络|代理/.test(message)) return 'network';
   return 'unknown';
 }
 
@@ -47,10 +63,12 @@ export class UpdateService {
   ) {
     const environmentUrl = process.env.ATM_UPDATE_URL?.trim() || '';
     const saved = this.readSavedSettings();
-    const feedUrl = environmentUrl || saved?.feedUrl || defaultFeedUrl;
+    const savedUrl = saved?.feedUrl?.trim() || '';
+    const embeddedUrl = defaultFeedUrl.trim();
+    const feedUrl = environmentUrl || savedUrl || embeddedUrl || OFFICIAL_UPDATE_FEED_URL;
     this.settingsView = {
       settings: { feedUrl, connectionMode: saved?.connectionMode || 'system' },
-      source: environmentUrl ? 'environment' : saved ? 'saved' : defaultFeedUrl ? 'default' : 'none',
+      source: environmentUrl ? 'environment' : savedUrl ? 'saved' : 'default',
     };
     this.stateValue = {
       status: !packaged ? 'unsupported' : feedUrl ? 'idle' : 'unconfigured',
@@ -90,11 +108,26 @@ export class UpdateService {
   }
 
   async check(): Promise<UpdateState> {
-    if (!this.packaged || !this.settingsView.settings.feedUrl) return this.state();
+    if (!this.packaged) return this.setState({ status: 'unsupported', message: '开发模式不执行应用更新' });
+    if (!this.settingsView.settings.feedUrl) {
+      return this.setState({ status: 'unconfigured', message: '尚未配置更新源，请展开“配置更新源”后保存' });
+    }
     if (this.busy) return this.state();
     this.busy = true;
-    this.setState({ status: 'checking', message: '正在检查更新' });
-    try { await this.configure(); await this.updater.checkForUpdates(); } catch (error) { this.setError('check', error); } finally { this.busy = false; }
+    try {
+      const configured = await this.configure();
+      if (configured.status !== 'idle') return configured;
+      this.setState({ status: 'checking', message: '正在连接更新服务器' });
+      await withTimeout(
+        this.updater.checkForUpdates(),
+        UPDATE_CHECK_TIMEOUT_MS,
+        '检查更新超时，请检查 GitHub 网络或系统代理',
+      );
+    } catch (error) {
+      this.setError('check', error);
+    } finally {
+      this.busy = false;
+    }
     return this.state();
   }
 

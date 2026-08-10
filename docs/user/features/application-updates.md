@@ -13,21 +13,23 @@ ATM 可以在软件内检查 Windows 新版本、显示下载进度，并在下�
 ## 更新源与安全
 
 - 更新源必须是 HTTPS 目录，并提供 `latest.yml`、Windows NSIS 安装包和对应 `.blockmap` 文件。
-- ATM 默认不内置未经确认的第三方发布地址。正式构建时通过 `ATM_UPDATE_FEED_URL` 指定发布目录；已安装客户端也可以通过 `ATM_UPDATE_URL` 覆盖。
+- ATM 默认使用官方 GitHub Release 更新源：`https://github.com/YNSGCU/allegro-toolkit-manager/releases/latest/download`。正式发布构建仍会写入同一地址；已安装客户端可以通过界面设置或 `ATM_UPDATE_URL` 覆盖。
 - 更新源地址不允许包含用户名、密码、查询参数或片段。
 - 系统代理为默认连接方式；只有明确不需要代理时才使用直连。
 - 下载内容会由 `electron-updater` 校验摘要；校验失败不会进入安装状态。
 
+点击“检查更新”后会立即显示“正在连接更新服务器”；30 秒内无法完成时会显示网络/代理超时错误，不会无提示地一直等待。
+
 ## 限制
 
-- 当前仓库尚未配置公开 ATM Release 地址，因此普通本地打包不会自动发现更新。
 - 开发模式、未配置 `latest.yml` 的安装包和非 NSIS 包不能执行应用内安装。
 - 应用有未完成的高风险写入操作时，应先结束操作再重启更新。
 - Windows 代码签名仍需单独配置；未签名安装包可能触发 SmartScreen 提示。
 
 ## 故障排查
 
-- 显示“未配置更新源”：使用带 `ATM_UPDATE_FEED_URL` 的正式更新构建，或由管理员提供 HTTPS 更新目录。
+- 早期本地 0.3.0 点击后没有变化：展开“配置更新源”，填入官方地址 `https://github.com/YNSGCU/allegro-toolkit-manager/releases/latest/download` 并点击“保存并检查”；也可以直接安装 0.3.1 或更高版本。
+- 显示“未配置更新源”：展开“配置更新源”并恢复上述官方地址。
 - 显示“更新元数据不可用”：确认发布目录中存在与安装包版本匹配的 `latest.yml`。
 - 显示“网络或代理连接不可用”：检查 Windows 代理设置，或在确认网络环境后切换为直连。
 - 显示“完整性校验失败”：不要继续安装，重新生成并重新发布完整的安装包、`.blockmap` 和 `latest.yml`。

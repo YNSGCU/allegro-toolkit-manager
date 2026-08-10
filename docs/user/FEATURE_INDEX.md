@@ -8,6 +8,6 @@
 | hotkey-command-assistant | complete | `docs/user/features/hotkey-command-assistant.md` | `docs/dev/features/hotkey-command-assistant.md` | 2026-08-01 |
 | multi-allegro-environments | complete | `docs/user/features/multi-allegro-environments.md` | `docs/dev/features/multi-allegro-environments.md` | 2026-08-10 |
 | menu-tree-drag-reorder | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-ui-architecture.md` | 2026-08-06 |
-| application-updates | partial | `docs/user/features/application-updates.md` | `docs/dev/features/application-updates.md` | 2026-08-06 |
+| application-updates | complete | `docs/user/features/application-updates.md` | `docs/dev/features/application-updates.md` | 2026-08-10 |
 | workspace-unified-profile | complete | `docs/user/features/workspace-unified-profile.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
 | menu-recovery-and-encoding | complete | `docs/user/features/menu-recovery-and-encoding.md` | `docs/dev/features/menu-recovery-and-encoding.md` | 2026-08-10 |
