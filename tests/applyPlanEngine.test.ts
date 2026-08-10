@@ -84,11 +84,59 @@ describe('菜单 Apply Plan 执行引擎', () => {
     expect(result.success).toBe(true);
     expect(fs.readFileSync(profilePath, 'utf8')).toBe('{"new":true}');
     const menuBytes = fs.readFileSync(menuPath);
-    expect(iconv.decode(menuBytes, 'gbk')).toContain('"中文菜单"');
-    expect(menuBytes.equals(Buffer.from(';; generated menu\naxlUIMenuInsert(nil \'popup "中文菜单")', 'utf8'))).toBe(false);
+    expect(menuBytes.toString('utf8')).toContain('"中文菜单"');
+    expect(menuBytes.equals(Buffer.from(';; generated menu\naxlUIMenuInsert(nil \'popup "中文菜单")', 'utf8'))).toBe(true);
     expect(fs.readFileSync(bootstrapPath, 'utf8')).toContain('generated_menu.il');
     expect(fs.readFileSync(ilinitPath, 'utf8')).toContain('bootstrap.il');
     expect(fs.readFileSync(backupPath, 'utf8')).toBe('{"old":true}');
     expect(fs.existsSync(path.join(root, 'history', 'apply_plan_history.json'))).toBe(true);
+  });
+
+  it('17.2 计划仅将 Allegro 脚本写为 GBK，JSON 仍保持 UTF-8', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-menu-plan-gbk-'));
+    tempDirs.push(root);
+    const profilePath = path.join(root, 'menu_profile.json');
+    const menuPath = path.join(root, 'generated_menu.il');
+    const ilinitPath = path.join(root, 'allegro.ilinit');
+    const profileContent = JSON.stringify({ name: '中文方案' });
+    const skillContent = 'load("D:/Skill/01-布局/测试.il")';
+
+    const plan = createApplyPlan({
+      title: '应用 17.2 菜单',
+      module: 'menu',
+      allegroTextEncoding: 'gbk',
+      steps: [
+        {
+          type: 'update_json',
+          title: '更新菜单方案',
+          targetFile: profilePath,
+          after: profileContent,
+        },
+        {
+          type: 'generate_menu',
+          title: '生成菜单脚本',
+          targetFile: menuPath,
+          after: skillContent,
+        },
+        {
+          type: 'modify_ilinit',
+          title: '更新启动脚本',
+          targetFile: ilinitPath,
+          after: skillContent,
+        },
+      ],
+    });
+
+    expect(plan.steps.find(step => step.targetFile === profilePath)?.textEncoding).toBeUndefined();
+    expect(plan.steps.find(step => step.targetFile === menuPath)?.textEncoding).toBe('gbk');
+
+    const result = await executeApplyPlan(plan, {
+      backupDir: path.join(root, 'backups'),
+    });
+
+    expect(result.success).toBe(true);
+    expect(fs.readFileSync(profilePath).equals(Buffer.from(profileContent, 'utf8'))).toBe(true);
+    expect(fs.readFileSync(menuPath).equals(iconv.encode(skillContent, 'gbk'))).toBe(true);
+    expect(fs.readFileSync(ilinitPath).equals(iconv.encode(skillContent, 'gbk'))).toBe(true);
   });
 });

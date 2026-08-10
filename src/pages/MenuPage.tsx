@@ -18,7 +18,15 @@ import {
   Sparkles,
   type LucideIcon,
 } from 'lucide-react';
-import type { MenuItemConfig, MenuProfile, MenuProfileStore, MenuIssue, MenuTreeValidationIssue } from '../types/menu';
+import type {
+  MenuEnvironmentAlternative,
+  MenuItemConfig,
+  MenuIssue,
+  MenuProfile,
+  MenuProfileRecoveryCandidate,
+  MenuProfileStore,
+  MenuTreeValidationIssue,
+} from '../types/menu';
 import { generateMenuId, validateMenuTree } from '../types/menu';
 import { reorderMenuItem } from '../utils/menuTreeOrder';
 import { showToast } from '../components/common/Toast';
@@ -32,6 +40,10 @@ import CommandSelector from '../components/CommandSelector';
 import MenuPreviewDialog from '../components/MenuPreviewDialog';
 import MenuApplyPlanDialog from '../components/MenuApplyPlanDialog';
 import { useMenuApplyPlan } from '../hooks/useMenuApplyPlan';
+import {
+  registerEnvironmentSwitchGuard,
+  runEnvironmentSwitchGuards,
+} from '../services/environmentSwitchGuard';
 import { formatUserError, PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'tree' | 'commands' | 'refs';
@@ -94,6 +106,10 @@ const MenuPage: React.FC = () => {
   const [savedItemsJson, setSavedItemsJson] = useState('[]');
   const [hasUnappliedDraft, setHasUnappliedDraft] = useState(false);
   const [needsAllegroRestart, setNeedsAllegroRestart] = useState(false);
+  const [recovery, setRecovery] = useState<MenuProfileRecoveryCandidate | null>(null);
+  const [environment, setEnvironment] = useState<{ id?: string | null; name?: string; version?: string | null; pcbenvPath?: string | null } | null>(null);
+  const [alternatives, setAlternatives] = useState<MenuEnvironmentAlternative[]>([]);
+  const [switchingEnvironment, setSwitchingEnvironment] = useState(false);
 
   // 弹窗
   const [showCommandSelector, setShowCommandSelector] = useState(false);
@@ -110,6 +126,8 @@ const MenuPage: React.FC = () => {
     applyError,
     applying,
     generatePlan,
+    generateRecoveryPlan,
+    generateEnvironmentCopyPlan,
     executePlan,
     clearPlan,
     clearResult,
@@ -171,6 +189,9 @@ const MenuPage: React.FC = () => {
       const data = profilesRes.data;
       setStore(data.store);
       setProfile(data.activeProfile);
+      setRecovery(data.recovery ?? null);
+      setEnvironment(data.environment ?? null);
+      setAlternatives(data.alternatives ?? []);
       // 标记已有非法数据
       const markedItems = markIllegalItems(data.activeProfile?.items || []);
       setItems(markedItems);
@@ -220,6 +241,19 @@ const MenuPage: React.FC = () => {
     () => JSON.stringify(items) !== savedItemsJson,
     [items, savedItemsJson],
   );
+
+  const syncMenuStoreState = useCallback((nextStore: MenuProfileStore) => {
+    const nextProfile = nextStore.profiles.find(item => item.id === nextStore.activeProfileId)
+      || nextStore.profiles[0]
+      || null;
+    const nextItems = nextProfile?.items || [];
+    setStore(nextStore);
+    setProfile(nextProfile);
+    setItems(nextItems);
+    setSavedItemsJson(JSON.stringify(nextItems));
+    setHasUnappliedDraft(Boolean(nextProfile && nextStore.appliedProfileId !== nextProfile.id));
+    setSelectedId(null);
+  }, []);
 
   useEffect(() => {
     if (hasUnsavedChanges) {
@@ -678,6 +712,21 @@ const MenuPage: React.FC = () => {
     }
   }, [store, profile, items, validateBeforeAction]);
 
+  useEffect(() => registerEnvironmentSwitchGuard('menu-draft', async () => {
+    if (!hasUnsavedChanges) return true;
+    return handleSaveDraft();
+  }), [hasUnsavedChanges, handleSaveDraft]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return undefined;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   /** 预览 generated_menu.il */
   const handlePreview = useCallback(async () => {
     if (!profile || !store) return;
@@ -720,19 +769,50 @@ const MenuPage: React.FC = () => {
     await generatePlan(JSON.stringify(previewProfile), JSON.stringify(previewStore));
   }, [profile, store, items, handleSaveDraft, generatePlan, validateBeforeAction]);
 
+  const handleSwitchMenuEnvironment = useCallback(async (environmentId: string) => {
+    setSwitchingEnvironment(true);
+    try {
+      if (!await runEnvironmentSwitchGuards()) {
+        setSwitchingEnvironment(false);
+        return;
+      }
+      const res = await window.atm.setActiveAllegroEnvironment(environmentId);
+      if (!res.success) throw new Error(res.error || '切换 Allegro 环境失败');
+      window.location.reload();
+    } catch (err) {
+      setSwitchingEnvironment(false);
+      showToast('error', formatUserError(err, '切换 Allegro 环境失败'));
+    }
+  }, []);
+
+  const handleGenerateRecoveryPlan = useCallback(async () => {
+    await generateRecoveryPlan();
+  }, [generateRecoveryPlan]);
+
+  const handleGenerateEnvironmentCopyPlan = useCallback(async (sourceEnvironmentId: string) => {
+    await generateEnvironmentCopyPlan(sourceEnvironmentId);
+  }, [generateEnvironmentCopyPlan]);
+
   /** 执行 Apply Plan（真正写文件） */
   const handleExecutePlan = useCallback(async () => {
+    const isRecoveryPlan = pendingPlan?.title === '恢复菜单方案备份';
+    const isEnvironmentCopyPlan = pendingPlan?.title.startsWith('复制菜单方案到') === true;
+    const isDraftOnlyPlan = isRecoveryPlan || isEnvironmentCopyPlan;
     const success = await executePlan();
     if (success) {
-      setNeedsAllegroRestart(true);
-      showToast('success', '菜单配置已写入。首次应用请重启 Allegro；已加载过 ATM 菜单时可执行 atmLoadMenus。');
+      setNeedsAllegroRestart(!isDraftOnlyPlan);
+      showToast('success', isRecoveryPlan
+        ? '菜单方案已从备份恢复。请检查内容后点击“审阅并应用”，重新生成 Allegro 菜单。'
+        : isEnvironmentCopyPlan
+          ? '菜单方案已复制到当前环境并保存为草稿。请检查后点击“审阅并应用”。'
+          : '菜单配置已写入。首次应用请重启 Allegro；已加载过 ATM 菜单时可执行 atmLoadMenus。');
       clearPlan();
       // 重新加载数据
       await loadData();
     } else {
       showToast('error', applyError || '应用失败');
     }
-  }, [executePlan, clearPlan, loadData, applyError]);
+  }, [pendingPlan, executePlan, clearPlan, loadData, applyError]);
 
   const handleRescan = useCallback(async () => {
     setNeedsAllegroRestart(false);
@@ -936,30 +1016,30 @@ const MenuPage: React.FC = () => {
           activeProfileId={store.activeProfileId}
           appliedProfileId={hasUnappliedDraft ? undefined : store.appliedProfileId}
           onCreate={async (name) => {
+            if (hasUnsavedChanges && !await handleSaveDraft()) return;
             const res = await window.atm.menuProfileCreate(name);
-            if (res.success) setStore(res.data.store);
+            if (res.success) syncMenuStoreState(res.data.store);
           }}
           onCopy={async (profileId) => {
+            if (hasUnsavedChanges && !await handleSaveDraft()) return;
             const res = await window.atm.menuProfileCopy(profileId);
-            if (res.success) setStore(res.data.store);
+            if (res.success) syncMenuStoreState(res.data.store);
           }}
           onRename={async (profileId, newName) => {
+            if (hasUnsavedChanges && !await handleSaveDraft()) return;
             const res = await window.atm.menuProfileRename(profileId, newName);
-            if (res.success) setStore(res.data.store);
+            if (res.success) syncMenuStoreState(res.data.store);
           }}
           onDelete={async (profileId) => {
+            if (hasUnsavedChanges && !await handleSaveDraft()) return;
             const res = await window.atm.menuProfileDelete(profileId);
-            if (res.success) setStore(res.data.store);
+            if (res.success) syncMenuStoreState(res.data.store);
           }}
           onSwitch={async (profileId) => {
+            if (hasUnsavedChanges && !await handleSaveDraft()) return;
             const res = await window.atm.menuProfileSetActive(profileId);
             if (res.success) {
-              setStore(res.data.store);
-              setProfile(res.data.activeProfile);
-              setItems(res.data.activeProfile?.items || []);
-              setSavedItemsJson(JSON.stringify(res.data.activeProfile?.items || []));
-              setHasUnappliedDraft(res.data.store.appliedProfileId !== profileId);
-              setSelectedId(null);
+              syncMenuStoreState(res.data.store);
             }
           }}
           onApply={handleGeneratePlan}
@@ -989,6 +1069,54 @@ const MenuPage: React.FC = () => {
         ]}
         needsRestart={needsAllegroRestart ? true : undefined}
       />
+
+      {items.length === 0 && alternatives.length > 0 && (
+        <div className="menu-recovery-banner menu-recovery-banner--environment" role="status">
+          <AlertTriangle aria-hidden="true" />
+          <div>
+            <strong>当前 {environment?.name || 'Allegro 环境'} 没有菜单方案</strong>
+            <span>
+              检测到其他环境仍有菜单数据：{alternatives.map(item =>
+                `${item.name}${item.recoveryItemCount ? `（可恢复 ${item.recoveryItemCount} 项）` : item.profileItemCount ? `（${item.profileItemCount} 项）` : '（仅有旧 IL）'}`
+              ).join('、')}
+            </span>
+          </div>
+          <div className="menu-recovery-actions">
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              disabled={switchingEnvironment}
+              onClick={() => void handleGenerateEnvironmentCopyPlan(alternatives[0].id)}
+            >
+              复制到当前 {environment?.version || '环境'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={switchingEnvironment}
+              onClick={() => void handleSwitchMenuEnvironment(alternatives[0].id)}
+            >
+              {switchingEnvironment ? '切换中…' : `切换到 ${alternatives[0].name}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {recovery && (
+        <div className="menu-recovery-banner" role="alert">
+          <AlertTriangle aria-hidden="true" />
+          <div>
+            <strong>发现可恢复的菜单方案“{recovery.activeProfile.name}”</strong>
+            <span>
+              当前 menu_profile.json 为空，但 ATM 备份中保存了 {recovery.itemCount} 个菜单项。
+              Allegro 可能仍在加载旧 generated_menu.il，因此会出现“软件不显示但菜单仍存在”的不一致。
+            </span>
+          </div>
+          <button type="button" className="btn btn-sm btn-primary" onClick={() => void handleGenerateRecoveryPlan()}>
+            审阅恢复计划
+          </button>
+        </div>
+      )}
 
       {tab !== 'tree' ? (
         <div className="menu-utility-view-bar">

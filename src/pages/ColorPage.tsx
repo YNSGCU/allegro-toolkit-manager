@@ -615,7 +615,11 @@ const ColorPage: React.FC = () => {
               <div className="color-bridge-banner-text">
                 <strong>桥接已配置自动加载，但当前 Allegro 会话尚未运行</strong>
                 <span>请重启 Allegro 使其生效；或在当前会话命令窗执行：</span>
-                <code className="color-bridge-setup-hint">skill load("C:/Users/89539/.codex/skills/allegro-vibe-bridge/vibe_server.il")</code>
+                {bridgeSetup.serverFile && (
+                  <code className="color-bridge-setup-hint">
+                    {`skill load("${bridgeSetup.serverFile.replace(/\\/g, '/')}")`}
+                  </code>
+                )}
               </div>
             </>
           ) : (
@@ -633,15 +637,6 @@ const ColorPage: React.FC = () => {
         <div className="color-page-empty">
           <p>还没有配色方案。</p>
           <p>点击「从 Allegro 捕获」复制当前板子的配色，或通过「更多操作 → 导入 .col 文件」从文件导入。</p>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => void handleCapture()}
-            disabled={!bridgeStatus?.connected}
-          >
-            <RefreshCw aria-hidden="true" />
-            开始捕获
-          </button>
         </div>
       ) : (
         <div className="color-page-grid">

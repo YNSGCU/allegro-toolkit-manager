@@ -7,6 +7,7 @@
 import { ipcMain, dialog } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import {
   captureColorScheme,
   applyColorSchemeSmart,
@@ -25,6 +26,7 @@ import {
   buildBridgeEnablePlan,
   findBridgeServerFile,
 } from '../../core/color/vibeBridgeInstaller';
+import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
 import {
   loadColorSchemeStore,
   createColorScheme,
@@ -293,7 +295,10 @@ ipcMain.handle('color:import-col', async () => {
       if (!ilinitPath) {
         return { success: true, data: { serverFile: findBridgeServerFile(), ilinitPath: null, ilinitExists: false, configured: false, canEnable: false } };
       }
-      return { success: true, data: checkBridgeSetup(ilinitPath) };
+      return {
+        success: true,
+        data: checkBridgeSetup(ilinitPath, getAllegroTextEncoding(envInfo.allegroVersion)),
+      };
     } catch (err) {
       return { success: false, error: `检查桥接安装状态失败: ${err instanceof Error ? err.message : String(err)}` };
     }
@@ -308,11 +313,22 @@ ipcMain.handle('color:import-col', async () => {
       const serverFile = findBridgeServerFile();
     if (!serverFile) return { success: false, error: '未找到 vibe_server.il，无法启用 Vibe Bridge' };
 
-      const currentContent = fs.existsSync(ilinitPath) ? fs.readFileSync(ilinitPath, 'utf-8') : '';
+      const textEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
+      const ilinitRead = fs.existsSync(ilinitPath)
+        ? readAllegroTextFile(ilinitPath, textEncoding)
+        : { text: '', detectedEncoding: textEncoding };
+      const currentContent = ilinitRead.text;
       const backupBase = path.join(envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated'), 'backup', new Date().toISOString().replace(/[:.]/g, '-'));
-      const plan = buildBridgeEnablePlan(ilinitPath, currentContent, serverFile, backupBase);
+      const plan = buildBridgeEnablePlan(
+        ilinitPath,
+        currentContent,
+        serverFile,
+        backupBase,
+        textEncoding,
+        ilinitRead.detectedEncoding !== textEncoding,
+      );
     if (!plan) return { success: true, data: null, info: '桥接已配置，无需重复启用' };
-      return { success: true, data: plan };
+      return { success: true, data: registerTrustedApplyPlan(plan, 'color-bridge') };
     } catch (err) {
       return { success: false, error: `生成启用桥接计划失败: ${err instanceof Error ? err.message : String(err)}` };
     }
@@ -322,7 +338,7 @@ ipcMain.handle('color:import-col', async () => {
   ipcMain.handle('color:bridge-execute-plan', async (_event, planJson: string) => {
     try {
       const { executeApplyPlan } = await import('../../core/apply/applyPlanEngine');
-      const plan = JSON.parse(planJson);
+      const plan = consumeTrustedApplyPlan(planJson, 'color-bridge', 'environment');
       const envInfo = locateEnvironment();
       const atmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
       const result = await executeApplyPlan(plan, { backupDir: path.join(atmDir, 'backup', new Date().toISOString().replace(/[:.]/g, '-')) });

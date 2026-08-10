@@ -24,6 +24,10 @@
 
 环境发现结束后按规范化 `pcbenvPath` 分组；同组环境互相写入 `sharedWithIds`。共享目录不是错误，但应用前必须提示影响范围。
 
+注册表加载、保存和刷新时都会根据当前环境集合重新构建 `sharedWithIds`，不信任历史 ID。显式刷新会删除已经不存在的自动发现目录，但保留仍存在的自动环境以及手动/导入环境。侧栏环境选择器在挂载时请求一次刷新，避免长期展示已消失的安装记录。
+
+同一 Allegro 版本可能发现多个候选配置，例如安装目录下的 `SPB_Data/pcbenv` 与 Windows 用户目录下的 `pcbenv`，但注册表和下拉框对每个版本只保留一个活动环境。归并时优先保留该版本当前已选中的环境；没有当前选择时，优先使用安装目录旁的 `SPB_Data/pcbenv`，再按存在性和可写性选择。若最终选中的同一 `pcbenv` 被多个版本复用，仍按实际路径重建共享关系。
+
 ## 兼容性边界
 
 `checkHotkeyProfileCompatibility` 能静态发现版本差异、复杂命令、绝对路径和共享目标。Allegro 命令行为、SKILL API、表单与菜单运行时仍需按准确版本验证。
@@ -32,7 +36,7 @@
 
 ## 测试
 
-`tests/multiEnvironmentCompatibility.test.ts` 覆盖注册表持久化、活动环境定位、手动切换、版本差异、绝对路径和共享目录风险。
+`tests/multiEnvironmentCompatibility.test.ts` 覆盖每版本唯一、当前选择保留、默认安装配置优先、注册表持久化、活动环境定位、陈旧自动记录清理、版本差异、绝对路径和共享目录风险；`tests/environmentSwitcher.test.tsx` 覆盖刷新后每个版本只渲染一个选项。
 
 ## 兼容证据与 Vibe Bridge
 
@@ -45,3 +49,22 @@ list(axlVersion('tVersion) axlVersion('fullVersion) axlVersion('programName))
 ```
 
 `axlVersion` 的三个选项来自本机当前 Allegro 官方 FUNCS 文档，证据等级为 `official-confirmed`。Bridge 未响应或版本不符时不得写入 `runtime_pass`。
+
+## 按环境切换管理目标
+
+侧栏版本选择器只决定 ATM 的管理与写入目标，不启动 Allegro，也不尝试修改 Windows 全局 `HOME/CDSROOT`。这样可以避免点击环境控件时误启动错误版本；已经运行的 Allegro 进程仍保持原有环境。
+
+切换链路为：
+
+```txt
+AllegroEnvironmentSwitcher
+  -> selectedEnvironmentId
+  -> window.atm.setActiveAllegroEnvironment(environmentId)
+  -> env:set-active-workspace
+  -> environmentRegistry.ts
+  -> window.location.reload()
+```
+
+切换提交前会执行页面级保护器，避免未保存的工作区被切换覆盖。`env:launch-workspace` 和 `allegroLauncher.ts` 仍保留为后端隔离启动能力，但不再由左下角环境控件调用。
+
+自动化测试覆盖下拉选择、切换按钮调用、切换按钮不启动 Allegro 和页面刷新前的环境保护。实际 Allegro 17.2 是否读取预期 `pcbenv` 仍需在对应启动器打开的新会话中确认。

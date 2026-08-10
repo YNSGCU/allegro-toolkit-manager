@@ -19,6 +19,7 @@ import type {
   MenuItemUpdateInput,
   MenuIssue,
   MenuItemType,
+  MenuProfileRecoveryCandidate,
 } from '../../src/types/menu';
 import { validateMenuTree } from '../../src/types/menu';
 import type { ApplyPlanStepType } from '../../src/types/applyPlan';
@@ -93,6 +94,90 @@ export function loadMenuProfileStore(atmGeneratedPath: string): MenuProfileStore
   }
 }
 
+function countProfileItems(items: MenuItemConfig[]): number {
+  return items.reduce((sum, item) => sum + 1 + countProfileItems(item.children || []), 0);
+}
+
+function normalizeRecoveryStore(parsed: unknown): MenuProfileStore | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+  const candidate = parsed as Partial<MenuProfileStore> & Partial<MenuProfile> & {
+    profileVersion?: string;
+    menus?: unknown[];
+  };
+  if (candidate.version && Array.isArray(candidate.profiles)) {
+    return candidate as MenuProfileStore;
+  }
+  if (candidate.profileVersion && Array.isArray(candidate.menus)) {
+    return migrateOldProfile(candidate);
+  }
+  if (candidate.id && candidate.name && Array.isArray(candidate.items)) {
+    const store = createEmptyStore();
+    const recovered = candidate as MenuProfile;
+    store.profiles.push(recovered);
+    store.activeProfileId = recovered.id;
+    return store;
+  }
+  return null;
+}
+
+/**
+ * 当前菜单仓库没有任何菜单项时，从 ATM 自身备份中寻找最新的非空方案。
+ * 只返回只读候选，不修改 menu_profile.json；真正恢复必须经过 Apply Plan。
+ */
+export function findMenuProfileRecovery(
+  atmGeneratedPath: string,
+  currentStore = loadMenuProfileStore(atmGeneratedPath),
+): MenuProfileRecoveryCandidate | null {
+  if (currentStore.profiles.some(profile => countProfileItems(profile.items || []) > 0)) {
+    return null;
+  }
+
+  const candidates: string[] = [];
+  const collect = (directory: string) => {
+    if (!fs.existsSync(directory)) return;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      if (/^menu_profile\.json(?:\..+)?\.bak$/i.test(entry.name)) {
+        candidates.push(path.join(directory, entry.name));
+      }
+    }
+  };
+  collect(atmGeneratedPath);
+  collect(path.join(atmGeneratedPath, 'backups'));
+
+  const recovered = candidates
+    .map((backupPath) => {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(backupPath, 'utf-8'));
+        const store = normalizeRecoveryStore(parsed);
+        if (!store) return null;
+        const activeProfile = store.profiles.find(profile => profile.id === store.activeProfileId && countProfileItems(profile.items || []) > 0)
+          ?? store.profiles.find(profile => countProfileItems(profile.items || []) > 0)
+          ?? null;
+        if (!activeProfile) return null;
+        store.activeProfileId = activeProfile.id;
+        const stat = fs.statSync(backupPath);
+        return {
+          backupPath,
+          modifiedAt: stat.mtime.toISOString(),
+          store,
+          activeProfile,
+          profileCount: store.profiles.filter(profile => countProfileItems(profile.items || []) > 0).length,
+          itemCount: countProfileItems(activeProfile.items || []),
+          mtimeMs: stat.mtimeMs,
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((item): item is MenuProfileRecoveryCandidate & { mtimeMs: number } => Boolean(item))
+    .sort((a, b) => b.mtimeMs - a.mtimeMs)[0];
+
+  if (!recovered) return null;
+  const { mtimeMs: _mtimeMs, ...candidate } = recovered;
+  return candidate;
+}
+
 /**
  * 将旧格式（V1）迁移到新格式
  */
@@ -141,15 +226,22 @@ function migrateMenuItems(oldMenus: any[], parentId?: string): MenuItemConfig[] 
  * 保存 menu_profile.json
  */
 export function saveMenuProfileStore(atmGeneratedPath: string, store: MenuProfileStore): boolean {
+  const profilePath = path.join(atmGeneratedPath, 'menu_profile.json');
+  const tmpPath = `${profilePath}.${process.pid}.${Date.now()}.tmp`;
   try {
-    const profilePath = path.join(atmGeneratedPath, 'menu_profile.json');
     if (!fs.existsSync(atmGeneratedPath)) {
       fs.mkdirSync(atmGeneratedPath, { recursive: true });
     }
     store.updatedAt = new Date().toISOString();
-    fs.writeFileSync(profilePath, JSON.stringify(store, null, 2), { encoding: 'utf-8' });
+    fs.writeFileSync(tmpPath, JSON.stringify(store, null, 2), { encoding: 'utf-8' });
+    fs.renameSync(tmpPath, profilePath);
     return true;
   } catch {
+    try {
+      if (fs.existsSync(tmpPath)) fs.rmSync(tmpPath, { force: true });
+    } catch {
+      // 临时文件清理失败不掩盖原始保存失败。
+    }
     return false;
   }
 }
@@ -490,6 +582,44 @@ export function listProfiles(store: MenuProfileStore): MenuProfile[] {
  */
 export function getActiveProfile(store: MenuProfileStore): MenuProfile | null {
   return store.profiles.find(p => p.id === store.activeProfileId) || store.profiles[0] || null;
+}
+
+/**
+ * 将其他 Allegro 环境中的非空活动菜单方案复制到当前环境仓库。
+ * 只构造新的源 JSON；真正写入由调用方生成可信 Apply Plan。
+ */
+export function copyMenuProfileStoreFromEnvironment(
+  targetStore: MenuProfileStore,
+  sourceStore: MenuProfileStore,
+  sourceEnvironment: { id: string; version?: string | null; name?: string },
+): { store: MenuProfileStore; profile: MenuProfile } {
+  const sourceProfile = sourceStore.profiles.find(
+    item => item.id === sourceStore.activeProfileId && countProfileItems(item.items || []) > 0,
+  ) ?? sourceStore.profiles.find(item => countProfileItems(item.items || []) > 0);
+  if (!sourceProfile) throw new Error('来源环境没有可复制的菜单项');
+
+  const store = JSON.parse(JSON.stringify(targetStore)) as MenuProfileStore;
+  const now = new Date().toISOString();
+  const baseName = `${sourceProfile.name}（来自 ${sourceEnvironment.version || sourceEnvironment.name || '其他环境'}）`;
+  const existingNames = new Set(store.profiles.map(item => item.name));
+  let name = baseName;
+  let suffix = 2;
+  while (existingNames.has(name)) name = `${baseName} ${suffix++}`;
+
+  const profile: MenuProfile = {
+    ...JSON.parse(JSON.stringify(sourceProfile)),
+    id: `profile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    sourceEnvironmentId: sourceEnvironment.id,
+    sourceAllegroVersion: sourceEnvironment.version ?? null,
+    testedAllegroVersions: sourceEnvironment.version ? [sourceEnvironment.version] : [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  store.profiles.push(profile);
+  store.activeProfileId = profile.id;
+  store.updatedAt = now;
+  return { store, profile };
 }
 
 /**

@@ -8,10 +8,12 @@
  * 本页只负责顺序串联与结果汇总，不绕过任何既有写入链路。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Copy, Plus, Settings2, Trash2 } from 'lucide-react';
 import type {
   WorkspaceApplyPlanView,
+  WorkspaceBindingOptions,
   WorkspaceProfile,
+  WorkspaceProfileBindings,
   WorkspaceProfileStore,
 } from '../types/workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
@@ -28,17 +30,30 @@ const MODULE_LABELS: Record<string, string> = {
   color: '配色方案',
 };
 
+const EMPTY_BINDINGS: WorkspaceProfileBindings = {
+  environmentId: undefined,
+  hotkeyProfileId: '',
+  skillProfileId: '',
+  menuProfileId: '',
+  colorSchemeId: undefined,
+};
+
 const UnifiedWorkspacePage: React.FC = () => {
   const { toasts, addToast, removeToast } = useToast();
   const [store, setStore] = useState<WorkspaceProfileStore | null>(null);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<WorkspacePreview | null>(null);
   const [applyPlan, setApplyPlan] = useState<WorkspaceApplyPlanView | null>(null);
+  const [applyTarget, setApplyTarget] = useState<WorkspaceProfile | null>(null);
   const [applying, setApplying] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WorkspaceProfile | null>(null);
   const [applyVisibility, setApplyVisibility] = useState(false);
+  const [editTarget, setEditTarget] = useState<WorkspaceProfile | null>(null);
+  const [bindingOptions, setBindingOptions] = useState<WorkspaceBindingOptions | null>(null);
+  const [bindingDraft, setBindingDraft] = useState<WorkspaceProfileBindings>(EMPTY_BINDINGS);
+  const [bindingLoading, setBindingLoading] = useState(false);
 
   const activeWorkspace = useMemo<WorkspaceProfile | null>(() => {
     if (!store) return null;
@@ -77,8 +92,71 @@ const UnifiedWorkspacePage: React.FC = () => {
       setNewName('');
       setCreateOpen(false);
       await reload();
+      await openEdit(res.data);
     } else {
       addToast('error', res.error || '创建工作区失败');
+    }
+  };
+
+  const handleCopy = async (workspace: WorkspaceProfile) => {
+    const res = await window.atm.workspaceCopy(workspace.id);
+    if (res.success && res.data) {
+      addToast('success', `已复制工作区「${res.data.name}」`);
+      await reload();
+    } else {
+      addToast('error', res.error || '复制工作区失败');
+    }
+  };
+
+  const loadBindingOptions = async (environmentId?: string) => {
+    setBindingLoading(true);
+    try {
+      const res = await window.atm.workspaceBindingOptions(environmentId);
+      if (!res.success || !res.data) throw new Error(res.error || '加载绑定选项失败');
+      setBindingOptions(res.data);
+      return res.data;
+    } catch (err) {
+      addToast('error', formatUserError(err, '加载绑定选项失败'));
+      return null;
+    } finally {
+      setBindingLoading(false);
+    }
+  };
+
+  const openEdit = async (workspace: WorkspaceProfile) => {
+    setEditTarget(workspace);
+    setBindingDraft({
+      environmentId: workspace.environmentId,
+      hotkeyProfileId: workspace.hotkeyProfileId,
+      skillProfileId: workspace.skillProfileId,
+      menuProfileId: workspace.menuProfileId,
+      colorSchemeId: workspace.colorSchemeId,
+    });
+    const options = await loadBindingOptions(workspace.environmentId);
+    if (!workspace.environmentId && options?.environmentId) {
+      setBindingDraft((current) => ({ ...current, environmentId: options.environmentId }));
+    }
+  };
+
+  const handleEnvironmentBindingChange = async (environmentId: string) => {
+    setBindingDraft({
+      ...EMPTY_BINDINGS,
+      environmentId: environmentId || undefined,
+      colorSchemeId: bindingDraft.colorSchemeId,
+    });
+    await loadBindingOptions(environmentId || undefined);
+  };
+
+  const handleBindingSave = async () => {
+    if (!editTarget) return;
+    const res = await window.atm.workspaceUpdate(editTarget.id, bindingDraft);
+    if (res.success) {
+      addToast('success', `已更新工作区「${editTarget.name}」`);
+      setEditTarget(null);
+      setBindingOptions(null);
+      await reload();
+    } else {
+      addToast('error', res.error || '更新工作区失败');
     }
   };
 
@@ -135,6 +213,7 @@ const UnifiedWorkspacePage: React.FC = () => {
     try {
       const res = await window.atm.workspaceApplyPlan(workspace.id, { applyVisibility });
       if (res.success && res.data) {
+        setApplyTarget(workspace);
         setApplyPlan(res.data);
       } else {
         addToast('error', res.error || '生成应用计划失败');
@@ -152,9 +231,33 @@ const UnifiedWorkspacePage: React.FC = () => {
       return;
     }
     setApplying(true);
-    const executed: string[] = [];
+    let completedSteps = 0;
     try {
-      for (const step of applyPlan.sequence.order) {
+      // 确认后、首个写入前再次向主进程校验环境锁与方案存在性，关闭 TOCTOU 窗口。
+      const latestRes = await window.atm.workspaceApplyPlan(workspace.id, { applyVisibility });
+      if (!latestRes.success || !latestRes.data) {
+        throw new Error(latestRes.error || '重新校验工作区失败');
+      }
+      const latestPlan = latestRes.data;
+      const reviewedSignature = JSON.stringify({
+        order: applyPlan.sequence.order.map((item) => item.module),
+        env: applyPlan.env,
+        blocked: applyPlan.sequence.blocked,
+      });
+      const latestSignature = JSON.stringify({
+        order: latestPlan.sequence.order.map((item) => item.module),
+        env: latestPlan.env,
+        blocked: latestPlan.sequence.blocked,
+      });
+      if (reviewedSignature !== latestSignature) {
+        setApplyPlan(latestPlan);
+        addToast('warning', latestPlan.sequence.blocked
+          ? latestPlan.sequence.blockedReason || '工作区状态已变化，请处理后重新确认'
+          : '工作区环境或方案状态已变化，请重新审阅后确认');
+        return;
+      }
+
+      for (const step of latestPlan.sequence.order) {
         let ok = false;
         let message = '';
         switch (step.module) {
@@ -166,7 +269,7 @@ const UnifiedWorkspacePage: React.FC = () => {
             if (!planRes.success || !planRes.data) throw new Error(planRes.error || '生成 Skill 计划失败');
             const execRes = await window.atm.skillProfileExecuteApplyPlan(JSON.stringify(planRes.data));
             ok = execRes.success;
-            message = execRes.error || 'Skill 方案已应用';
+            message = execRes.success ? 'Skill 方案已应用' : execRes.error || 'Skill 方案执行失败';
             break;
           }
           case 'menu': {
@@ -177,36 +280,37 @@ const UnifiedWorkspacePage: React.FC = () => {
             if (!planRes.success || !planRes.data) throw new Error(planRes.error || '生成菜单计划失败');
             const execRes = await window.atm.menuExecuteApplyPlan(JSON.stringify(planRes.data));
             ok = execRes.success;
-            message = execRes.error || '菜单方案已应用';
+            message = execRes.success ? '菜单方案已应用' : execRes.error || '菜单方案执行失败';
             break;
           }
           case 'hotkey': {
-            const envFilePath = applyPlan.env.envFilePath;
+            const envFilePath = latestPlan.env.envFilePath;
             if (!envFilePath) throw new Error('未找到可编辑的 env 文件');
             const planRes = await window.atm.createApplyPlan(envFilePath, workspace.hotkeyProfileId);
             if (!planRes.success || !planRes.data) throw new Error(planRes.error || '生成快捷键计划失败');
             const execRes = await window.atm.applyPlan(JSON.stringify(planRes.data));
             ok = execRes.success;
-            message = execRes.error || '快捷键方案已应用';
+            message = execRes.success ? '快捷键方案已应用' : execRes.error || '快捷键方案执行失败';
             break;
           }
           case 'color': {
             if (!workspace.colorSchemeId) throw new Error('未绑定配色方案');
             const execRes = await window.atm.colorApply(workspace.colorSchemeId, applyVisibility);
             ok = execRes.success;
-            message = execRes.error || '配色方案已应用';
+            message = execRes.success ? '配色方案已应用' : execRes.error || '配色方案执行失败';
             break;
           }
         }
-        executed.push(`${MODULE_LABELS[step.module]}: ${message}`);
         if (!ok) {
           addToast('error', `${MODULE_LABELS[step.module]}应用失败：${message}`);
           break;
         }
+        completedSteps += 1;
         addToast('success', message);
       }
-      addToast('info', `已完成 ${executed.length}/${applyPlan.sequence.order.length} 个步骤`);
+      addToast('info', `已完成 ${completedSteps}/${latestPlan.sequence.order.length} 个步骤`);
       setApplyPlan(null);
+      setApplyTarget(null);
     } catch (err) {
       addToast('error', formatUserError(err, '应用工作区失败'));
     } finally {
@@ -299,7 +403,29 @@ const UnifiedWorkspacePage: React.FC = () => {
                     >
                       重命名
                     </button>
-                    {workspace.id !== 'default' && (
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      aria-label={`复制 ${workspace.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleCopy(workspace);
+                      }}
+                    >
+                      <Copy aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      aria-label={`配置 ${workspace.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void openEdit(workspace);
+                      }}
+                    >
+                      <Settings2 aria-hidden="true" />
+                    </button>
+                    {workspace.id !== 'default' && !isActive && (
                       <button
                         type="button"
                         className="btn btn-sm btn-danger"
@@ -384,20 +510,31 @@ const UnifiedWorkspacePage: React.FC = () => {
       <BusinessDialog
         open={Boolean(applyPlan)}
         title="应用工作区"
-        description={applyPlan ? `按顺序应用「${activeWorkspace?.name ?? ''}」的 ${applyPlan.sequence.order.length} 个方案` : ''}
+        description={applyPlan ? `按顺序应用「${applyTarget?.name ?? ''}」的 ${applyPlan.sequence.order.length} 个方案` : ''}
         onClose={() => {
-          if (!applying) setApplyPlan(null);
+          if (!applying) {
+            setApplyPlan(null);
+            setApplyTarget(null);
+          }
         }}
         footer={
           <>
-            <button type="button" className="btn" onClick={() => setApplyPlan(null)} disabled={applying}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setApplyPlan(null);
+                setApplyTarget(null);
+              }}
+              disabled={applying}
+            >
               取消
             </button>
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => void executeSteps(activeWorkspace!)}
-              disabled={applying || !applyPlan || applyPlan.sequence.blocked}
+              onClick={() => void executeSteps(applyTarget!)}
+              disabled={applying || !applyPlan || !applyTarget || applyPlan.sequence.blocked}
             >
               {applying ? '应用中…' : '确认应用'}
             </button>
@@ -421,6 +558,85 @@ const UnifiedWorkspacePage: React.FC = () => {
             ))}
           </div>
         )}
+      </BusinessDialog>
+
+      {/* 工作区绑定配置 */}
+      <BusinessDialog
+        open={Boolean(editTarget)}
+        title="配置工作区"
+        description={editTarget ? `为「${editTarget.name}」绑定环境与四类方案` : ''}
+        onClose={() => {
+          if (!bindingLoading) {
+            setEditTarget(null);
+            setBindingOptions(null);
+          }
+        }}
+        dismissDisabled={bindingLoading}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setEditTarget(null);
+                setBindingOptions(null);
+              }}
+              disabled={bindingLoading}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => void handleBindingSave()}
+              disabled={bindingLoading || !bindingOptions}
+            >
+              保存绑定
+            </button>
+          </>
+        }
+      >
+        <div className="workspace-binding-form">
+          <label>
+            <span>Allegro 环境</span>
+            <select
+              aria-label="Allegro 环境"
+              value={bindingDraft.environmentId ?? ''}
+              onChange={(event) => void handleEnvironmentBindingChange(event.target.value)}
+              disabled={bindingLoading}
+            >
+              <option value="">未绑定环境</option>
+              {bindingOptions?.environments.map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+          </label>
+          {[
+            { key: 'hotkeyProfileId' as const, label: '快捷键方案', items: bindingOptions?.hotkeyProfiles ?? [] },
+            { key: 'skillProfileId' as const, label: 'Skill 方案', items: bindingOptions?.skillProfiles ?? [] },
+            { key: 'menuProfileId' as const, label: '菜单方案', items: bindingOptions?.menuProfiles ?? [] },
+            { key: 'colorSchemeId' as const, label: '配色方案', items: bindingOptions?.colorSchemes ?? [] },
+          ].map(({ key, label, items }) => (
+            <label key={key}>
+              <span>{label}</span>
+              <select
+                aria-label={label}
+                value={bindingDraft[key] ?? ''}
+                onChange={(event) => setBindingDraft((current) => ({
+                  ...current,
+                  [key]: event.target.value || (key === 'colorSchemeId' ? undefined : ''),
+                }))}
+                disabled={bindingLoading}
+              >
+                <option value="">未绑定</option>
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+          {bindingLoading && <p className="workspace-binding-loading">正在读取目标环境的方案…</p>}
+        </div>
       </BusinessDialog>
 
       {/* 新建 */}

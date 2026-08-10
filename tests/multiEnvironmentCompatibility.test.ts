@@ -2,7 +2,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { refreshEnvironmentRegistry, setActiveEnvironment, loadEnvironmentRegistry } from '../core/environment/environmentRegistry';
+import {
+  refreshEnvironmentRegistry,
+  setActiveEnvironment,
+  loadEnvironmentRegistry,
+  saveEnvironmentRegistry,
+  selectEnvironmentPerVersion,
+} from '../core/environment/environmentRegistry';
 import { locateEnvironment } from '../core/environment/locateEnvironment';
 import { checkHotkeyProfileCompatibility } from '../core/environment/compatibility';
 import { listCompatibilityRecords, saveCompatibilityRecord } from '../core/environment/compatibilityRecords';
@@ -25,6 +31,39 @@ afterEach(() => {
 });
 
 describe('multi Allegro environment registry', () => {
+  it('每个版本只保留一个环境，并优先保留当前选择', () => {
+    const makeEnvironment = (id: string, version: string, pcbenvPath: string, installRoot: string) => ({
+      id,
+      name: `Allegro ${version}`,
+      allegroVersion: version,
+      installRoot,
+      executablePath: null,
+      homePath: path.dirname(pcbenvPath),
+      pcbenvPath,
+      envFilePath: path.join(pcbenvPath, 'env'),
+      ilinitFilePath: path.join(pcbenvPath, 'allegro.ilinit'),
+      writable: true,
+      exists: true,
+      sharedWithIds: [],
+      source: 'discovered' as const,
+    });
+    const environments = [
+      makeEnvironment('v172-user', '17.2', 'C:\\Users\\tester\\pcbenv', 'D:\\Cadence172\\SPB_17.2'),
+      makeEnvironment('v172-install', '17.2', 'D:\\Cadence172\\SPB_Data\\pcbenv', 'D:\\Cadence172\\SPB_17.2'),
+      makeEnvironment('v174-user', '17.4', 'C:\\Users\\tester\\pcbenv', 'D:\\Cadence174\\SPB_17.4'),
+      makeEnvironment('v174-install', '17.4', 'D:\\Cadence174\\SPB_Data\\pcbenv', 'D:\\Cadence174\\SPB_17.4'),
+    ];
+
+    expect(selectEnvironmentPerVersion(environments).map(item => item.id)).toEqual([
+      'v172-install',
+      'v174-install',
+    ]);
+    expect(selectEnvironmentPerVersion(environments, 'v172-user').map(item => item.id)).toEqual([
+      'v172-user',
+      'v174-install',
+    ]);
+  });
+
   it('persists active environment and makes locateEnvironment use it', () => {
     const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-registry-'));
     tempRoots.push(configRoot);
@@ -45,6 +84,41 @@ describe('multi Allegro environment registry', () => {
 
     const manualSelected = refreshEnvironmentRegistry(first);
     expect(manualSelected.environments.find((item) => item.id === manualSelected.activeEnvironmentId)?.pcbenvPath).toBe(path.normalize(first));
+  });
+
+  it('refresh 时移除已消失的自动发现记录，并清理陈旧共享引用', () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-registry-stale-'));
+    tempRoots.push(configRoot);
+    process.env.ATM_CONFIG_HOME = configRoot;
+    const stalePcbenv = path.join(configRoot, 'missing', 'pcbenv');
+    saveEnvironmentRegistry({
+      version: 1,
+      activeEnvironmentId: 'stale-discovered',
+      environments: [{
+        id: 'stale-discovered',
+        name: 'Allegro 17.2',
+        allegroVersion: '17.2',
+        installRoot: path.join(configRoot, 'missing', 'SPB_17.2'),
+        executablePath: null,
+        homePath: path.dirname(stalePcbenv),
+        pcbenvPath: stalePcbenv,
+        envFilePath: path.join(stalePcbenv, 'env'),
+        ilinitFilePath: path.join(stalePcbenv, 'allegro.ilinit'),
+        writable: false,
+        exists: false,
+        sharedWithIds: ['missing-peer'],
+        source: 'discovered',
+      }],
+      manualInstallRoots: [],
+      updatedAt: new Date(0).toISOString(),
+    });
+
+    const manualPcbenv = makePcbenv('replacement');
+    const refreshed = refreshEnvironmentRegistry(manualPcbenv);
+    expect(refreshed.environments.some((item) => item.id === 'stale-discovered')).toBe(false);
+    expect(refreshed.environments.every((item) => item.sharedWithIds.every(
+      (peerId) => refreshed.environments.some((peer) => peer.id === peerId),
+    ))).toBe(true);
   });
 });
 

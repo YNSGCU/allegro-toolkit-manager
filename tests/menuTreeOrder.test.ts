@@ -13,6 +13,12 @@ describe('菜单树拖动排序', () => {
     expect(result.map((entry) => entry.order)).toEqual([0, 1, 2]);
   });
 
+  it('向下拖动相邻项时真正调换两者位置', () => {
+    const result = reorderMenuItem([item('a'), item('b'), item('c')], 'a', 'b');
+    expect(result.map((entry) => entry.id)).toEqual(['b', 'a', 'c']);
+    expect(result.map((entry) => entry.order)).toEqual([0, 1, 2]);
+  });
+
   it('只在同级内排序，不改变父子层级', () => {
     const result = reorderMenuItem([item('root'), { ...item('menu'), type: 'menu', children: [item('child-a', 'menu'), item('child-b', 'menu')] }], 'child-b', 'root');
     expect(result[0].id).toBe('root');

@@ -1,6 +1,6 @@
 # 统一工作区方案（Workspace Unified Profile）设计
 
-> 状态：设计（v0.3.0 之后实施）
+> 状态：已完成（M1–M4，含 2026-08-08 安全与一致性修复）
 > 更新：2026-08-08
 
 ## 目标
@@ -104,3 +104,38 @@ export interface WorkspaceProfile {
 3. 统一应用后四个页面都显示对应方案且环境锁生效
 4. 单一模块失败时停止并明确提示，已应用模块可撤销
 5. 备份包含工作区定义，新电脑恢复后工作区可重新选择环境
+
+## 当前功能链
+
+```text
+UnifiedWorkspacePage
+  → workspace:binding-options / workspace:update
+  → workspaceManager.updateWorkspace
+  → workspaces.json 原子写入
+  → 页面 reload
+
+应用目标卡片
+  → workspace:apply-plan（目标 workspaceId + 当前环境锁）
+  → applyTarget 固定确认对象
+  → Skill → 菜单 → 快捷键 → 配色
+  → 各模块主进程可信计划校验 / 环境漂移校验 / 备份回滚
+  → 中文逐步结果与准确完成数
+```
+
+新增 IPC：
+
+- `workspace:binding-options`：按目标环境加载环境及四类方案候选项。
+- `workspace:update`：校验候选项存在后更新组合关系。
+
+工作区存储使用同目录临时文件写入后原子替换。保存失败会向 IPC 抛错，禁止 Renderer 显示假成功。默认工作区和当前使用中的工作区均不可删除。
+
+## Apply Plan 信任边界
+
+`electron/ipc/trustedApplyPlan.ts` 为 Menu、Skill Profile 和 Vibe Bridge 启用计划维护主进程内的一次性快照。Renderer 返回确认结果时必须同时满足：
+
+1. plan ID 由当前主进程生成且未过期；
+2. IPC 作用域和模块一致；
+3. JSON 内容与主进程快照完全一致；
+4. 每个 plan ID 只能消费一次。
+
+因此 Renderer 可以展示计划，但不能修改目标路径、步骤或跨通道复用计划。

@@ -2,6 +2,7 @@
  * ATM - 环境检测 IPC 处理器（V3.0 多 env 支持）
  */
 import { ipcMain, dialog, shell } from 'electron';
+import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { locateEnvironment, calculateHealthScore, ensureAtmDirectoryStructure } from '../../core/environment/locateEnvironment';
@@ -20,6 +21,7 @@ import {
 } from '../../core/environment/environmentRegistry';
 import { listCompatibilityRecords, saveCompatibilityRecord } from '../../core/environment/compatibilityRecords';
 import { verifyAllegroRuntimeViaVibeBridge } from '../../core/environment/vibeBridgeProbe';
+import { buildAllegroLaunchSpec } from '../../core/environment/allegroLauncher';
 
 export function registerEnvIpc(): void {
   ipcMain.handle('env:list-workspaces', (_event, refresh = false, manualPcbenvPath?: string) => {
@@ -41,6 +43,45 @@ export function registerEnvIpc(): void {
       return { success: true, data: { registry, environment } };
     } catch (err) {
       return { success: false, error: `切换 Allegro 环境失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('env:launch-workspace', async (_event, environmentId: string) => {
+    try {
+      const registry = loadEnvironmentRegistry();
+      const environment = registry.environments.find((item) => item.id === environmentId);
+      if (!environment) return { success: false, error: '目标 Allegro 环境不存在' };
+
+      const spec = buildAllegroLaunchSpec(environment);
+      if (!fs.existsSync(spec.executablePath) || !fs.statSync(spec.executablePath).isFile()) {
+        return { success: false, error: `Allegro 可执行文件不存在：${spec.executablePath}` };
+      }
+
+      const child = spawn(spec.executablePath, [], {
+        cwd: spec.cwd,
+        env: spec.env,
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: false,
+      });
+      await new Promise<void>((resolve, reject) => {
+        child.once('spawn', resolve);
+        child.once('error', reject);
+      });
+      child.unref();
+
+      return {
+        success: true,
+        data: {
+          pid: child.pid ?? null,
+          environmentId: environment.id,
+          allegroVersion: environment.allegroVersion,
+          homePath: spec.env.HOME ?? null,
+          executablePath: spec.executablePath,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `启动 Allegro 失败：${err instanceof Error ? err.message : String(err)}` };
     }
   });
 

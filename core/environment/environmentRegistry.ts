@@ -23,15 +23,95 @@ function normalize(value: string): string {
   return path.normalize(value).replace(/[\\/]+$/, '').toLowerCase();
 }
 
+/**
+ * 共享关系始终由当前注册表中的真实 pcbenv 分组重建，禁止沿用已经不存在的环境 ID。
+ */
+function rebuildSharedRelationships(
+  environments: AllegroEnvironmentWorkspace[],
+): AllegroEnvironmentWorkspace[] {
+  const normalized = environments.map(environment => ({ ...environment, sharedWithIds: [] }));
+  const byPcbenv = new Map<string, AllegroEnvironmentWorkspace[]>();
+  for (const environment of normalized) {
+    const key = normalize(environment.pcbenvPath);
+    const group = byPcbenv.get(key) || [];
+    group.push(environment);
+    byPcbenv.set(key, group);
+  }
+  for (const group of byPcbenv.values()) {
+    if (group.length < 2) continue;
+    for (const environment of group) {
+      environment.sharedWithIds = group
+        .filter(peer => peer.id !== environment.id)
+        .map(peer => peer.id);
+    }
+  }
+  return normalized;
+}
+
+function environmentSelectionPriority(environment: AllegroEnvironmentWorkspace): number {
+  let priority = 0;
+  if (environment.installRoot) {
+    const installPcbenv = path.join(path.dirname(environment.installRoot), 'SPB_Data', 'pcbenv');
+    if (normalize(environment.pcbenvPath) === normalize(installPcbenv)) priority += 100;
+  }
+  if (environment.source === 'manual') priority += 50;
+  if (environment.exists) priority += 10;
+  if (environment.writable) priority += 5;
+  return priority;
+}
+
+/**
+ * 下拉环境以 Allegro 版本为唯一维度。同版本有多个 pcbenv 时优先保留当前选择；
+ * 没有当前选择时优先使用该版本安装目录旁的 SPB_Data/pcbenv。
+ */
+export function selectEnvironmentPerVersion(
+  environments: AllegroEnvironmentWorkspace[],
+  preferredEnvironmentId: string | null = null,
+): AllegroEnvironmentWorkspace[] {
+  const versioned = new Map<string, AllegroEnvironmentWorkspace[]>();
+  const unversioned: AllegroEnvironmentWorkspace[] = [];
+  for (const environment of environments) {
+    if (!environment.allegroVersion) {
+      unversioned.push(environment);
+      continue;
+    }
+    const group = versioned.get(environment.allegroVersion) || [];
+    group.push(environment);
+    versioned.set(environment.allegroVersion, group);
+  }
+
+  const selected = Array.from(versioned.entries())
+    .sort(([left], [right]) => left.localeCompare(right, undefined, { numeric: true }))
+    .map(([, group]) => group.find(item => item.id === preferredEnvironmentId)
+      ?? [...group].sort((left, right) => {
+        const priorityDiff = environmentSelectionPriority(right) - environmentSelectionPriority(left);
+        return priorityDiff || left.id.localeCompare(right.id);
+      })[0]);
+
+  return [...selected, ...unversioned];
+}
+
 function readRegistry(): EnvironmentRegistry {
   try {
     const raw = fs.readFileSync(getEnvironmentRegistryPath(), 'utf-8');
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.environments)) {
+      const deduplicated = selectEnvironmentPerVersion(
+        parsed.environments,
+        parsed.activeEnvironmentId ?? null,
+      );
+      const previousActive = parsed.environments.find(
+        (environment: AllegroEnvironmentWorkspace) => environment.id === parsed.activeEnvironmentId,
+      );
+      const activeEnvironmentId = deduplicated.some(item => item.id === parsed.activeEnvironmentId)
+        ? parsed.activeEnvironmentId
+        : deduplicated.find(item => item.allegroVersion === previousActive?.allegroVersion)?.id
+          ?? deduplicated[0]?.id
+          ?? null;
       return {
         version: parsed.version ?? REGISTRY_VERSION,
-        activeEnvironmentId: parsed.activeEnvironmentId ?? null,
-        environments: parsed.environments,
+        activeEnvironmentId,
+        environments: rebuildSharedRelationships(deduplicated),
         manualInstallRoots: Array.isArray(parsed.manualInstallRoots) ? parsed.manualInstallRoots : [],
         updatedAt: parsed.updatedAt ?? new Date(0).toISOString(),
       };
@@ -55,7 +135,15 @@ export function loadEnvironmentRegistry(): EnvironmentRegistry {
 export function saveEnvironmentRegistry(registry: EnvironmentRegistry): EnvironmentRegistry {
   const filePath = getEnvironmentRegistryPath();
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  const data = { ...registry, version: REGISTRY_VERSION, updatedAt: new Date().toISOString() };
+  const data = {
+    ...registry,
+    version: REGISTRY_VERSION,
+    environments: rebuildSharedRelationships(selectEnvironmentPerVersion(
+      registry.environments,
+      registry.activeEnvironmentId,
+    )),
+    updatedAt: new Date().toISOString(),
+  };
   const tmpPath = `${filePath}.tmp`;
   fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
   fs.renameSync(tmpPath, filePath);
@@ -220,19 +308,7 @@ export function discoverEnvironmentWorkspaces(manualPcbenvPath?: string): Allegr
     }
   }
 
-  const byPcbenv = new Map<string, AllegroEnvironmentWorkspace[]>();
-  for (const workspace of workspaces) {
-    const key = normalize(workspace.pcbenvPath);
-    const group = byPcbenv.get(key) || [];
-    group.push(workspace);
-    byPcbenv.set(key, group);
-  }
-  for (const group of byPcbenv.values()) {
-    if (group.length > 1) {
-      for (const workspace of group) workspace.sharedWithIds = group.filter((item) => item.id !== workspace.id).map((item) => item.id);
-    }
-  }
-  return workspaces;
+  return rebuildSharedRelationships(workspaces);
 }
 
 export function refreshEnvironmentRegistry(manualPcbenvPath?: string): EnvironmentRegistry {
@@ -240,18 +316,24 @@ export function refreshEnvironmentRegistry(manualPcbenvPath?: string): Environme
   const current = readRegistry();
   const merged = [...discovered];
   for (const old of current.environments) {
-    if (!merged.some((item) => item.id === old.id)) merged.push(old);
+    const shouldPreserve = old.source !== 'discovered' || fs.existsSync(old.pcbenvPath);
+    if (shouldPreserve && !merged.some((item) => item.id === old.id)) merged.push(old);
   }
   const manualEnvironmentId = manualPcbenvPath
     ? discovered.find((item) => item.source === 'manual')?.id
     : null;
-  const activeEnvironmentId = manualEnvironmentId || (current.activeEnvironmentId && merged.some((item) => item.id === current.activeEnvironmentId)
-    ? current.activeEnvironmentId
-    : merged[0]?.id ?? null);
+  const preferredEnvironmentId = manualEnvironmentId || current.activeEnvironmentId;
+  const selected = selectEnvironmentPerVersion(merged, preferredEnvironmentId);
+  const previousActive = current.environments.find(item => item.id === current.activeEnvironmentId);
+  const activeEnvironmentId = preferredEnvironmentId && selected.some(item => item.id === preferredEnvironmentId)
+    ? preferredEnvironmentId
+    : selected.find(item => item.allegroVersion === previousActive?.allegroVersion)?.id
+      ?? selected[0]?.id
+      ?? null;
   return saveEnvironmentRegistry({
     version: REGISTRY_VERSION,
     activeEnvironmentId,
-    environments: merged,
+    environments: rebuildSharedRelationships(selected),
     manualInstallRoots: current.manualInstallRoots ?? [],
     updatedAt: current.updatedAt,
   });

@@ -54,7 +54,7 @@ export function planWorkspaceApplySequence(
   const order: WorkspaceApplySequenceStep[] = [];
 
   // 环境锁：工作区绑定环境时，必须与当前激活环境一致
-  if (workspace.environmentId && currentEnvironmentId && workspace.environmentId !== currentEnvironmentId) {
+  if (workspace.environmentId && workspace.environmentId !== currentEnvironmentId) {
     return {
       workspaceId: workspace.id,
       workspaceName: workspace.name,
@@ -62,7 +62,7 @@ export function planWorkspaceApplySequence(
       order: [],
       warnings,
       blocked: true,
-      blockedReason: `工作区绑定环境 ${workspace.environmentId}，当前激活为 ${currentEnvironmentId}，请先切换环境`,
+      blockedReason: `工作区绑定环境 ${workspace.environmentId}，当前激活为 ${currentEnvironmentId ?? '未设置'}，请先切换环境`,
     };
   }
 

@@ -5,10 +5,12 @@ import { ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import { createApplyPlan, createBackupStep, executeApplyPlan } from '../../core/apply/applyPlanEngine';
 import { generateBootstrapIlContent, generateBootstrapLines, insertBootstrapToIlinit } from '../../core/generator/generateBootstrap';
 import type { ApplyPlan } from '../../src/types/applyPlan';
 import type { SkillProfile } from '../../src/types/skillProfile';
+import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
 import {
   loadSkillProfileStore,
   saveSkillProfileStore,
@@ -172,6 +174,7 @@ export function registerSkillProfileIpc(): void {
   ipcMain.handle('skill-profile:create-apply-plan', async (_event, profileJson: string) => {
     try {
       const envInfo = locateEnvironment();
+      const allegroTextEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
       const atmDir = getAtmDir();
       const profile: SkillProfile = JSON.parse(profileJson);
       const profilePath = path.join(atmDir, 'skill_profiles.json');
@@ -210,10 +213,12 @@ export function registerSkillProfileIpc(): void {
       ];
 
       const loaderLine = `load("${loaderIlPath.replace(/\\/g, '/')}")`;
-      const currentBootstrap = fs.existsSync(bootstrapPath)
-        ? fs.readFileSync(bootstrapPath, { encoding: 'utf-8' })
-        : '';
-      if (!currentBootstrap.includes('generated_skill_loader.il')) {
+      const bootstrapRead = fs.existsSync(bootstrapPath)
+        ? readAllegroTextFile(bootstrapPath, allegroTextEncoding)
+        : { text: '', detectedEncoding: allegroTextEncoding };
+      const currentBootstrap = bootstrapRead.text;
+      if (!currentBootstrap.includes('generated_skill_loader.il')
+        || bootstrapRead.detectedEncoding !== allegroTextEncoding) {
         steps.push({
           type: 'ensure_bootstrap',
           title: '确保 ATM 启动脚本加载 Skill',
@@ -226,17 +231,18 @@ export function registerSkillProfileIpc(): void {
       }
 
       if (ilinitPath) {
-        const currentIlinit = fs.existsSync(ilinitPath)
-          ? fs.readFileSync(ilinitPath, { encoding: 'utf-8' })
-          : '';
+        const ilinitRead = fs.existsSync(ilinitPath)
+          ? readAllegroTextFile(ilinitPath, allegroTextEncoding)
+          : { text: '', detectedEncoding: allegroTextEncoding };
+        const currentIlinit = ilinitRead.text;
         const nextIlinit = insertBootstrapToIlinit(currentIlinit, generateBootstrapLines(atmDir));
-        if (nextIlinit !== null) {
+        if (nextIlinit !== null || ilinitRead.detectedEncoding !== allegroTextEncoding) {
           steps.push({
             type: 'modify_ilinit',
             title: '配置 Allegro 启动加载',
             description: '在 allegro.ilinit 中加载 ATM bootstrap.il',
             targetFile: ilinitPath,
-            after: nextIlinit,
+            after: nextIlinit ?? currentIlinit,
           });
         }
       }
@@ -258,8 +264,9 @@ export function registerSkillProfileIpc(): void {
         targetFiles: [...new Set(steps.map(step => step.targetFile))],
         environmentId: envInfo.environmentId ?? null,
         environmentPcbenvPath: envInfo.pcbenvPath,
+        allegroTextEncoding,
       });
-      return { success: true, data: plan };
+      return { success: true, data: registerTrustedApplyPlan(plan, 'skill-profile') };
     } catch (err) {
       return { success: false, error: `生成 Skill 方案 Apply Plan 失败: ${(err as Error).message}` };
     }
@@ -267,7 +274,7 @@ export function registerSkillProfileIpc(): void {
 
   ipcMain.handle('skill-profile:execute-apply-plan', async (_event, planJson: string) => {
     try {
-      const plan: ApplyPlan = JSON.parse(planJson);
+      const plan: ApplyPlan = consumeTrustedApplyPlan(planJson, 'skill-profile', 'skill');
       const envInfo = locateEnvironment();
       if (plan.environmentId && plan.environmentId !== envInfo.environmentId) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '当前 Allegro 环境已变化，请重新生成 Apply Plan' };
       if (plan.environmentPcbenvPath && path.normalize(plan.environmentPcbenvPath).toLowerCase() !== path.normalize(envInfo.pcbenvPath || '').toLowerCase()) return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: 'Apply Plan 目标 pcbenv 已变化，请重新生成计划' };

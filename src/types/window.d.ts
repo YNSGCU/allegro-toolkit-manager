@@ -11,7 +11,13 @@ import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
-import type { WorkspaceApplyPlanView, WorkspaceProfile, WorkspaceProfileStore } from './workspaceProfile';
+import type {
+  WorkspaceApplyPlanView,
+  WorkspaceBindingOptions,
+  WorkspaceProfile,
+  WorkspaceProfileBindings,
+  WorkspaceProfileStore,
+} from './workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 
 declare global {
@@ -21,6 +27,11 @@ declare global {
       locateEnvironment: (manualPcbenvPath?: string) => Promise<{ success: boolean; data?: EnvironmentInfo; error?: string }>;
       listAllegroEnvironments: (refresh?: boolean, manualPcbenvPath?: string) => Promise<{ success: boolean; data?: EnvironmentRegistry; error?: string }>;
       setActiveAllegroEnvironment: (environmentId: string) => Promise<{ success: boolean; data?: { registry: EnvironmentRegistry; environment?: AllegroEnvironmentWorkspace }; error?: string }>;
+      launchAllegroEnvironment: (environmentId: string) => Promise<{
+        success: boolean;
+        data?: { pid: number | null; environmentId: string; allegroVersion: string | null; homePath: string | null; executablePath: string };
+        error?: string;
+      }>;
       addAllegroInstallRoot: () => Promise<{ success: boolean; data?: { registry: EnvironmentRegistry; selectedRoot: string } | null; error?: string }>;
       removeAllegroInstallRoot: (installRoot: string) => Promise<{ success: boolean; data?: EnvironmentRegistry; error?: string }>;
       listCompatibilityRecords: (filters?: Partial<Pick<CompatibilityEvidenceRecord, 'environmentId' | 'scope' | 'subjectId'>>) => Promise<{ success: boolean; data?: CompatibilityEvidenceRecord[]; error?: string }>;
@@ -178,6 +189,10 @@ declare global {
       /** 生成菜单 Apply Plan */
       menuCreateApplyPlan: (profileJson: string, storeJson?: string) =>
         Promise<{ success: boolean; data?: any; error?: string }>;
+      /** 从 ATM 备份生成菜单方案恢复计划 */
+      menuCreateRecoveryPlan: () => Promise<{ success: boolean; data?: any; error?: string }>;
+      /** 从其他 Allegro 环境复制菜单方案到当前环境 */
+      menuCreateEnvironmentCopyPlan: (sourceEnvironmentId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       /** 执行菜单 Apply Plan */
       menuExecuteApplyPlan: (planJson: string) => Promise<{
         success: boolean;
@@ -263,6 +278,8 @@ declare global {
       workspaceLoadAll: () => Promise<{ success: boolean; data?: WorkspaceProfileStore; error?: string }>;
       workspaceCreate: (name: string, options?: Partial<Pick<WorkspaceProfile, 'description' | 'environmentId' | 'hotkeyProfileId' | 'skillProfileId' | 'menuProfileId' | 'colorSchemeId'>>) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspaceCopy: (workspaceId: string, newName?: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
+      workspaceBindingOptions: (environmentId?: string) => Promise<{ success: boolean; data?: WorkspaceBindingOptions; error?: string }>;
+      workspaceUpdate: (workspaceId: string, bindings: Partial<WorkspaceProfileBindings>) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspaceRename: (workspaceId: string, newName: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspaceDelete: (workspaceId: string) => Promise<{ success: boolean; error?: string }>;
       workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;

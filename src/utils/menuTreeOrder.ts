@@ -20,7 +20,7 @@ function normalizeList(list: MenuItemConfig[]): MenuItemConfig[] {
   }));
 }
 
-/** 将菜单项拖到目标项之前；只允许同级排序，避免误改变菜单层级。 */
+/** 将菜单项移动到目标项所在位置；只允许同级排序，避免误改变菜单层级。 */
 export function reorderMenuItem(items: MenuItemConfig[], draggedId: string, targetId: string): MenuItemConfig[] {
   if (!draggedId || !targetId || draggedId === targetId) return items;
   const draggedParentId = findParentId(items, draggedId);
@@ -33,7 +33,9 @@ export function reorderMenuItem(items: MenuItemConfig[], draggedId: string, targ
     if (draggedIndex >= 0 && targetIndex >= 0) {
       const next = [...list];
       const [dragged] = next.splice(draggedIndex, 1);
-      next.splice(Math.max(0, next.findIndex((item) => item.id === targetId)), 0, dragged);
+      // 使用删除前的目标索引：向下拖动时落在目标项之后，向上拖动时落在目标项之前，
+      // 从而让相邻两项拖放也会真正调换位置。
+      next.splice(Math.min(targetIndex, next.length), 0, dragged);
       return { changed: true, list: normalizeList(next) };
     }
     for (let index = 0; index < list.length; index += 1) {

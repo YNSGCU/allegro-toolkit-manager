@@ -12,9 +12,10 @@ const workspaces = {
     {
       id: 'default',
       name: '默认工作区',
-      hotkeyProfileId: '',
-      skillProfileId: '',
-      menuProfileId: '',
+      hotkeyProfileId: 'hk_default',
+      skillProfileId: 'sk_default',
+      menuProfileId: 'mn_default',
+      colorSchemeId: 'color_default',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
@@ -40,6 +41,16 @@ function mockAtm(overrides: Record<string, unknown> = {}) {
     workspaceSetActive: () => Promise.resolve(ok(workspaces.workspaces[1])),
     workspaceCreate: () => Promise.resolve(ok({ id: 'ws_new', name: '新工作区' })),
     workspaceRename: () => Promise.resolve(ok({})),
+    workspaceCopy: () => Promise.resolve(ok({ id: 'ws_copy', name: '项目A（副本）' })),
+    workspaceUpdate: () => Promise.resolve(ok(workspaces.workspaces[1])),
+    workspaceBindingOptions: () => Promise.resolve(ok({
+      environmentId: 'env_1',
+      environments: [{ id: 'env_1', name: '17.4 环境' }],
+      hotkeyProfiles: [{ id: 'hk_1', name: '我的快捷键' }],
+      skillProfiles: [{ id: 'sk_1', name: '我的 Skill' }],
+      menuProfiles: [{ id: 'mn_1', name: '我的菜单' }],
+      colorSchemes: [{ id: 'color_1', name: '板A配色' }],
+    })),
     workspaceDelete: () => Promise.resolve({ success: true }),
     workspacePreview: () => Promise.resolve(ok({
       preview: {
@@ -100,13 +111,17 @@ describe('UnifiedWorkspacePage', () => {
     });
   });
 
-  it('应用弹窗展示执行顺序，确认后按序调用各模块', async () => {
+  it('应用非当前卡片时按被点击工作区执行，而不是误用当前工作区', async () => {
     const executor = vi.fn().mockResolvedValue({ success: true, data: {} });
+    const skillPlan = vi.fn().mockResolvedValue({ success: true, data: { module: 'skill' } });
     mockAtm({
-      skillProfileLoadAll: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'sk_1', name: '我的 Skill' }] } }),
-      skillProfileCreateApplyPlan: () => Promise.resolve({ success: true, data: { module: 'skill' } }),
+      skillProfileLoadAll: () => Promise.resolve({ success: true, data: { profiles: [
+        { id: 'sk_default', name: '默认 Skill' },
+        { id: 'sk_1', name: '我的 Skill' },
+      ] } }),
+      skillProfileCreateApplyPlan: skillPlan,
       skillProfileExecuteApplyPlan: executor,
-      menuLoadProfiles: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'mn_1', name: '我的菜单' }] } }),
+      menuLoadProfiles: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'mn_default', name: '默认菜单' }] } }),
       menuCreateApplyPlan: () => Promise.resolve({ success: true, data: { module: 'menu' } }),
       menuExecuteApplyPlan: executor,
       createApplyPlan: () => Promise.resolve({ success: true, data: { module: 'hotkey' } }),
@@ -119,13 +134,68 @@ describe('UnifiedWorkspacePage', () => {
     fireEvent.click(applyButton);
 
     await screen.findByText('确认应用');
+    expect(screen.getByText('按顺序应用「默认工作区」的 4 个方案')).toBeInTheDocument();
     expect(screen.getByText('Skill 方案')).toBeInTheDocument();
     expect(screen.getByText('配色方案')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '确认应用' }));
     await waitFor(() => {
-      expect(executor).toHaveBeenCalled();
+      expect(skillPlan).toHaveBeenCalledWith(expect.stringContaining('sk_default'));
     });
+  });
+
+  it('失败步骤不计入已完成数量', async () => {
+    mockAtm({
+      skillProfileLoadAll: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'sk_default' }] } }),
+      skillProfileCreateApplyPlan: () => Promise.resolve({ success: true, data: { module: 'skill' } }),
+      skillProfileExecuteApplyPlan: () => Promise.resolve({ success: false, error: '写入失败' }),
+    });
+    render(<UnifiedWorkspacePage />);
+    fireEvent.click((await screen.findAllByRole('button', { name: '应用此工作区' }))[0]);
+    fireEvent.click(await screen.findByRole('button', { name: '确认应用' }));
+    expect(await screen.findByText('已完成 0/4 个步骤')).toBeInTheDocument();
+  });
+
+  it('确认后环境锁变化时停止执行并要求重新审阅', async () => {
+    const executor = vi.fn();
+    let planCall = 0;
+    mockAtm({
+      workspaceApplyPlan: () => {
+        planCall += 1;
+        return Promise.resolve({
+          success: true,
+          data: planCall === 1
+            ? {
+                sequence: { order: [{ module: 'skill', label: 'Skill 方案' }], warnings: [], blocked: false },
+                env: { environmentId: 'env_1', pcbenvPath: 'C:/pcbenv', envFilePath: 'C:/pcbenv/env' },
+                applyOrder: [],
+                applyVisibility: false,
+              }
+            : {
+                sequence: { order: [], warnings: [], blocked: true, blockedReason: '当前 Allegro 环境已变化' },
+                env: { environmentId: 'env_2', pcbenvPath: 'D:/pcbenv', envFilePath: 'D:/pcbenv/env' },
+                applyOrder: [],
+                applyVisibility: false,
+              },
+        });
+      },
+      skillProfileExecuteApplyPlan: executor,
+    });
+    render(<UnifiedWorkspacePage />);
+    fireEvent.click((await screen.findAllByRole('button', { name: '应用此工作区' }))[0]);
+    fireEvent.click(await screen.findByRole('button', { name: '确认应用' }));
+
+    expect((await screen.findAllByText('当前 Allegro 环境已变化')).length).toBeGreaterThan(0);
+    expect(executor).not.toHaveBeenCalled();
+  });
+
+  it('提供工作区绑定配置入口', async () => {
+    mockAtm();
+    render(<UnifiedWorkspacePage />);
+    fireEvent.click(await screen.findByRole('button', { name: '配置 项目A' }));
+    expect(await screen.findByRole('dialog', { name: '配置工作区' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Allegro 环境')).toBeInTheDocument();
+    expect(screen.getByLabelText('快捷键方案')).toBeInTheDocument();
   });
 
   it('新建工作区弹窗可提交', async () => {
@@ -137,8 +207,6 @@ describe('UnifiedWorkspacePage', () => {
     fireEvent.change(input, { target: { value: '项目B' } });
     fireEvent.click(screen.getByRole('button', { name: '创建' }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
+    expect(await screen.findByRole('dialog', { name: '配置工作区' })).toBeInTheDocument();
   });
 });

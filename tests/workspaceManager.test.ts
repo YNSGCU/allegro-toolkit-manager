@@ -16,6 +16,7 @@ import {
   loadWorkspaceStore,
   renameWorkspace,
   setActiveWorkspace,
+  updateWorkspace,
 } from '../core/workspace/workspaceManager';
 import { buildWorkspacePreview } from '../core/workspace/buildWorkspacePreview';
 import { planWorkspaceApplySequence } from '../core/workspace/planWorkspaceApply';
@@ -80,6 +81,40 @@ describe('workspaceManager', () => {
     const result = deleteWorkspace('default');
     expect(result.success).toBe(false);
     expect(result.error).toContain('默认工作区不可删除');
+  });
+
+  it('当前使用中的工作区不可删除', () => {
+    const created = createWorkspace('当前项目');
+    setActiveWorkspace(created.id);
+    const result = deleteWorkspace(created.id);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('当前使用中');
+  });
+
+  it('更新环境与四类方案绑定并持久化', () => {
+    const created = createWorkspace('项目C');
+    const updated = updateWorkspace(created.id, {
+      environmentId: 'env_2',
+      hotkeyProfileId: 'hk_2',
+      skillProfileId: 'sk_2',
+      menuProfileId: 'mn_2',
+      colorSchemeId: 'color_2',
+    });
+    expect(updated).toMatchObject({
+      environmentId: 'env_2',
+      hotkeyProfileId: 'hk_2',
+      skillProfileId: 'sk_2',
+      menuProfileId: 'mn_2',
+      colorSchemeId: 'color_2',
+    });
+    expect(getWorkspace(created.id)?.skillProfileId).toBe('sk_2');
+  });
+
+  it('存储写入失败时抛错，不返回假成功', () => {
+    const invalidRoot = path.join(configHome, 'not-a-directory');
+    fs.writeFileSync(invalidRoot, 'file', 'utf-8');
+    process.env.ATM_CONFIG_HOME = invalidRoot;
+    expect(() => createWorkspace('不会持久化')).toThrow('保存工作区失败');
   });
 
   it('存储文件与备份兼容', () => {
@@ -194,6 +229,18 @@ describe('planWorkspaceApplySequence', () => {
 
     expect(sequence.blocked).toBe(true);
     expect(sequence.blockedReason).toContain('环境');
+  });
+
+  it('工作区已绑定环境但当前环境为空时拒绝执行', () => {
+    const sequence = planWorkspaceApplySequence(workspace, null, {
+      skill: true,
+      menu: true,
+      hotkey: true,
+      color: true,
+    });
+
+    expect(sequence.blocked).toBe(true);
+    expect(sequence.blockedReason).toContain('未设置');
   });
 
   it('缺失的快捷键/Skill/菜单方案警告并跳过，配色未绑定可忽略', () => {

@@ -197,3 +197,25 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+.workspace-binding-form {
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-binding-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary, #5f5a52);
+  font-size: 13px;
+}
+
+.workspace-binding-form select {
+  width: 100%;
+}
+
+.workspace-binding-loading {
+  margin: 0;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+}

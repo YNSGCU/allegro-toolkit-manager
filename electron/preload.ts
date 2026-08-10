@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('atm', {
   setActiveAllegroEnvironment: (environmentId: string) =>
     ipcRenderer.invoke('env:set-active-workspace', environmentId),
 
+  launchAllegroEnvironment: (environmentId: string) =>
+    ipcRenderer.invoke('env:launch-workspace', environmentId),
+
   /** 手动添加 Allegro 安装根目录（新电脑第一次使用时） */
   addAllegroInstallRoot: () => ipcRenderer.invoke('env:add-install-root'),
 
@@ -428,6 +431,13 @@ contextBridge.exposeInMainWorld('atm', {
   menuCreateApplyPlan: (profileJson: string, storeJson?: string) =>
     ipcRenderer.invoke('menu:create-apply-plan', profileJson, storeJson),
 
+  /** 从 ATM 备份生成菜单方案恢复计划 */
+  menuCreateRecoveryPlan: () => ipcRenderer.invoke('menu:create-recovery-plan'),
+
+  /** 从其他 Allegro 环境复制菜单方案到当前环境 */
+  menuCreateEnvironmentCopyPlan: (sourceEnvironmentId: string) =>
+    ipcRenderer.invoke('menu:create-environment-copy-plan', sourceEnvironmentId),
+
   /** 执行菜单 Apply Plan */
   menuExecuteApplyPlan: (planJson: string) =>
     ipcRenderer.invoke('menu:execute-apply-plan', planJson),
@@ -602,6 +612,12 @@ contextBridge.exposeInMainWorld('atm', {
   /** 复制工作区 */
   workspaceCopy: (workspaceId: string, newName?: string) =>
     ipcRenderer.invoke('workspace:copy', workspaceId, newName),
+  /** 加载工作区绑定候选项 */
+  workspaceBindingOptions: (environmentId?: string) =>
+    ipcRenderer.invoke('workspace:binding-options', environmentId),
+  /** 更新工作区环境与子方案绑定 */
+  workspaceUpdate: (workspaceId: string, bindings: any) =>
+    ipcRenderer.invoke('workspace:update', workspaceId, bindings),
   /** 重命名工作区 */
   workspaceRename: (workspaceId: string, newName: string) =>
     ipcRenderer.invoke('workspace:rename', workspaceId, newName),

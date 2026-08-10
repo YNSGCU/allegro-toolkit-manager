@@ -1,4 +1,60 @@
 # Handoff
+
+## 2026-08-10：菜单切换后草稿消失修复
+
+- 只读核对真实配置：17.4 `menu_profile.json` 的“测试”方案仍包含 6 项；17.2 的两个方案均为空，用户数据未被删除。
+- 根因一：Menu Profile CRUD 只替换 `store`，编辑器的 `profile/items/savedItemsJson` 可能继续指向旧方案；根因二：方案/环境切换未先保存草稿。
+- 修复：统一状态同步，方案和 Allegro 环境切换前保存，失败阻止切换，窗口卸载提示；菜单 JSON 使用原子保存且 CRUD 检查失败。
+- 新增显式跨环境复制：蓝色环境提示可生成可信 Apply Plan，把来源非空菜单复制为当前环境新草稿；来源不写入，目标 IL 需后续另行“审阅并应用”。
+- 验证：`npm run verify` 全绿，67 个测试文件 / 401 项测试通过；新版 `release/ATM-Setup-0.3.0-x64.exe` 已生成，SHA-256 `A58A3D61AA3B1ADCE02D424CD76814E7B041ECEB8B76A3648AAF44F8FB0B88B8`。Electron 可见窗口中的复制/切换流程仍需用户安装后确认。
+
+## 2026-08-10：环境控件改为只切换、不启动
+
+- `AllegroEnvironmentSwitcher` 现在先选择目标版本，再点击“切换环境”；提交前仍执行页面级环境切换保护器。
+- 左下角控件不再调用 `launchAllegroEnvironment`，不会打开 Allegro，也不会尝试修改 Windows 全局 `HOME/CDSROOT`。
+- 已更新多版本环境用户/开发文档、模块图和连接检查表；需重建 Electron 后手动确认切换 17.2/17.4 会刷新到对应管理目标。
+
+## 2026-08-09 追加：17.2 中文 Skill 路径加载失败
+
+- 实机证据：17.2 S083 Command 窗口把 `01-布局`、`03-检查调整` 显示为 `01-甯冨眬`、`03-妫€鏌ヨ皟鏁`，并对 11 个实际存在的 `.il` 报 `can't access file`。当前 `allegro.ilinit` 为无 BOM UTF-8；同字节按 GBK 解码可精确复现截图。
+- 修复：新增 `core/environment/allegroTextEncoding.ts`，17.2 及更早写 CP936/GBK，17.4 写 UTF-8；读取现有 `.il`/`allegro.ilinit` 自动识别。统一 Apply Plan 仅给 Allegro 脚本步骤附加编码，JSON 与历史仍为 UTF-8，备份/回滚仍按原始字节。
+- 接入：Menu、Skill Profile、旧 Skill Toggle、Vibe Bridge 和 Hotkey 加载上下文均使用版本策略；重新应用 17.2 当前 Skill 方案会备份并转换 `generated_skill_loader.il`、`bootstrap.il` 与 `allegro.ilinit`。
+- 验证：`npm run verify` 全绿，66 个测试文件 / 394 项测试通过；安全审计、lint、格式、双端 TypeScript 和生产构建均通过。仍需在用户确认 Apply Plan 后重启真实 17.2 复测。
+- 独立问题：`SPMHOD-29` 表示板文件副本由更高版本保存；应在 17.4 使用 File → Export → Downrev Design 另存 17.2 副本，不能靠脚本编码修复。
+
+## 2026-08-09 追加：17.2 仍显示 17.4 乱码菜单
+
+- 实机文件证据：17.2 注册环境自己的 `pcbenv` 下没有 `atm_generated/generated_menu.il`；17.4 的旧文件存在且是 GBK 字节，“测试”解码为 `B2 E2 CA D4`，与截图 `²âÊÔ` 完全一致。
+- 系统证据：当前 Windows 用户 `HOME=D:\application\Cadence\Cadence17\Cadence\SPB_Data`、`CDSROOT=...\SPB_17.4`。因此直接启动 17.2 执行文件仍可能读取 17.4 `pcbenv`。
+- 修复：新增 `core/environment/allegroLauncher.ts`、`env:launch-workspace`、preload/window 类型和侧栏“按此环境启动”；新进程使用所选环境自己的 `HOME/CDSROOT`，不修改全局环境变量。HOME 不一致时侧栏明确告警。
+- 验证：`npm run verify` 全绿；65 个测试文件 / 390 项测试通过，安全审计、lint、格式、双端 TypeScript 和生产构建均通过。
+- 待确认：重新构建并重启 ATM，从侧栏选择 17.2 后点击“按此环境启动”，确认新 17.2 会话不再加载 17.4 旧菜单。菜单 UTF-8 重建仍需走原菜单 Apply Plan，不得直接覆盖用户文件。
+
+## 2026-08-08 追加：菜单拖动有影子但不换位修复
+
+- 根因是递归行各自保存拖动 state，且目标行在 Chromium protected-mode `dragover` 中读不到 DataTransfer payload；向下相邻拖动的旧插入索引也可能得到原顺序。
+- `MenuTree` 顶层现共享拖动源、父级和目标；同级目标显示强调线，drop 后调用页面现有 `onReorder`。
+- `reorderMenuItem` 使用删除前目标索引，向下拖动落到目标之后、向上拖动落到目标之前。
+- 回归测试覆盖 protected-mode 空 payload、目标反馈、相邻向下换位和跨父级拒绝；完整 `npm run verify` 已通过（64 个测试文件 / 387 项测试），Electron 可见窗口仍需重启应用后复核。
+
+## 2026-08-08 追加：菜单详情裁切与环境重名修复
+
+- 菜单分栏补回 `display:grid + height:100%`，树和属性面板各自滚动，原先落到树下方的属性区及删除按钮恢复可达。
+- 侧栏环境选择器启动时刷新；注册表读取/保存/刷新均按版本归并，每个 Allegro 版本只显示一个选项。当前选择优先，否则优先该版本安装目录旁的 `SPB_Data\pcbenv`。
+- 环境注册表不再保留缺失路径的自动发现记录，并按当前 `pcbenvPath` 重建共享 ID。
+- 完整 `npm run verify` 已通过：64 个测试文件 / 385 项测试，安全审计、lint、格式、双端 TypeScript 和生产构建均通过；Electron 可见窗口仍需重启应用后复核。
+
+## 2026-08-08 追加：统一工作区缺陷修复与 Apply Plan 信任边界
+
+- 修复从非当前工作区卡片应用时误用 activeWorkspace 的问题；页面固定 `applyTarget`，并在首个写入前重新请求 `workspace:apply-plan` 校验环境与方案状态。
+- 新增工作区“配置/复制”入口和 `workspace:binding-options` / `workspace:update` 完整链；新建后自动进入环境与四类方案绑定。
+- 环境锁在当前环境为空时也会阻止执行；失败步骤不再计入完成数量。
+- `workspaces.json` 改为临时文件原子替换，保存失败抛错；默认工作区和当前使用中的工作区不可删除。
+- 新增 `trustedApplyPlan.ts`：Menu、Skill Profile、Vibe Bridge 计划只能执行主进程生成、未篡改、同作用域且未消费的快照。
+- 配色页桥接手动命令使用动态 `serverFile`，移除开发机用户名与重复捕获按钮。
+- 验证：`npm run verify` 全绿；63 个测试文件 / 380 项测试通过；生产构建通过。
+- 尚未执行：真实 Allegro 写入、Electron 可见窗口手工巡检和安装包重打包，避免在自动修复流程中影响用户环境。
+
 ## 最新进展（2026-08-08）：v0.3.0 Beta 收口
 
 - 配色方案：单层自定义颜色（Hex + 取色器，安全索引分配）、应用预览弹窗（目标板叠层/角色/最终颜色/调色板变更/可见性）、应用前自动快照 + 一键撤销。
@@ -101,6 +157,7 @@
 - Env 导入、方案导入预览和快捷键删除确认仍使用旧壳层；其中 Env 导入文件较大，应在独立重构批次拆分状态机和视图，避免与发布修复混改。
 - 安装包已使用 `build/icon.svg` 品牌图标，但发布者仍为通用名称且未配置代码签名；公开分发前必须补齐真实发布者信息和签名证书。
 - 参考截图中的复杂 Allegro 宏仍为 provisional；必须在目标 Allegro 版本的 Command 窗口逐条验证后，才能进入可信模板库。
+- 菜单丢失/乱码修复已补齐：当前环境无数据时提示其他环境，源 JSON 为空时可从 ATM 备份生成恢复计划，`generated_menu.il` 改为 UTF-8。尚未直接修改用户 pcbenv；需在 Allegro 17.4 中恢复、重新应用并执行 `atmLoadMenus` 做运行时确认。
 - 2026-08-04：新增多 Allegro 环境注册表与全局选择器；快捷键/Skill/菜单统一解析活动环境，Apply Plan 锁定 environmentId/pcbenvPath 并拒绝环境漂移。
 - 快捷键方案支持跨版本兼容性预检与目标环境副本；Skill、菜单方案已记录来源环境和 Allegro 版本，复杂运行时兼容仍需目标版本实机验证。
 - 环境页可通过 Vibe Bridge 调用官方 `axlVersion` 做只读版本核对；2026-08-04 当前外部 Bridge 探测超时，因此没有写入任何伪造的 runtime_pass。

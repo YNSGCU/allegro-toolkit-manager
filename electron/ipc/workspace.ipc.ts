@@ -19,6 +19,7 @@ import {
   loadWorkspaceStore,
   renameWorkspace,
   setActiveWorkspace,
+  updateWorkspace,
 } from '../../core/workspace/workspaceManager';
 import { buildWorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 import { loadAllProfiles } from '../../core/profile/hotkeyProfile';
@@ -29,7 +30,51 @@ import { loadEnvironmentRegistry, getActiveEnvironment } from '../../core/enviro
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
 import { planWorkspaceApplySequence, WORKSPACE_APPLY_ORDER } from '../../core/workspace/planWorkspaceApply';
 import path from 'path';
-import type { WorkspaceProfile } from '../../src/types/workspaceProfile';
+import type {
+  WorkspaceBindingOptions,
+  WorkspaceProfile,
+  WorkspaceProfileBindings,
+} from '../../src/types/workspaceProfile';
+
+function loadBindingOptions(environmentId?: string): WorkspaceBindingOptions {
+  const registry = loadEnvironmentRegistry();
+  const selectedEnvironment = environmentId
+    ? registry.environments.find((item) => item.id === environmentId) ?? null
+    : getActiveEnvironment();
+  if (environmentId && !selectedEnvironment) throw new Error('目标 Allegro 环境不存在');
+
+  let pcbenvPath: string | null = null;
+  try {
+    pcbenvPath = locateEnvironment(selectedEnvironment?.pcbenvPath).pcbenvPath ?? null;
+  } catch {
+    // 环境尚不可用时仍返回环境和全局配色选项。
+  }
+  const atmDir = pcbenvPath ? path.join(pcbenvPath, 'atm_generated') : null;
+  return {
+    environmentId: selectedEnvironment?.id,
+    environments: registry.environments.map((item) => ({ id: item.id, name: item.name })),
+    hotkeyProfiles: pcbenvPath
+      ? loadAllProfiles(pcbenvPath).map((item) => ({ id: item.id, name: item.name }))
+      : [],
+    skillProfiles: atmDir
+      ? loadSkillProfileStore(atmDir).profiles.map((item) => ({ id: item.id, name: item.name }))
+      : [],
+    menuProfiles: atmDir
+      ? (loadMenuProfileStore(atmDir).profiles ?? []).map((item) => ({ id: item.id, name: item.name }))
+      : [],
+    colorSchemes: loadColorSchemeStore().schemes.map((item) => ({ id: item.id, name: item.name })),
+  };
+}
+
+function assertBindingExists(
+  value: string | undefined,
+  options: Array<{ id: string }>,
+  label: string,
+): void {
+  if (value && !options.some((item) => item.id === value)) {
+    throw new Error(`${label}不存在，请重新选择`);
+  }
+}
 
 export function registerWorkspaceIpc(): void {
   ipcMain.handle('workspace:load-all', () => {
@@ -59,6 +104,34 @@ export function registerWorkspaceIpc(): void {
       return { success: true, data: workspace };
     } catch (err) {
       return { success: false, error: `复制工作区失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('workspace:binding-options', (_event, environmentId?: string) => {
+    try {
+      return { success: true, data: loadBindingOptions(environmentId) };
+    } catch (err) {
+      return { success: false, error: `加载工作区绑定选项失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  ipcMain.handle('workspace:update', (_event, workspaceId: string, bindings: Partial<WorkspaceProfileBindings>) => {
+    try {
+      const existing = getWorkspace(workspaceId);
+      if (!existing) return { success: false, error: '工作区不存在' };
+      const targetEnvironmentId = Object.prototype.hasOwnProperty.call(bindings, 'environmentId')
+        ? bindings.environmentId
+        : existing.environmentId;
+      const options = loadBindingOptions(targetEnvironmentId);
+      assertBindingExists(bindings.hotkeyProfileId, options.hotkeyProfiles, '快捷键方案');
+      assertBindingExists(bindings.skillProfileId, options.skillProfiles, 'Skill 方案');
+      assertBindingExists(bindings.menuProfileId, options.menuProfiles, '菜单方案');
+      assertBindingExists(bindings.colorSchemeId, options.colorSchemes, '配色方案');
+      const workspace = updateWorkspace(workspaceId, bindings);
+      if (!workspace) return { success: false, error: '工作区不存在' };
+      return { success: true, data: workspace };
+    } catch (err) {
+      return { success: false, error: `更新工作区失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 

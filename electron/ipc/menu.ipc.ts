@@ -18,6 +18,8 @@ import { ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
+import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
 import {
   loadMenuProfileStore,
   saveMenuProfileStore,
@@ -34,6 +36,8 @@ import {
   ensureBootstrapMenuLoad,
   countMenuItems,
   rebuildMenuPaths,
+  findMenuProfileRecovery,
+  copyMenuProfileStoreFromEnvironment,
 } from '../../core/menu/menuManager';
 import { createApplyPlan, createBackupStep, executeApplyPlan } from '../../core/apply/applyPlanEngine';
 import { generateBootstrapLines } from '../../core/generator/generateBootstrap';
@@ -41,6 +45,8 @@ import { insertBootstrapToIlinit } from '../../core/generator/generateManagedEnv
 import { scanEnhancedSkills } from '../../core/skill/enhancedScan';
 import { buildMenuCommandCatalog } from '../../core/menu/menuCommandCatalog';
 import type { ApplyPlan, ApplyPlanStepType } from '../../src/types/applyPlan';
+import type { MenuProfile } from '../../src/types/menu';
+import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
 
 /** 获取 atm_generated 目录路径 */
 function getAtmDir(): string {
@@ -62,9 +68,33 @@ export function registerMenuIpc(): void {
   // ═══════════════════════════════════════════════════
   ipcMain.handle('menu:load-profiles', async () => {
     try {
-      const atmDir = getAtmDir();
+      const envInfo = locateEnvironment();
+      const atmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
       const store = loadMenuProfileStore(atmDir);
       const activeProfile = getActiveProfile(store);
+      const recovery = findMenuProfileRecovery(atmDir, store);
+      const currentPcbenv = path.normalize(envInfo.pcbenvPath || '').toLowerCase();
+      const alternatives = loadEnvironmentRegistry().environments
+        .filter(environment => path.normalize(environment.pcbenvPath).toLowerCase() !== currentPcbenv)
+        .map(environment => {
+          const alternativeAtmDir = path.join(environment.pcbenvPath, 'atm_generated');
+          const alternativeStore = loadMenuProfileStore(alternativeAtmDir);
+          const alternativeRecovery = findMenuProfileRecovery(alternativeAtmDir, alternativeStore);
+          const profileItemCount = alternativeStore.profiles.reduce(
+            (sum, profile) => sum + countMenuItems(profile.items || []).total,
+            0,
+          );
+          return {
+            id: environment.id,
+            name: environment.name,
+            version: environment.allegroVersion,
+            pcbenvPath: environment.pcbenvPath,
+            profileItemCount,
+            recoveryItemCount: alternativeRecovery?.itemCount ?? 0,
+            generatedMenuExists: fs.existsSync(getMenuIlPath(alternativeAtmDir)),
+          };
+        })
+        .filter(item => item.profileItemCount > 0 || item.recoveryItemCount > 0 || item.generatedMenuExists);
       return {
         success: true,
         data: {
@@ -73,10 +103,120 @@ export function registerMenuIpc(): void {
           atmGeneratedPath: atmDir,
           profilePath: getMenuProfilePath(atmDir),
           menuIlPath: getMenuIlPath(atmDir),
+          recovery,
+          alternatives,
+          environment: {
+            id: envInfo.environmentId,
+            name: envInfo.allegroVersion ? `Allegro ${envInfo.allegroVersion}` : '当前 Allegro 环境',
+            version: envInfo.allegroVersion,
+            pcbenvPath: envInfo.pcbenvPath,
+          },
         },
       };
     } catch (err) {
       return { success: false, error: `加载菜单方案失败: ${(err as Error).message}` };
+    }
+  });
+
+  // 从 ATM 自身备份恢复丢失的菜单方案。只恢复 menu_profile.json；
+  // 恢复后用户仍需审阅并应用，才会重新生成 generated_menu.il。
+  ipcMain.handle('menu:create-recovery-plan', async () => {
+    try {
+      const envInfo = locateEnvironment();
+      const atmDir = getAtmDir();
+      const currentStore = loadMenuProfileStore(atmDir);
+      const recovery = findMenuProfileRecovery(atmDir, currentStore);
+      if (!recovery) return { success: false, error: '没有可恢复的菜单方案备份' };
+      const profilePath = getMenuProfilePath(atmDir);
+      const backupDir = path.join(atmDir, 'backups');
+      const backupEntry = fs.existsSync(profilePath) ? createBackupStep(profilePath, backupDir) : null;
+      const plan = createApplyPlan({
+        title: '恢复菜单方案备份',
+        description: `从 ${path.basename(recovery.backupPath)} 恢复 ${recovery.profileCount} 个方案；恢复后需再次审阅应用菜单。`,
+        module: 'menu',
+        steps: [
+          ...(backupEntry ? [backupEntry.step] : []),
+          {
+            type: 'update_json',
+            title: '恢复 menu_profile.json',
+            description: `恢复方案“${recovery.activeProfile.name}”（${recovery.itemCount} 个菜单项）`,
+            targetFile: profilePath,
+            after: JSON.stringify({ ...recovery.store, updatedAt: new Date().toISOString() }, null, 2),
+          },
+        ],
+        backups: backupEntry ? [backupEntry.backup] : [],
+        risks: [{
+          id: 'menu-recovery-review',
+          severity: 'info',
+          title: '恢复后仍需审阅应用',
+          description: '本次只恢复 ATM 菜单方案，不会立即替换 Allegro 当前菜单。',
+        }],
+        targetFiles: [profilePath],
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
+      });
+      return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
+    } catch (err) {
+      return { success: false, error: `生成菜单恢复计划失败: ${(err as Error).message}` };
+    }
+  });
+
+  // 显式复制其他 Allegro 环境中的菜单源方案到当前环境。
+  // 只复制 menu_profile.json 中的一个非空方案，不直接生成或加载 IL。
+  ipcMain.handle('menu:create-environment-copy-plan', async (_event, sourceEnvironmentId: string) => {
+    try {
+      const envInfo = locateEnvironment();
+      const registry = loadEnvironmentRegistry();
+      const sourceEnvironment = registry.environments.find(item => item.id === sourceEnvironmentId);
+      if (!sourceEnvironment) return { success: false, error: '未找到来源 Allegro 环境' };
+      if (sourceEnvironment.id === envInfo.environmentId) {
+        return { success: false, error: '来源环境与当前环境相同，无需复制' };
+      }
+
+      const sourceAtmDir = path.join(sourceEnvironment.pcbenvPath, 'atm_generated');
+      const sourceStore = loadMenuProfileStore(sourceAtmDir);
+      const targetAtmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
+      const targetStore = loadMenuProfileStore(targetAtmDir);
+      const copied = copyMenuProfileStoreFromEnvironment(targetStore, sourceStore, {
+        id: sourceEnvironment.id,
+        version: sourceEnvironment.allegroVersion,
+        name: sourceEnvironment.name,
+      });
+      for (const profile of copied.store.profiles) {
+        profile.items = rebuildMenuPaths(profile.items || []);
+      }
+
+      const profilePath = getMenuProfilePath(targetAtmDir);
+      const backupDir = path.join(targetAtmDir, 'backups');
+      const backupEntry = fs.existsSync(profilePath) ? createBackupStep(profilePath, backupDir) : null;
+      const plan = createApplyPlan({
+        title: `复制菜单方案到 ${envInfo.allegroVersion ? `Allegro ${envInfo.allegroVersion}` : '当前环境'}`,
+        description: `从 ${sourceEnvironment.name} 复制“${copied.profile.name}”作为当前环境的新草稿，不会立即修改 Allegro 菜单。`,
+        module: 'menu',
+        steps: [
+          ...(backupEntry ? [backupEntry.step] : []),
+          {
+            type: 'update_json',
+            title: '复制菜单方案草稿',
+            description: `写入 ${countMenuItems(copied.profile.items || []).total} 个菜单项`,
+            targetFile: profilePath,
+            after: JSON.stringify(copied.store, null, 2),
+          },
+        ],
+        backups: backupEntry ? [backupEntry.backup] : [],
+        risks: [{
+          id: 'menu-cross-environment-review',
+          severity: 'info',
+          title: '复制后需要重新审阅应用',
+          description: '本计划只复制 ATM 菜单草稿；目标版本的命令兼容性与脚本编码会在后续普通菜单 Apply Plan 中处理。',
+        }],
+        targetFiles: [profilePath],
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
+      });
+      return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
+    } catch (err) {
+      return { success: false, error: `生成跨环境菜单复制计划失败: ${(err as Error).message}` };
     }
   });
 
@@ -155,6 +295,7 @@ export function registerMenuIpc(): void {
   ipcMain.handle('menu:create-apply-plan', async (_event, profileJson: string, storeJson?: string) => {
     try {
       const envInfo = locateEnvironment();
+      const allegroTextEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
       const atmDir = getAtmDir();
       const profile = JSON.parse(profileJson);
       const currentStore = storeJson
@@ -179,10 +320,12 @@ export function registerMenuIpc(): void {
 
       // 检查 bootstrap
       const bootstrapCheck = checkBootstrapMenuLoad(atmDir);
-      if (bootstrapCheck.needsUpdate) {
-        const currentBootstrap = fs.existsSync(bootstrapPath)
-          ? fs.readFileSync(bootstrapPath, { encoding: 'utf-8' })
-          : '';
+      const bootstrapRead = fs.existsSync(bootstrapPath)
+        ? readAllegroTextFile(bootstrapPath, allegroTextEncoding)
+        : { text: '', detectedEncoding: allegroTextEncoding };
+      if (bootstrapCheck.needsUpdate
+        || bootstrapRead.detectedEncoding !== allegroTextEncoding) {
+        const currentBootstrap = bootstrapRead.text;
         const nextBootstrap = ensureBootstrapMenuLoad(currentBootstrap, atmDir);
         steps.push({
           type: 'ensure_bootstrap',
@@ -193,18 +336,19 @@ export function registerMenuIpc(): void {
         });
       }
 
-      const currentIlinit = fs.existsSync(ilinitPath)
-        ? fs.readFileSync(ilinitPath, { encoding: 'utf-8' })
-        : '';
+      const ilinitRead = fs.existsSync(ilinitPath)
+        ? readAllegroTextFile(ilinitPath, allegroTextEncoding)
+        : { text: '', detectedEncoding: allegroTextEncoding };
+      const currentIlinit = ilinitRead.text;
       const bootstrapBlock = generateBootstrapLines(atmDir);
       const nextIlinit = insertBootstrapToIlinit(currentIlinit, bootstrapBlock);
-      if (nextIlinit !== null) {
+      if (nextIlinit !== null || ilinitRead.detectedEncoding !== allegroTextEncoding) {
         steps.push({
           type: 'modify_ilinit',
           title: '配置 Allegro 启动加载',
           description: '在 allegro.ilinit 中加载 ATM bootstrap.il',
           targetFile: ilinitPath,
-          after: nextIlinit,
+          after: nextIlinit ?? currentIlinit,
         });
       }
 
@@ -239,9 +383,10 @@ export function registerMenuIpc(): void {
         targetFiles: [profilePath, menuIlPath, bootstrapPath, ilinitPath],
         environmentId: envInfo.environmentId ?? null,
         environmentPcbenvPath: envInfo.pcbenvPath,
+        allegroTextEncoding,
       });
 
-      return { success: true, data: plan };
+      return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
     } catch (err) {
       return { success: false, error: `生成菜单 Apply Plan 失败: ${(err as Error).message}` };
     }
@@ -252,7 +397,7 @@ export function registerMenuIpc(): void {
   // ═══════════════════════════════════════════════════
   ipcMain.handle('menu:execute-apply-plan', async (_event, planJson: string) => {
     try {
-      const plan: ApplyPlan = JSON.parse(planJson);
+      const plan: ApplyPlan = consumeTrustedApplyPlan(planJson, 'menu', 'menu');
       if (plan.module !== 'menu') {
         return { success: false, appliedSteps: 0, totalSteps: plan.steps?.length || 0, error: '拒绝执行非菜单 Apply Plan' };
       }
@@ -309,13 +454,19 @@ export function registerMenuIpc(): void {
       const { checkMenuFileStatus, loadMenuProfileStore } = require('../../core/menu/menuManager');
       const fileStatus = checkMenuFileStatus(atmDir, envInfo.pcbenvPath || '');
       const store = loadMenuProfileStore(atmDir);
-      const profileCount = store.profiles.reduce((sum: number, p: any) => sum + (p.items?.length || 0), 0);
+      const profileCount = store.profiles.reduce(
+        (sum: number, profile: MenuProfile) => sum + countMenuItems(profile.items || []).total,
+        0,
+      );
+      const recovery = findMenuProfileRecovery(atmDir, store);
       return {
         success: true,
         data: {
           ...fileStatus,
           profileItemCount: profileCount,
           hasMenuItems: profileCount > 0,
+          recoveryAvailable: Boolean(recovery),
+          generatedMenuStale: fileStatus.ilExists && profileCount === 0,
         },
       };
     } catch (err) {
@@ -354,7 +505,7 @@ export function registerMenuIpc(): void {
         created.sourceAllegroVersion = envInfo.allegroVersion ?? null;
         created.testedAllegroVersions = envInfo.allegroVersion ? [envInfo.allegroVersion] : [];
       }
-      saveMenuProfileStore(atmDir, updated);
+      if (!saveMenuProfileStore(atmDir, updated)) throw new Error('menu_profile.json 写入失败');
       return { success: true, data: { store: updated } };
     } catch (err) {
       return { success: false, error: `新建菜单方案失败: ${(err as Error).message}` };
@@ -367,7 +518,7 @@ export function registerMenuIpc(): void {
       const { loadMenuProfileStore, saveMenuProfileStore, copyProfile } = require('../../core/menu/menuManager');
       const store = loadMenuProfileStore(atmDir);
       const updated = copyProfile(store, profileId, newName);
-      saveMenuProfileStore(atmDir, updated);
+      if (!saveMenuProfileStore(atmDir, updated)) throw new Error('menu_profile.json 写入失败');
       return { success: true, data: { store: updated } };
     } catch (err) {
       return { success: false, error: `复制菜单方案失败: ${(err as Error).message}` };
@@ -380,7 +531,7 @@ export function registerMenuIpc(): void {
       const { loadMenuProfileStore, saveMenuProfileStore, renameProfile } = require('../../core/menu/menuManager');
       const store = loadMenuProfileStore(atmDir);
       const updated = renameProfile(store, profileId, newName);
-      saveMenuProfileStore(atmDir, updated);
+      if (!saveMenuProfileStore(atmDir, updated)) throw new Error('menu_profile.json 写入失败');
       return { success: true, data: { store: updated } };
     } catch (err) {
       return { success: false, error: `重命名菜单方案失败: ${(err as Error).message}` };
@@ -393,7 +544,7 @@ export function registerMenuIpc(): void {
       const { loadMenuProfileStore, saveMenuProfileStore, deleteProfile } = require('../../core/menu/menuManager');
       const store = loadMenuProfileStore(atmDir);
       const updated = deleteProfile(store, profileId);
-      saveMenuProfileStore(atmDir, updated);
+      if (!saveMenuProfileStore(atmDir, updated)) throw new Error('menu_profile.json 写入失败');
       return { success: true, data: { store: updated } };
     } catch (err) {
       return { success: false, error: `删除菜单方案失败: ${(err as Error).message}` };
@@ -410,7 +561,7 @@ export function registerMenuIpc(): void {
       for (const p of updated.profiles) {
         p.items = rebuildMenuPaths(p.items);
       }
-      saveMenuProfileStore(atmDir, updated);
+      if (!saveMenuProfileStore(atmDir, updated)) throw new Error('menu_profile.json 写入失败');
       const active = getActiveProfile(updated);
       return { success: true, data: { store: updated, activeProfile: active } };
     } catch (err) {
@@ -460,6 +611,8 @@ export function registerMenuIpc(): void {
    */
   ipcMain.handle('menu:generate-plan', async () => {
     try {
+      const envInfo = locateEnvironment();
+      const allegroTextEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
       const atmDir = getAtmDir();
       const profilePath = path.join(atmDir, 'menu_profile.json');
       const menuIlPath = path.join(atmDir, 'generated_menu.il');
@@ -478,11 +631,12 @@ export function registerMenuIpc(): void {
         })),
         requiresRestart: true,
         targetFiles: [profilePath, menuIlPath],
-        environmentId: locateEnvironment().environmentId ?? null,
-        environmentPcbenvPath: locateEnvironment().pcbenvPath,
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
+        allegroTextEncoding,
       });
 
-      return { success: true, data: plan };
+      return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
     } catch (err) {
       return { success: false, error: `生成菜单 Apply Plan 失败: ${(err as Error).message}` };
     }

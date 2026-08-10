@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import iconv from 'iconv-lite';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createApplyPlan,
@@ -163,7 +162,7 @@ describe('临时 pcbenv Skill 方案事务', () => {
 });
 
 describe('临时 pcbenv 菜单方案事务', () => {
-  it('使用菜单步骤生成器写入 GBK 脚本，失败时恢复旧配置并清理新文件', async () => {
+  it('使用菜单步骤生成器写入 UTF-8 脚本，失败时恢复旧配置并清理新文件', async () => {
     const pcbenv = createPcbenv('atm-menu-rollback-');
     const atmDir = path.join(pcbenv, 'atm_generated');
     const profilePath = path.join(atmDir, 'menu_profile.json');
@@ -228,7 +227,7 @@ describe('临时 pcbenv 菜单方案事务', () => {
     expect(fs.existsSync(path.join(atmDir, 'history', 'apply_plan_history.json'))).toBe(false);
   });
 
-  it('成功生成的菜单脚本保持 GBK 编码并可撤销', async () => {
+  it('成功生成的菜单脚本保持 UTF-8 编码并可撤销', async () => {
     const pcbenv = createPcbenv('atm-menu-integration-');
     const atmDir = path.join(pcbenv, 'atm_generated');
     const profilePath = path.join(atmDir, 'menu_profile.json');
@@ -260,7 +259,7 @@ describe('临时 pcbenv 菜单方案事务', () => {
     const historyDir = path.join(atmDir, 'history');
 
     expect((await executeApplyPlan(plan, { backupDir, historyDir })).success).toBe(true);
-    expect(iconv.decode(fs.readFileSync(menuPath), 'gbk')).toContain('中文工具');
+    expect(fs.readFileSync(menuPath, 'utf8')).toContain('中文工具');
     expect((await undoUnifiedPlan(historyDir, backupDir)).success).toBe(true);
     expect(fs.existsSync(menuPath)).toBe(false);
   });

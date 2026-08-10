@@ -48,18 +48,24 @@ export function loadWorkspaceStore(): WorkspaceProfileStore {
 }
 
 /** 保存工作区存储 */
-export function saveWorkspaceStore(store: WorkspaceProfileStore): boolean {
+export function saveWorkspaceStore(store: WorkspaceProfileStore): void {
+  const filePath = getWorkspaceStorePath();
+  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   try {
-    const filePath = getWorkspaceStorePath();
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     store.updatedAt = new Date().toISOString();
-    fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf-8');
-    return true;
-  } catch {
-    return false;
+    fs.writeFileSync(tmpPath, JSON.stringify(store, null, 2), 'utf-8');
+    fs.renameSync(tmpPath, filePath);
+  } catch (err) {
+    try {
+      if (fs.existsSync(tmpPath)) fs.rmSync(tmpPath, { force: true });
+    } catch {
+      // 临时文件清理失败不覆盖原始保存错误。
+    }
+    throw new Error(`保存工作区失败: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -143,6 +149,35 @@ export function renameWorkspace(workspaceId: string, newName: string): Workspace
   return workspace;
 }
 
+/** 更新工作区绑定关系。调用方应在写入前校验环境与子方案是否存在。 */
+export function updateWorkspace(
+  workspaceId: string,
+  bindings: Partial<Pick<WorkspaceProfile, 'environmentId' | 'hotkeyProfileId' | 'skillProfileId' | 'menuProfileId' | 'colorSchemeId'>>,
+): WorkspaceProfile | null {
+  const store = loadWorkspaceStore();
+  const workspace = store.workspaces.find((item) => item.id === workspaceId);
+  if (!workspace) return null;
+
+  if (Object.prototype.hasOwnProperty.call(bindings, 'environmentId')) {
+    workspace.environmentId = bindings.environmentId || undefined;
+  }
+  if (Object.prototype.hasOwnProperty.call(bindings, 'hotkeyProfileId')) {
+    workspace.hotkeyProfileId = bindings.hotkeyProfileId ?? '';
+  }
+  if (Object.prototype.hasOwnProperty.call(bindings, 'skillProfileId')) {
+    workspace.skillProfileId = bindings.skillProfileId ?? '';
+  }
+  if (Object.prototype.hasOwnProperty.call(bindings, 'menuProfileId')) {
+    workspace.menuProfileId = bindings.menuProfileId ?? '';
+  }
+  if (Object.prototype.hasOwnProperty.call(bindings, 'colorSchemeId')) {
+    workspace.colorSchemeId = bindings.colorSchemeId || undefined;
+  }
+  workspace.updatedAt = new Date().toISOString();
+  saveWorkspaceStore(store);
+  return workspace;
+}
+
 /** 删除工作区：默认工作区不可删；删除激活工作区后自动激活剩余第一个 */
 export function deleteWorkspace(workspaceId: string): { success: boolean; error?: string } {
   const store = loadWorkspaceStore();
@@ -153,10 +188,10 @@ export function deleteWorkspace(workspaceId: string): { success: boolean; error?
   if (workspaceId === 'default') {
     return { success: false, error: '默认工作区不可删除' };
   }
-  store.workspaces = store.workspaces.filter((item) => item.id !== workspaceId);
   if (store.activeWorkspaceId === workspaceId) {
-    store.activeWorkspaceId = store.workspaces[0]?.id ?? '';
+    return { success: false, error: '当前使用中的工作区不可删除，请先切换到其他工作区' };
   }
+  store.workspaces = store.workspaces.filter((item) => item.id !== workspaceId);
   saveWorkspaceStore(store);
   return { success: true };
 }

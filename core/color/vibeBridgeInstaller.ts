@@ -13,6 +13,7 @@ import os from 'os';
 import path from 'path';
 import type { ApplyPlan } from '../../src/types/applyPlan';
 import { createApplyPlan } from '../apply/applyPlanEngine';
+import { readAllegroTextFile, type AllegroTextEncoding } from '../environment/allegroTextEncoding';
 
 /** Vibe Bridge 服务端文件名 */
 export const VIBE_SERVER_FILE = 'vibe_server.il';
@@ -81,10 +82,13 @@ export function buildBridgeEnablePlan(
   currentContent: string,
   serverPath: string,
   backupDir: string,
+  textEncoding: AllegroTextEncoding = 'utf8',
+  forceEncodingRewrite = false,
 ): ApplyPlan | null {
   const loadLine = buildBridgeLoadLine(serverPath);
   const nextContent = insertBridgeLoadToIlinit(currentContent, loadLine, serverPath);
-  if (!nextContent) return null;
+  const contentToWrite = nextContent ?? (forceEncodingRewrite ? currentContent : null);
+  if (contentToWrite === null) return null;
 
   const backupFile = path.join(backupDir, 'allegro.ilinit');
   return createApplyPlan({
@@ -106,7 +110,7 @@ export function buildBridgeEnablePlan(
         description: `追加 ${loadLine}`,
         targetFile: ilinitPath,
         before: currentContent,
-        after: nextContent,
+        after: contentToWrite,
       },
     ],
     risks: [
@@ -126,6 +130,7 @@ export function buildBridgeEnablePlan(
     ],
     targetFiles: [ilinitPath],
     environmentPcbenvPath: path.dirname(ilinitPath),
+    allegroTextEncoding: textEncoding,
   });
 }
 
@@ -139,10 +144,13 @@ export interface BridgeSetupStatus {
 }
 
 /** 检查桥接安装状态 */
-export function checkBridgeSetup(ilinitPath: string): BridgeSetupStatus {
+export function checkBridgeSetup(
+  ilinitPath: string,
+  textEncoding: AllegroTextEncoding = 'utf8',
+): BridgeSetupStatus {
   const serverFile = findBridgeServerFile();
   const ilinitExists = fs.existsSync(ilinitPath);
-  const currentContent = ilinitExists ? fs.readFileSync(ilinitPath, 'utf-8') : '';
+  const currentContent = ilinitExists ? readAllegroTextFile(ilinitPath, textEncoding).text : '';
   const configured = serverFile !== null && hasBridgeLoadInIlinit(currentContent, serverFile);
   return {
     serverFile,

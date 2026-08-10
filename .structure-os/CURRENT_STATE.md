@@ -1,13 +1,35 @@
 # Current State
 
+## 2026-08-10 菜单保存与跨环境复制修复
+- 实机配置确认：17.4 的“测试”方案仍有 6 项；17.2 的“默认菜单方案”和“副本”均为空，数据未删除而是环境隔离。
+- 菜单方案 CRUD/切换后统一同步编辑状态；切换方案或 Allegro 环境前先保存草稿，失败时阻止切换；关闭/强制刷新有未保存提醒。
+- 当前环境为空时可从蓝色提示生成“复制到当前环境”可信 Apply Plan，只复制非空菜单源方案为独立草稿，不立即修改 Allegro。
+- `menu_profile.json` 改为临时文件原子替换，CRUD 不再忽略保存失败。
+
+## 2026-08-10 环境控件行为调整
+- 左下角 Allegro 环境控件改为“选择版本 -> 点击切换环境”，只切换 ATM 的活动管理目标并刷新页面，不再从该控件启动 Allegro。
+- 已打开的 Allegro 进程与 Windows 全局 `HOME/CDSROOT` 不受影响；需要启动时使用对应版本的独立启动器。
+
 ## Snapshot
-- Last updated: 2026-08-08
-- Current branch: master；v0.3.0 Beta 收口中，最近提交为配色预览/撤销与备份恢复测试
-- App status: 六个侧栏入口（快捷键/Skill/菜单/配色/备份与恢复/系统状态）；配色支持捕获、单层自定义颜色、应用预览与一键撤销；设置支持 .atmbak 备份/分区恢复；窗口状态持久化；IPC 通道注册表自检
-- Test status: 60 files / 353 tests pass；覆盖配色预览与撤销、备份分区隔离、窗口状态、环境注册、Apply Plan 环境锁
+- 2026-08-09：确认真实 17.2 会把 UTF-8 `allegro.ilinit` 按 CP936/GBK 读取，中文路径因此变成“甯冨眬”并加载失败；已实现 17.2=GBK、17.4=UTF-8 的版本编码策略、旧文件自动识别及 Apply Plan 安全转码，等待真实会话重启复测。
+- 2026-08-09：定位到“打开 17.2 仍显示 17.4 乱码菜单”的根因是 Windows `HOME/CDSROOT` 仍指向 17.4；新增按所选环境隔离启动链路与 HOME 不匹配告警。定向测试和前后端类型检查通过，17.2 实机仍待复测。
+- Last updated: 2026-08-10
+- Current branch: master；v0.3.0 Beta 收口中，统一工作区安全与一致性缺陷已修复（尚未提交）
+- App status: 七个侧栏入口（统一工作区/快捷键/Skill/菜单/配色/备份与恢复/系统状态）；工作区支持环境与四类方案绑定、复制、预览和顺序应用；配色支持捕获、自定义颜色、应用预览与撤销
+- Test status: 67 files / 401 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理和版本编码策略覆盖
 - Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认
 
 ## Implemented Behavior
+
+- 统一工作区新建后自动进入绑定配置；可按目标环境选择快捷键/Skill/菜单方案并选择全局配色方案，也可复制和重新配置现有工作区。
+- 工作区应用固定用户点击的目标对象，确认前再次校验环境锁与模块存在性；环境为空、漂移或计划变化时停止执行并要求重新审阅。
+- 工作区 JSON 使用临时文件原子替换，保存失败不再假成功；默认工作区和当前使用中的工作区不可删除。
+- Menu、Skill Profile 与 Vibe Bridge Apply Plan 使用主进程一次性可信快照，拒绝 Renderer 篡改、跨作用域复用和重复执行。
+- Menu 树与属性面板恢复为确定高度双栏并各自滚动，删除等底部操作不再被 contained 页面裁切。
+- Menu 拖放状态由整棵树共享，不依赖 Chromium `dragover` 读取 DataTransfer；同级项目向上或向下拖动都会实际换位，并显示目标行反馈。
+- 环境下拉框按 Allegro 版本唯一；同版本多个 `pcbenv` 候选优先保留当前选择，否则优先版本安装目录配置。刷新会重建共享关系并移除已消失的自动记录。
+- 配色页手动桥接命令使用运行时发现的 `serverFile`，不再包含开发机用户名；空状态不再重复展示捕获按钮。
+- Menu、Skill Profile、Skill Toggle 和 Vibe Bridge 计划按环境版本标注 Allegro 文本编码；旧 UTF-8/GBK 脚本可自动识别，JSON 与历史记录保持 UTF-8。
 
 - Environment page locates and inspects Allegro config paths.
 - Hotkey page supports layered visualization, conflict checks, profile preview/application, import/export, and change history.
@@ -41,6 +63,7 @@
 
 - Structure OS CLI is not installed locally, so governance validation is file-based only.
 - Public release signing is incomplete: the project icon is configured, but publisher identity is generic and the Windows installer is unsigned.
+- 新增隔离启动尚未在真实 Allegro 17.2 会话确认；旧窗口与桌面快捷方式仍会继承全局 `HOME/CDSROOT`。
 
 ## Recently Changed Areas
 
@@ -64,3 +87,4 @@
 
 - Should the remaining legacy inline styles in deep feature dialogs be migrated into domain CSS modules in a dedicated cleanup?
 - Which complex macro templates from the supplied reference should be promoted after Allegro-version-specific runtime verification?
+- 菜单页现可识别“活动环境为空、其他环境有数据”和“源 JSON 为空但 ATM 备份可恢复”，恢复必须经过可信 Apply Plan；菜单 IL 已改为 UTF-8。目标 Allegro 17.4 的中文运行时显示仍待用户实机确认。

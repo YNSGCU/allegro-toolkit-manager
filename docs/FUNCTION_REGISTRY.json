@@ -1,5 +1,5 @@
 {
-    "generatedAt":  "2026-08-08",
+    "generatedAt":  "2026-08-09",
     "features":  [
                      {
                          "id":  "multi-allegro-environments",
@@ -12,6 +12,7 @@
                          "ipc":  [
                                      "env:list-workspaces",
                                      "env:set-active-workspace",
+                                     "env:launch-workspace",
                                      "env:verify-vibe-runtime",
                                      "env:list-compatibility-records",
                                      "profile:check-compatibility",
@@ -22,6 +23,8 @@
                                       "core/environment/compatibility.ts",
                                       "core/environment/compatibilityRecords.ts",
                                       "core/environment/vibeBridgeProbe.ts",
+                                      "core/environment/allegroLauncher.ts",
+                                      "core/environment/allegroTextEncoding.ts",
                                       "core/environment/locateEnvironment.ts"
                                   ]
                      },
@@ -111,7 +114,11 @@
                                      "menu:load-profiles",
                                      "menu:validate",
                                      "menu:generate-preview",
-                                     "menu:create-apply-plan"
+                                     "menu:create-apply-plan",
+                                     "menu:create-recovery-plan",
+                                     "menu:create-environment-copy-plan",
+                                     "menu:execute-apply-plan",
+                                     "menu:check-status"
                                  ],
                          "core":  [
                                       "core/menu/menuManager.ts",
@@ -225,6 +232,31 @@
                          "core":  [
                                       "core/backup/backupManager.ts",
                                       "core/settings/windowState.ts"
+                                  ]
+                     },
+                     {
+                         "id":  "workspace-unified-profile",
+                         "status":  "complete",
+                         "ui":  [
+                                    "src/pages/UnifiedWorkspacePage.tsx"
+                                ],
+                         "ipc":  [
+                                     "workspace:load-all",
+                                     "workspace:create",
+                                     "workspace:copy",
+                                     "workspace:binding-options",
+                                     "workspace:update",
+                                     "workspace:rename",
+                                     "workspace:delete",
+                                     "workspace:set-active",
+                                     "workspace:preview",
+                                     "workspace:apply-plan"
+                                 ],
+                         "core":  [
+                                      "core/workspace/workspaceManager.ts",
+                                      "core/workspace/buildWorkspacePreview.ts",
+                                      "core/workspace/planWorkspaceApply.ts",
+                                      "electron/ipc/trustedApplyPlan.ts"
                                   ]
                      }
                  ]

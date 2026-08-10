@@ -11,6 +11,7 @@ import { createBackup } from '../../core/backup/createBackup';
 import { createApplyPlan, type PlanAction } from '../../core/apply/createApplyPlan';
 import { applyChanges } from '../../core/apply/applyChanges';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import { checkHotkeyProfileCompatibility } from '../../core/environment/compatibility';
 import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
 import { validateSkillReferences } from '../../core/validator/validateSkillRefs';
@@ -54,13 +55,14 @@ function getFullEnvInfo() {
 function getLoadContext(envInfo: ReturnType<typeof locateEnvironment>) {
   let loaderContent: string | undefined;
   let ilinitContent: string | undefined;
+  const textEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
   try {
     if (envInfo.atmGeneratedPath) {
       const lp = path.join(envInfo.atmGeneratedPath, 'generated_skill_loader.il');
-      if (fs.existsSync(lp)) loaderContent = fs.readFileSync(lp, 'utf-8');
+      if (fs.existsSync(lp)) loaderContent = readAllegroTextFile(lp, textEncoding).text;
     }
     if (envInfo.ilinitFilePath && fs.existsSync(envInfo.ilinitFilePath)) {
-      ilinitContent = fs.readFileSync(envInfo.ilinitFilePath, 'utf-8');
+      ilinitContent = readAllegroTextFile(envInfo.ilinitFilePath, textEncoding).text;
     }
   } catch {}
   return { loaderContent, ilinitContent };

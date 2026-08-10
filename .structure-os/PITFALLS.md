@@ -1,7 +1,34 @@
+## PIT-2026-08-10-01: 菜单方案下拉状态与编辑对象必须同步，切换前必须保存
+
+- Area: 菜单方案、React 页面状态、Allegro 环境切换、`menu_profile.json`
+- Symptom: 用户编辑或复制菜单方案后，切换方案/Allegro 版本再返回，菜单项消失；下拉框显示“副本”，但编辑器实际仍持有旧方案对象。
+- Root cause: Profile CRUD 只更新 `store`，没有同步 `profile/items/savedItemsJson`；方案和环境切换直接替换状态或刷新页面，没有先保存未提交草稿。不同 Allegro 环境各自拥有独立 `menu_profile.json`，又让已保存在 17.4 的菜单看起来像在 17.2 丢失。
+- Wrong attempts: 把所有版本改成共享同一文件；切换时静默丢弃草稿；仅修改状态标签；自动复制来源环境而不给用户审阅。
+- Correct fix: CRUD/切换后从返回仓库统一重建页面状态；方案或环境切换前调用现有草稿保存并在失败时阻止切换；跨环境复用必须由用户显式生成可信 Apply Plan，只复制非空方案到目标环境草稿。
+- Guardrail: 任何 `store + activeId + activeObject + editableItems + savedSnapshot` 组合都必须由一个同步函数更新；所有会卸载页面或替换活动对象的入口必须先处理未保存状态。跨环境写入必须锁定来源和目标，禁止静默共享或复制。
+- Related files: `src/pages/MenuPage.tsx`, `src/services/environmentSwitchGuard.ts`, `src/components/AllegroEnvironmentSwitcher.tsx`, `electron/ipc/menu.ipc.ts`, `core/menu/menuManager.ts`
+- Detection: 创建/复制方案后编辑菜单，分别切换菜单方案和 17.2/17.4；保存失败时活动目标不得改变。当前环境为空而其他环境有数据时，应出现“复制到当前”并打开 Apply Plan。
+- Verification: `tests/menuManager.test.ts`、`tests/environmentSwitchGuard.test.ts`、`tests/menuWorkspace.test.tsx`、`tests/environmentSwitcher.test.tsx`。
+- Last seen: 2026-08-10
+
 ## PIT-2026-08-06-01: 菜单拖动排序必须限制在同级
 
-- 规则：拖动只接受同一 parentId 下的目标项；跨层级拖动忽略。层级变更必须使用显式编辑动作并经过菜单验证。
-- 持久化：拖动只修改草稿，仍必须生成并执行菜单 Apply Plan。
+- Area: 菜单树、React 递归组件、HTML5 Drag and Drop
+- Symptom: 能看到拖动影子，但目标行没有反馈，松开后顺序不变；把上方相邻项拖到下方项时也可能保持原顺序。
+- Root cause:
+  - 每个递归行各自保存 `draggedId`，目标行无法读取源行 state。
+  - Chromium 在 `dragover` 的 protected mode 下可能让 `DataTransfer.getData()` 返回空字符串。
+  - 删除源项后重新查找目标索引并插到目标之前，会让“上方向下拖到相邻项”成为无变化操作。
+- Correct fix:
+  1. 在 `MenuTree` 顶层共享 `{ id, parentId }` 和 `dropTargetId`，递归行只消费共享状态。
+  2. `dragover` 只根据共享 parentId 判断是否接受，不能依赖读取 DataTransfer payload。
+  3. 使用删除前的目标索引插入，使向下拖动落在目标之后、向上拖动落在目标之前。
+  4. 目标行必须显示整行强调反馈；拖动结束、放置或取消时统一清理状态。
+- Guardrail: 只接受同一 `parentId` 下的目标项；跨层级拖动忽略。层级变更必须使用显式编辑动作并经过菜单验证。
+- Related files: `src/components/MenuTree.tsx`, `src/utils/menuTreeOrder.ts`, `tests/menuWorkspace.test.tsx`, `tests/menuTreeOrder.test.ts`
+- Detection: 模拟 `dragover` 阶段 `getData()` 返回空，确认目标行仍可接受放置；覆盖上方向下、下方向上和跨父级三种排序。
+- Verification: 拖动只修改草稿，仍必须保存草稿并生成、执行菜单 Apply Plan。
+- Last seen: 2026-08-08
 
 ## PIT-2026-08-08-01: 配色图层列表的 flex 容器会压缩子项
 
@@ -124,7 +151,8 @@
   2. 让页头和筛选区 `flex: 0 0 auto`，列表区 `flex: 1`并在表格包装层设置 `overflow: auto`。
   3. 详情区使用内容区栅格和相对宽度；宽度不足时切换为弹窗。
   4. Menu 树、属性面板和预览区同样必须从页面根到内部滚动容器连续传递 `min-height: 0`，避免固定像素高度。
-  5. Hotkey contained 工作区由 `.hotkey-workspace-content` 统一承担纵向滚动，键盘容器只承担局部横向滚动。
+  5. Menu 分栏容器必须显式声明 `display: grid` 和确定高度；只有 `grid-template-columns` 不会创建 Grid，详情会落到树下并被外层 `overflow: hidden` 裁切。
+  6. Hotkey contained 工作区由 `.hotkey-workspace-content` 统一承担纵向滚动，键盘容器只承担局部横向滚动。
 - Avoid:
   - 只给最内层表格加 `overflow: auto`。
   - 用负 margin 和 `calc(100% + padding)` 强行拉宽整个页面。
@@ -322,3 +350,95 @@
 - Cause: 复用其他项目的 GitHub Release 地址，或普通本地打包意外生成 publish 元数据。
 - Safe fix: ATM 默认保持未配置；正式构建必须通过 ATM_UPDATE_FEED_URL 显式注入 HTTPS 目录，并同时发布 latest.yml、NSIS 安装包和 .blockmap。
 - Avoid: 复制 PiAgent 更新 URL、在没有真实 Release 时宣称更新可用、默认开启自动下载或自动安装。
+
+## PIT-2026-08-08-06: 工作区确认必须固定用户点击的目标
+
+- Area: 统一工作区、React 状态、跨模块应用
+- Symptom: 点击非当前工作区的“应用”后，计划按被点击项生成，但确认执行读取 activeWorkspace，导致执行另一套子方案。
+- Root cause: 页面只保存 Apply Plan，没有同时保存生成该计划的工作区对象。
+- Correct fix: 生成计划成功时固定 `applyTarget`；确认标题、执行器和关闭清理全部引用同一目标。
+- Guardrail: 所有“列表项 → 异步预览 → 二次确认”流程必须把目标 ID/对象与预览结果成对保存，禁止在确认阶段重新读取全局 active 状态。
+- Verification: 当前工作区为 B 时点击 A，确认标题和 Skill plan 参数必须都属于 A。
+- Last seen: 2026-08-08
+
+## PIT-2026-08-08-07: Renderer 返回的 Apply Plan 不能直接作为主进程指令
+
+- Area: Electron IPC、Apply Plan、安全边界
+- Symptom: Renderer 可修改序列化计划中的 `targetFile` 或步骤，再交给主进程通用执行器写入。
+- Root cause: 主进程把预览载荷同时当作可信执行指令；模块名和环境校验不能证明步骤未被篡改。
+- Correct fix: 主进程注册带作用域和过期时间的一次性计划快照；执行时按 ID、作用域、模块和完整序列化内容校验，并执行主进程快照。
+- Guardrail: 任何通用文件写入执行器都不能直接信任 Renderer 构造的路径或步骤。
+- Related files: `electron/ipc/trustedApplyPlan.ts`, `menu.ipc.ts`, `skill.profile.ipc.ts`, `color.ipc.ts`
+- Verification: 篡改目标路径、跨作用域复用和重复消费测试必须被拒绝。
+- Last seen: 2026-08-08
+
+## PIT-2026-08-08-08: 持久化函数失败不能被 CRUD 忽略
+
+- Area: 工作区存储、JSON 配置、IPC 成功状态
+- Symptom: 创建/重命名返回成功，但重载后记录消失。
+- Root cause: `saveWorkspaceStore` 返回 boolean，所有 CRUD 调用方忽略了 false。
+- Correct fix: 使用临时文件 + 原子替换；保存失败抛错，由 IPC 转换为中文失败响应。
+- Guardrail: 改变持久化状态的函数必须在写入确认后才能返回业务对象；禁止忽略 save 返回值。
+- Verification: 把配置根指向普通文件，创建工作区必须抛出“保存工作区失败”。
+- Last seen: 2026-08-08
+
+## PIT-2026-08-08-09: 菜单源 JSON、派生 IL 与 Allegro 环境不能混为一体
+
+- Area: 菜单管理、多 Allegro 环境、SKILL 文件编码
+- Symptom: ATM 菜单页为空，但 Allegro 仍显示旧菜单；中文“测试”显示为 `²âÊÔ`。
+- Root cause:
+  - 当前活动环境指向另一个 `pcbenv`，而原菜单在旧环境中。
+  - `menu_profile.json` 已为空，但旧 `generated_menu.il` 仍被 bootstrap 加载。
+  - 生成器无条件把中文 IL 转为 GBK，目标 Allegro 17.4 会话却按西文代码页解释这些字节。
+- Correct fix:
+  1. 菜单加载结果必须携带活动环境，并只读提示其他环境中的源方案、备份或旧 IL。
+  2. 仅当当前源仓库为空时扫描 ATM 自身备份；恢复必须经过 Apply Plan，且先只恢复源 JSON。
+  3. 用户审阅恢复内容后，再通过普通 Apply Plan 按目标版本重建派生 IL（17.2=GBK，17.4=UTF-8）。
+  4. 在目标 Allegro 会话执行 `atmLoadMenus` 或重启，确认运行时中文显示。
+- Guardrail: 禁止用旧 IL 的存在推断源方案完整；禁止自动跨环境复制；禁止不看目标版本就固定使用 GBK 或 UTF-8；恢复和派生文件生成保持两个显式确认步骤。
+- Related files: `core/menu/menuManager.ts`, `core/apply/applyPlanEngine.ts`, `electron/ipc/menu.ipc.ts`, `src/pages/MenuPage.tsx`
+- Verification: 单元测试覆盖最新非空备份选择、非空当前源不触发恢复、17.2 GBK/17.4 UTF-8 精确字节、失败回滚与撤销；两个目标版本的运行时显示仍需人工确认。
+- Last seen: 2026-08-08
+
+## PIT-2026-08-08-10: 同版本的多个 pcbenv 候选不能直接全部进入下拉框
+
+- Area: 多 Allegro 环境、环境注册表、侧栏选择器
+- Symptom: 下拉框出现两个 17.2 或两个 17.4，用户只想按 Allegro 版本选择；共享标记还可能指向注册表中已不存在的环境 ID。
+- Root cause:
+  - 环境发现会为同一安装版本组合安装目录 `SPB_Data\pcbenv` 和用户目录 `C:\Users\...\pcbenv`，却没有在注册表层确定该版本唯一的活动目标。
+  - 刷新逻辑按 ID 合并所有历史自动记录，并直接保留旧 `sharedWithIds`，导致已消失环境和错误共享提示长期存在。
+- Correct fix:
+  1. 注册表读取、保存和刷新都按 `allegroVersion` 归并，每个版本只保留一个环境。
+  2. 当前已选环境优先；没有当前选择时，优先版本安装目录旁的 `SPB_Data\pcbenv`。
+  3. 归并后再根据规范化 `pcbenvPath` 重建共享关系，并删除缺失路径的自动发现记录。
+- Guardrail: 下拉框按版本唯一，但写入安全仍必须保留所选项的 `environmentId + pcbenvPath`；不得仅凭版本号执行 Apply Plan，也不得信任没有当前 peer 的历史共享 ID。
+- Related files: `core/environment/environmentRegistry.ts`, `src/components/AllegroEnvironmentSwitcher.tsx`
+- Detection: 构造 17.2/17.4 各自的安装/用户两个候选，确认最终只有两个环境；切换当前候选后刷新，确认选择不漂移；注入缺失路径与无效 peer ID 后确认被清理。
+- Verification: `tests/environmentSwitcher.test.tsx` 与 `tests/multiEnvironmentCompatibility.test.ts`。
+- Last seen: 2026-08-08
+
+## PIT-2026-08-09-01: 选择管理目标不会改变桌面启动的 Allegro HOME
+
+- Area: 多 Allegro 环境、Windows 环境变量、Electron 子进程启动、菜单乱码
+- Symptom: ATM 已选择 Allegro 17.2，用户也打开了 17.2 执行文件，但窗口仍显示 17.4 的旧 ATM 菜单和 `²âÊÔ` 乱码。
+- Root cause: ATM 的环境选择只控制自身读写目标；桌面快捷方式启动的 Allegro 继续继承 Windows 全局 `HOME/CDSROOT`。本机全局变量指向 17.4，17.2 自己的 `pcbenv` 没有 ATM 派生文件，实际显示内容却来自 17.4 的旧 GBK `generated_menu.il`。
+- Wrong attempts: 继续修改 17.2 空目录中的菜单文件；仅按 Allegro 版本号推断实际 `pcbenv`；把 ATM 下拉切换误认为系统环境切换。
+- Correct fix: 由主进程根据已注册环境 ID 启动目标 `allegro.exe`，只为该子进程设置目标 `HOME/CDSROOT`；侧栏检测 Windows HOME 与管理目标不一致并告警。不要修改全局环境变量。
+- Guardrail: “管理目标”和“运行进程环境”必须分别表述；任何运行时结论都要核对实际 HOME、执行文件和加载文件三者。Renderer 不得提交可执行路径，IPC 必须从注册表重新解析。
+- Related files: `core/environment/allegroLauncher.ts`, `electron/ipc/env.ipc.ts`, `electron/preload.ts`, `src/components/AllegroEnvironmentSwitcher.tsx`
+- Detection: 选中 17.2 且全局 HOME 指向 17.4 时必须显示告警；启动规格必须包含 17.2 HOME/CDSROOT 且不改变 `process.env`。
+- Verification: 自动化测试覆盖启动规格与 UI 告警；真实 17.2 会话需确认不再加载 17.4 `generated_menu.il`。
+- Last seen: 2026-08-09
+
+## PIT-2026-08-09-02: Allegro SKILL 启动文本编码必须绑定目标版本
+
+- Area: Allegro 17.2/17.4、SKILL、`allegro.ilinit`、Apply Plan
+- Symptom: 真正隔离启动 17.2 后，Command 窗口把 `01-布局` 显示为 `01-甯冨眬`，随后所有中文目录中的 `.il` 都提示 `can't access file`。
+- Root cause: 17.2 Windows 会话按 CP936/GBK 读取启动 SKILL 文本，但现有 `allegro.ilinit` 是 UTF-8；UTF-8 中文字节被当作 GBK 解码。17.4 的已观测行为相反，固定 GBK 会显示为 `²âÊÔ`。
+- Wrong attempts: 全版本强制 UTF-8；全版本强制 GBK；只改菜单生成器而遗漏 Skill loader、bootstrap 和 ilinit；直接覆盖用户 pcbenv 文件。
+- Correct fix: 从活动环境的 `allegroVersion` 选择 17.2=GBK、17.4=UTF-8；读取旧 `.il`/`allegro.ilinit` 时自动识别 UTF-8/GBK，Apply Plan 步骤显式携带 `textEncoding` 后再写入。JSON、历史和备份清单始终为 UTF-8，备份/回滚按原始字节复制。
+- Guardrail: 编码策略只能应用于 Allegro 直接读取的 `.il`、`.ils` 和 `allegro.ilinit`；计划必须锁定环境并经过可信快照、备份和确认。未知版本默认维持 UTF-8并要求运行时验证。
+- Related files: `core/environment/allegroTextEncoding.ts`, `core/apply/applyPlanEngine.ts`, `electron/ipc/menu.ipc.ts`, `electron/ipc/skill.profile.ipc.ts`, `electron/ipc/skill.apply.ipc.ts`
+- Detection: 检查原始字节；UTF-8 文件按 GBK 解码能稳定复现“甯冨眬”，GBK “测试”按西文代码页显示能稳定复现 `²âÊÔ`。
+- Verification: `tests/allegroTextEncoding.test.ts`、`tests/applyPlanEngine.test.ts` 覆盖版本映射、自动识别、精确字节和 JSON 不转码；真实 17.2/17.4 重启验证仍需人工完成。
+- Last seen: 2026-08-09

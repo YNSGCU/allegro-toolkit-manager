@@ -34,6 +34,12 @@ describe('页面工作区契约', () => {
     }
   });
 
+  it('配色桥接提示使用运行时服务路径，不硬编码开发机用户目录', () => {
+    const source = readPageSource('../src/pages/ColorPage.tsx');
+    expect(source).not.toContain('C:/Users/89539');
+    expect(source).toContain('bridgeSetup.serverFile');
+  });
+
   it('概览展示健康、工作区和关键文件三层信息', () => {
     const source = readPageSource('../src/pages/DashboardPage.tsx');
     expect(source).toContain('workspaceEntries');

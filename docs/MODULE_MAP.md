@@ -23,7 +23,9 @@
 
 `src/pages/EnvironmentPage.tsx` -> `window.atm.locateEnvironment()` -> `electron/preload.ts` -> `electron/ipc/env.ipc.ts` -> `core/environment/locateEnvironment.ts`
 
-多版本链：`Layout/EnvironmentPage` -> `listAllegroEnvironments/setActiveAllegroEnvironment` -> `env:list-workspaces/env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `%APPDATA%/AllegroToolkitManager/environments.json`。`locateEnvironment()` 统一解析活动环境，快捷键、Skill、菜单 Apply Plan 生成时锁定 `environmentId + pcbenvPath`，执行前拒绝环境漂移。
+多版本链：`Layout/EnvironmentPage` -> `listAllegroEnvironments/setActiveAllegroEnvironment` -> `env:list-workspaces/env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `%APPDATA%/AllegroToolkitManager/environments.json`。侧栏挂载时刷新环境，注册表清理已消失的自动记录、按版本归并为一个活动 `pcbenv`，再按最终路径重建共享关系；当前选择优先，没有当前选择时优先版本安装目录旁的 `SPB_Data/pcbenv`。`locateEnvironment()` 统一解析活动环境，快捷键、Skill、菜单 Apply Plan 生成时锁定 `environmentId + pcbenvPath`，执行前拒绝环境漂移。
+
+环境切换链：`AllegroEnvironmentSwitcher` -> `setActiveAllegroEnvironment` -> `env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `environments.json`。左下角控件只切换 ATM 管理目标，不启动 Allegro；隔离启动能力仍由 `allegroLauncher.ts` 提供给显式启动入口。
 
 迁移链：`HotkeyProfileMigrationDialog` -> `profile:check-compatibility/profile:migrate` -> `core/environment/compatibility.ts` + `core/profile/hotkeyProfile.ts` -> 目标环境 `atm_generated/profiles`。
 
@@ -57,6 +59,15 @@ Skill profile apply chain: `SkillPage` -> `skillProfileCreateApplyPlan/skillProf
 
 `src/pages/MenuPage.tsx` -> `window.atm.*menu methods*` -> `electron/preload.ts` -> `electron/ipc/menu.ipc.ts` -> `core/menu/*`, `core/apply/*`
 
+菜单恢复链：`menu:load-profiles` -> `findMenuProfileRecovery()` 只读扫描当前环境的 ATM 备份 -> `menu:create-recovery-plan` -> 可信一次性 Apply Plan -> 仅恢复 `menu_profile.json`。恢复后必须再次审阅普通菜单 Apply Plan，才会按目标版本重建 `generated_menu.il`（17.2=GBK，17.4=UTF-8）。
+
+Allegro 文本编码链：`locateEnvironment().allegroVersion` -> `getAllegroTextEncoding()` -> Menu/Skill/Bridge 计划的 `.il` / `allegro.ilinit` 步骤携带 `textEncoding` -> `applyPlanEngine` 按版本写入。读取旧脚本使用 `readAllegroTextFile()` 自动识别 UTF-8/GBK；JSON 和历史文件不参与转码。
+
+多环境提示链：菜单页加载当前环境为空时，IPC 只读检查注册表中的其他 `pcbenv/atm_generated`，返回存在源方案、恢复备份或旧 IL 的环境；不会自动跨环境复制，用户可选择切换查看或审阅显式复制计划。
+
+跨环境菜单复制链：`MenuPage` 蓝色环境提示 -> `menuCreateEnvironmentCopyPlan` -> `menu:create-environment-copy-plan` -> `copyMenuProfileStoreFromEnvironment()` -> 可信一次性 Apply Plan -> 目标环境 `menu_profile.json`。只复制非空源方案为独立草稿，不写来源环境，也不直接生成 `generated_menu.il`。
+
+切换保护链：`MenuPage` 注册 `environmentSwitchGuard` -> 侧栏或页面内环境切换先等待 `menu:save-draft` -> 成功后 `env:set-active-workspace` -> 页面刷新；方案 CRUD/切换后统一重建 `store/profile/items/savedItemsJson` 状态，避免编辑对象与下拉选项漂移。
 
 菜单树排序链：src/components/MenuTree.tsx -> src/pages/MenuPage.tsx -> src/utils/menuTreeOrder.ts -> 现有 Menu Apply Plan。拖动仅改变同级 order，不直接触发 IPC 写入。
 
@@ -95,3 +106,6 @@ src/components/common/ApplicationUpdatePanel.tsx -> electron/preload.ts -> elect
 - 应用规划：`planWorkspaceApplySequence` 按 Skill → 菜单 → 快捷键 → 配色 顺序编排；环境锁不一致或无可应用方案时拒绝执行。
 - 执行链：`workspace:apply-plan` 校验环境锁与模块可用性并返回执行序列；页面按序列串联各模块既有 Apply Plan API（skill-profile / menu / hotkey / color），不绕过既有写入链路。
 - 页面：`UnifiedWorkspacePage`（`/workspace`）承载工作区 CRUD、统一预览、应用选项与执行结果汇总；侧栏「工作区」为主分组首位。
+- 绑定链：配置弹窗 -> `workspace:binding-options` -> 目标环境方案候选 -> `workspace:update` -> `updateWorkspace` -> `workspaces.json` 原子替换 -> 页面刷新。
+- 确认对象：页面保存用户点击的 `applyTarget`，预览、确认标题和四类子方案执行始终引用同一个工作区，不使用可能不同的 activeWorkspace。
+- 可信计划：Menu / Skill Profile / Vibe Bridge 计划在 `electron/ipc/trustedApplyPlan.ts` 注册为一次性主进程快照；执行 IPC 拒绝内容篡改、跨作用域复用、过期和重复执行。

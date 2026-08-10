@@ -78,6 +78,8 @@ export interface ApplyPlanStep {
   before?: string;
   /** 修改后内容 */
   after?: string;
+  /** Allegro 直接读取的文本文件编码；JSON 等应用配置不得设置此字段 */
+  textEncoding?: 'utf8' | 'gbk';
   /** 预览文本 */
   previewText?: string;
   /** 执行状态 */

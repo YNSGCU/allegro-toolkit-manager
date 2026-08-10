@@ -5,7 +5,11 @@
  */
 import fs from 'fs';
 import path from 'path';
-import iconv from 'iconv-lite';
+import {
+  readAllegroTextFile,
+  writeAllegroTextFile,
+  type AllegroTextEncoding,
+} from '../environment/allegroTextEncoding';
 import type {
   ApplyPlan,
   ApplyPlanStep,
@@ -46,6 +50,7 @@ export function createApplyPlan(
     targetFiles?: string[];
     environmentId?: string | null;
     environmentPcbenvPath?: string | null;
+    allegroTextEncoding?: AllegroTextEncoding;
   },
 ): ApplyPlan {
   const now = new Date().toISOString();
@@ -53,6 +58,10 @@ export function createApplyPlan(
 
   const steps: ApplyPlanStep[] = params.steps.map((s, i) => ({
     ...s,
+    textEncoding: s.textEncoding
+      ?? (params.allegroTextEncoding && isAllegroTextTarget(s)
+        ? params.allegroTextEncoding
+        : undefined),
     id: `step_${id}_${i}`,
     status: 'pending',
   }));
@@ -206,9 +215,9 @@ async function executeStep(
         // 如果没有 before，可能是备份步骤，跳过
         break;
       }
-      const content = fs.readFileSync(step.targetFile, { encoding: 'utf-8' });
+      const content = readStepText(step.targetFile, step.textEncoding);
       const updated = content.replace(step.before, step.after || `# ATM disabled: ${step.before.trim()}`);
-      fs.writeFileSync(step.targetFile, updated, { encoding: 'utf-8' });
+      writeStepText(step.targetFile, updated, step.textEncoding);
       break;
     }
     case 'write_file':
@@ -221,7 +230,7 @@ async function executeStep(
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(step.targetFile, step.after, { encoding: 'utf-8' });
+        writeStepText(step.targetFile, step.after, step.textEncoding);
       }
       break;
     }
@@ -229,8 +238,7 @@ async function executeStep(
       if (step.targetFile && step.after !== undefined) {
         const dir = path.dirname(step.targetFile);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        // Allegro 17.4 在简体中文 Windows 上按系统代码页读取 .il。
-        fs.writeFileSync(step.targetFile, iconv.encode(step.after, 'gbk'));
+        writeStepText(step.targetFile, step.after, step.textEncoding);
       }
       break;
     }
@@ -239,14 +247,14 @@ async function executeStep(
       if (step.targetFile && step.after !== undefined) {
         let content = '';
         if (fs.existsSync(step.targetFile)) {
-          content = fs.readFileSync(step.targetFile, { encoding: 'utf-8' });
+          content = readStepText(step.targetFile, step.textEncoding);
         }
         if (step.type === 'append_line') {
           content += '\n' + step.after;
         } else if (step.type === 'modify_line' && step.before) {
           content = content.replace(step.before, step.after);
         }
-        fs.writeFileSync(step.targetFile, content, { encoding: 'utf-8' });
+        writeStepText(step.targetFile, content, step.textEncoding);
       }
       break;
     }
@@ -265,7 +273,7 @@ async function executeStep(
       if (step.targetFile && step.after !== undefined) {
         const dir = path.dirname(step.targetFile);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(step.targetFile, step.after, { encoding: 'utf-8' });
+        writeStepText(step.targetFile, step.after, step.textEncoding);
       }
       break;
     }
@@ -292,6 +300,33 @@ async function executeStep(
       break;
     }
   }
+}
+
+function isAllegroTextTarget(
+  step: Omit<ApplyPlanStep, 'id' | 'status'>,
+): boolean {
+  const target = step.targetFile || step.target;
+  if (!target) return false;
+  const fileName = path.basename(target).toLowerCase();
+  return fileName === 'allegro.ilinit' || ['.il', '.ils'].includes(path.extname(fileName));
+}
+
+function readStepText(filePath: string, encoding?: AllegroTextEncoding): string {
+  return encoding
+    ? readAllegroTextFile(filePath, encoding).text
+    : fs.readFileSync(filePath, { encoding: 'utf-8' });
+}
+
+function writeStepText(
+  filePath: string,
+  content: string,
+  encoding?: AllegroTextEncoding,
+): void {
+  if (encoding) {
+    writeAllegroTextFile(filePath, content, encoding);
+    return;
+  }
+  fs.writeFileSync(filePath, content, { encoding: 'utf-8' });
 }
 
 /**

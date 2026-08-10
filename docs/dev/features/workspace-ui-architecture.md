@@ -51,7 +51,7 @@ Electron 生产环境通过内嵌本地 HTTP 服务读取 `dist/`，并沿用 Vi
 
 快捷键页使用“键位 / 列表 / 冲突”三个任务页签，不再按窗口尺寸缩放键盘或文字。键位页只承担键盘占用与物理键入口；独立列表页承担搜索、筛选、宽表格和选中详情；导入导出与历史由工具弹窗承载。页头不再显示重复的 eyebrow，方案栏与状态条在宽窗口合并到同一上下文行，窄窗口才堆叠；子页标题、说明和主操作使用单行紧凑工具栏。旧 overview 路由重定向到键位页，旧 editor 路由重定向到列表页，import-export 重定向到键位页。`.hotkey-workspace-content` 是页面纵向滚动所有者；列表页宽窗口使用双栏，窄窗口堆叠并由内部滚动容器承接内容。键盘网格和列表 Grid 子项都必须设置 `min-width: 0`，避免固有宽度撑破窄视口。
 
-Skill 默认筛选条只保留搜索和“筛选”入口，详情固定为“概览 / 命令与引用 / 操作”三类。菜单以树编辑为唯一主工作区，命令清单与引用检查降级为工具视图；顶栏根据 dirty/unapplied/applied 状态只显示一个主操作。系统侧栏只保留“系统状态”，环境路由继续兼容。
+Skill 默认筛选条只保留搜索和“筛选”入口，详情固定为“概览 / 命令与引用 / 操作”三类。菜单以树编辑为唯一主工作区，命令清单与引用检查降级为工具视图；顶栏根据 dirty/unapplied/applied 状态只显示一个主操作。菜单 `menu-editor-content -> menu-editor-split -> tree/detail -> menu-item-editor` 必须连续传递 `height/min-height: 0`，其中 split 明确使用 Grid，树与属性编辑器分别拥有内部滚动，禁止让详情自然落到树下再被 contained 页面裁切。系统侧栏只保留“系统状态”，环境路由继续兼容。
 
 可读性约束：
 
@@ -84,7 +84,8 @@ UI 重置不授权任何直接写文件行为。Hotkey、Skill 和 Menu 的写�
 
 本轮生产构建入口 JS 为 246.60kB；快捷键、Skill、菜单页面包分别约为 163.70kB、84.82kB、52.77kB。快捷键包新增构建时命令词典和辅助组件，原 500kB 主包告警未复发。
 
-
 ## Menu tree drag reorder
 
-MenuTree 使用原生 HTML5 drag-and-drop 事件，将拖动项 ID 与 parent ID 放入 DataTransfer。eorderMenuItem() 在纯函数中递归查找同级列表，目标项必须与拖动项拥有相同 parentId，随后重排数组并重新计算各节点 order 与 updatedAt。MenuPage 只更新本地草稿并沿用现有 Apply Plan 持久化链路。
+`MenuTree` 使用原生 HTML5 drag-and-drop，但拖动项 ID 与 `parentId` 由整棵树顶层 state 共享，不能依赖目标行在 `dragover` 阶段读取 `DataTransfer`；Chromium 此时可能处于 protected mode 并返回空 payload。目标行只在同级时调用 `preventDefault()` 接受放置，并用 `is-drop-target` 显示强调线。
+
+`reorderMenuItem()` 使用删除前的目标索引：向下拖动落到目标之后、向上拖动落到目标之前，保证相邻项也会真实换位；随后重新计算同级 `order` 与 `updatedAt`。`MenuPage` 只更新本地草稿并沿用现有 Apply Plan 持久化链路。

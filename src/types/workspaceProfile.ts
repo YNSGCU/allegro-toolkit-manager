@@ -23,6 +23,26 @@ export interface WorkspaceProfileStore {
   updatedAt: string;
 }
 
+export type WorkspaceProfileBindings = Pick<
+  WorkspaceProfile,
+  'environmentId' | 'hotkeyProfileId' | 'skillProfileId' | 'menuProfileId' | 'colorSchemeId'
+>;
+
+export interface WorkspaceBindingOption {
+  id: string;
+  name: string;
+}
+
+/** 工作区配置弹窗所需的环境与子方案候选项。 */
+export interface WorkspaceBindingOptions {
+  environmentId?: string;
+  environments: WorkspaceBindingOption[];
+  hotkeyProfiles: WorkspaceBindingOption[];
+  skillProfiles: WorkspaceBindingOption[];
+  menuProfiles: WorkspaceBindingOption[];
+  colorSchemes: WorkspaceBindingOption[];
+}
+
 export function generateWorkspaceId(): string {
   return `ws_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }

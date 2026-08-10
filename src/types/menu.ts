@@ -123,6 +123,26 @@ export interface MenuProfileStore {
   updatedAt: string;
 }
 
+/** menu_profile.json 为空/损坏时，从 ATM 历史备份发现的只读恢复候选。 */
+export interface MenuProfileRecoveryCandidate {
+  backupPath: string;
+  modifiedAt: string;
+  store: MenuProfileStore;
+  activeProfile: MenuProfile;
+  profileCount: number;
+  itemCount: number;
+}
+
+export interface MenuEnvironmentAlternative {
+  id: string;
+  name: string;
+  version?: string | null;
+  pcbenvPath: string;
+  profileItemCount: number;
+  recoveryItemCount: number;
+  generatedMenuExists: boolean;
+}
+
 // ═══════════════════════════════════════════════════
 // CRUD 输入类型
 // ═══════════════════════════════════════════════════
@@ -164,6 +184,14 @@ export interface MenuLoadResult {
   store: MenuProfileStore;
   activeProfile: MenuProfile;
   atmGeneratedPath: string;
+  recovery?: MenuProfileRecoveryCandidate | null;
+  alternatives?: MenuEnvironmentAlternative[];
+  environment?: {
+    id?: string | null;
+    name?: string;
+    version?: string | null;
+    pcbenvPath?: string | null;
+  };
 }
 
 export interface MenuPreviewResult {

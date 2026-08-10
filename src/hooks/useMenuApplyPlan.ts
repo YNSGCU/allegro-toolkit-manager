@@ -12,6 +12,8 @@ interface UseMenuApplyPlanReturn {
   applyError: string | null;
   applying: boolean;
   generatePlan: (profileJson: string, storeJson?: string) => Promise<void>;
+  generateRecoveryPlan: () => Promise<void>;
+  generateEnvironmentCopyPlan: (sourceEnvironmentId: string) => Promise<void>;
   executePlan: () => Promise<boolean>;
   clearPlan: () => void;
   clearResult: () => void;
@@ -36,6 +38,40 @@ export function useMenuApplyPlan(): UseMenuApplyPlanReturn {
       }
     } catch (err) {
       setApplyError(`生成 Apply Plan 异常: ${(err as Error).message}`);
+      setPendingPlan(null);
+    }
+  }, []);
+
+  const generateRecoveryPlan = useCallback(async () => {
+    try {
+      setApplyResult(null);
+      setApplyError(null);
+      const res = await window.atm.menuCreateRecoveryPlan();
+      if (res.success && res.data) {
+        setPendingPlan(res.data);
+      } else {
+        setApplyError(res.error || '生成菜单恢复计划失败');
+        setPendingPlan(null);
+      }
+    } catch (err) {
+      setApplyError(`生成菜单恢复计划异常: ${(err as Error).message}`);
+      setPendingPlan(null);
+    }
+  }, []);
+
+  const generateEnvironmentCopyPlan = useCallback(async (sourceEnvironmentId: string) => {
+    try {
+      setApplyResult(null);
+      setApplyError(null);
+      const res = await window.atm.menuCreateEnvironmentCopyPlan(sourceEnvironmentId);
+      if (res.success && res.data) {
+        setPendingPlan(res.data);
+      } else {
+        setApplyError(res.error || '生成跨环境菜单复制计划失败');
+        setPendingPlan(null);
+      }
+    } catch (err) {
+      setApplyError(`生成跨环境菜单复制计划异常: ${(err as Error).message}`);
       setPendingPlan(null);
     }
   }, []);
@@ -77,6 +113,8 @@ export function useMenuApplyPlan(): UseMenuApplyPlanReturn {
     applyError,
     applying,
     generatePlan,
+    generateRecoveryPlan,
+    generateEnvironmentCopyPlan,
     executePlan,
     clearPlan,
     clearResult,

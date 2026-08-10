@@ -3,10 +3,67 @@ import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import MenuTreeAddBar from '../src/components/MenuTreeAddBar';
+import MenuTree from '../src/components/MenuTree';
+import type { MenuItemConfig } from '../src/types/menu';
 
 afterEach(() => cleanup());
 
 describe('菜单编辑工作区', () => {
+  it('DataTransfer 在 dragover 读不到 payload 时仍可调换同级菜单位置', () => {
+    const onReorder = vi.fn();
+    const child = (id: string, label: string): MenuItemConfig => ({
+      id,
+      label,
+      type: 'command',
+      command: id,
+      parentId: 'parent',
+      order: 0,
+      menuSource: 'atm_managed',
+      enabled: true,
+      visible: true,
+    });
+    const items: MenuItemConfig[] = [{
+      id: 'parent',
+      label: '测试3',
+      type: 'menu',
+      order: 0,
+      menuSource: 'atm_managed',
+      enabled: true,
+      visible: true,
+      children: [child('test4', '测试4'), child('test5', '测试5')],
+    }];
+    render(
+      <MenuTree
+        items={items}
+        selectedId={null}
+        onSelect={vi.fn()}
+        onAddChild={vi.fn()}
+        onDelete={vi.fn()}
+        onDuplicate={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onReorder={onReorder}
+      />,
+    );
+
+    const dataTransfer = {
+      effectAllowed: 'none',
+      dropEffect: 'none',
+      setData: vi.fn(),
+      // Chromium dragover 的 protected mode 不允许目标读取 dragstart payload。
+      getData: vi.fn(() => ''),
+    };
+    const source = screen.getByRole('button', { name: /测试4，可拖动调整同级位置/ });
+    const target = screen.getByRole('button', { name: /测试5，可拖动调整同级位置/ });
+
+    fireEvent.dragStart(source, { dataTransfer });
+    fireEvent.dragOver(target, { dataTransfer });
+    expect(target).toHaveClass('is-drop-target');
+    fireEvent.drop(target, { dataTransfer });
+
+    expect(onReorder).toHaveBeenCalledWith('test4', 'test5');
+  });
+
   it('选中菜单目录后通过单一添加入口提供三种内容类型', () => {
     const onAddSubmenu = vi.fn();
     const onAddCommand = vi.fn();
@@ -76,7 +133,25 @@ describe('菜单编辑工作区', () => {
     expect(pageSource).toContain('compact');
     expect(cssSource).not.toMatch(/\.menu-editor-content\s*\{[^}]*min-height:\s*520px/s);
     expect(workspaceCssSource).toMatch(/\.workspace-page-menu \.menu-editor-content\s*\{[^}]*min-height:\s*0/s);
+    expect(workspaceCssSource).toMatch(
+      /\.workspace-page-menu \.menu-editor-split\s*\{[^}]*display:\s*grid;[^}]*height:\s*100%;[^}]*min-height:\s*0;/s,
+    );
+    expect(workspaceCssSource).toMatch(
+      /\.workspace-page-menu \.menu-tree-pane\s*\{[^}]*overflow-y:\s*auto;/s,
+    );
+    expect(workspaceCssSource).toMatch(
+      /\.workspace-page-menu \.menu-detail-pane\s*\{[^}]*overflow:\s*hidden;/s,
+    );
     expect(hookSource).toContain('window.atm.menuExecuteApplyPlan');
+    expect(hookSource).toContain('window.atm.menuCreateRecoveryPlan');
     expect(preloadSource).toContain("ipcRenderer.invoke('menu:execute-apply-plan'");
+    expect(preloadSource).toContain("ipcRenderer.invoke('menu:create-recovery-plan'");
+    expect(preloadSource).toContain("ipcRenderer.invoke('menu:create-environment-copy-plan'");
+    expect(pageSource).toContain('发现可恢复的菜单方案');
+    expect(pageSource).toContain('当前 menu_profile.json 为空');
+    expect(pageSource).toContain('setActiveAllegroEnvironment');
+    expect(pageSource).toContain("registerEnvironmentSwitchGuard('menu-draft'");
+    expect(pageSource).toContain('复制到当前');
+    expect(pageSource).toContain('hasUnsavedChanges && !await handleSaveDraft()');
   });
 });

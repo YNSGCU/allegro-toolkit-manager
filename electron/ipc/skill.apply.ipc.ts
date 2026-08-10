@@ -6,6 +6,7 @@
 import { ipcMain } from 'electron';
 import path from 'path';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import { scanAllSkills } from '../../core/skill/scanSkill';
 import { parseSkillFile } from '../../core/parser/parseSkillMeta';
 import { scanEnhancedSkills } from '../../core/skill/enhancedScan';
@@ -106,6 +107,7 @@ export function registerSkillApplyIpc(): void {
         requiresRestart: plan.requiresRestart,
         environmentId: envInfo.environmentId ?? null,
         environmentPcbenvPath: envInfo.pcbenvPath,
+        allegroTextEncoding: getAllegroTextEncoding(envInfo.allegroVersion),
       });
       return await executeUnifiedApplyPlan(unifiedPlan, {
         backupDir: path.join(atmDir, 'backups'),
@@ -311,6 +313,7 @@ function createSkillTogglePlan(
   atmDir: string,
   envInfo: any,
 ): SkillApplyPlan {
+  const allegroTextEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
   const backupId = new Date().toISOString().replace(/[:.]/g, '-');
   const backupBase = path.join(atmDir, 'backup', backupId);
   const steps: SkillApplyStep[] = [];
@@ -328,7 +331,7 @@ function createSkillTogglePlan(
     }
   } catch {}
   const currentBootstrap = fs.existsSync(bootstrapIlPath)
-    ? fs.readFileSync(bootstrapIlPath, 'utf8')
+    ? readAllegroTextFile(bootstrapIlPath, allegroTextEncoding).text
     : '';
   steps.push({
     type: 'write_bootstrap',
@@ -342,7 +345,9 @@ function createSkillTogglePlan(
       steps.push({ type: 'backup', target: ilinitPath, description: `备份 allegro.ilinit（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'allegro.ilinit') });
     }
   } catch {}
-  const currentIlinit = fs.existsSync(ilinitPath) ? fs.readFileSync(ilinitPath, 'utf8') : '';
+  const currentIlinit = fs.existsSync(ilinitPath)
+    ? readAllegroTextFile(ilinitPath, allegroTextEncoding).text
+    : '';
   const nextIlinit = insertBootstrapToIlinit(currentIlinit, generateBootstrapLines(atmDir));
   steps.push({
     type: 'modify_ilinit',
