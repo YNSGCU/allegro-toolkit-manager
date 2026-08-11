@@ -4,6 +4,7 @@
 - 数据模型新增 `compatibilityLabel`：ATM 方案的 `label` 继续保存中文原名，17.2 及更早版本生成 IL 时使用用户确认的可打印 ASCII 显示名，17.4 继续使用中文原名。
 - 菜单编辑器在 17.2 中文项上将兼容名标为必填并阻止非法保存；预览、可信 Apply Plan 和旧兼容入口统一传入活动 Allegro 版本，避免预览与实际写入不一致。
 - 验证：菜单生成、Renderer 表单和临时 pcbenv GBK IL/UTF-8 JSON 定向测试共 25 项通过；完整门禁 69 个测试文件 / 412 项、双端类型检查与生产构建全绿。当前真实 17.2 配置已通过 Apply Plan 写入英文标签，视觉结果待会话加载确认。
+- 发布：v0.3.4 已公开为 GitHub Latest，exe、blockmap、`latest.yml` 三项资产齐全，远端更新元数据明确指向 0.3.4；tag workflow 成功。推 tag 已自动触发发布，之后不得并行运行本地 `publish:github`。
 
 ## 2026-08-11 17.2 中文动态菜单限制确认与实验回滚
 - 实机证据：17.2 当前 `generated_menu.il` 中“器件”为 GBK 字节 `C6 F7 BC FE`，运行菜单显示为 `Æ÷¼þ`；这与此前 17.2 启动脚本必须用 GBK 的路径证据形成职责差异。
@@ -42,7 +43,7 @@
 - 2026-08-09：确认真实 17.2 会把 UTF-8 `allegro.ilinit` 按 CP936/GBK 读取，中文路径因此变成“甯冨眬”并加载失败；脚本实现 17.2=GBK、17.4=UTF-8，菜单标签额外使用 UTF-8 字节八进制转义。
 - 2026-08-09：定位到“打开 17.2 仍显示 17.4 乱码菜单”的根因是 Windows `HOME/CDSROOT` 仍指向 17.4；新增按所选环境隔离启动链路与 HOME 不匹配告警。定向测试和前后端类型检查通过，17.2 实机仍待复测。
 - Last updated: 2026-08-11
-- Current branch: master；v0.3.1 已发布，应用内检查更新无反馈、统一工作区安全与一致性缺陷已修复
+- Current branch: master；v0.3.4 已发布，17.2 菜单使用独立 ASCII 兼容显示名，17.4 继续使用中文原名
 - App status: 七个侧栏入口（统一工作区/快捷键/Skill/菜单/配色/备份与恢复/系统状态）；工作区支持环境与四类方案绑定、复制、预览和顺序应用；配色支持捕获、自定义颜色、应用预览与撤销
 - Test status: 69 files / 412 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、17.2 英文兼容显示名、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
 - Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认

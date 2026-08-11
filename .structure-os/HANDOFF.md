@@ -6,6 +6,8 @@
 - UI：菜单详情新增“17.2 英文兼容显示名”；活动环境为 17.2 且原名非 ASCII 时必填，说明兼容名只影响旧版本显示。
 - 链路：新版/旧版预览与菜单 Apply Plan 均从 `locateEnvironment().allegroVersion` 传入生成器；Apply Plan 仍负责 GBK/UTF-8 写入、备份、历史和撤销。
 - 验证：`tests/menuManager.test.ts`、`tests/menuItemEditorCompatibility.test.tsx`、`tests/pcbenvApplyIntegration.test.ts` 共 25 项通过；完整门禁 69 个测试文件 / 412 项全绿。当前用户方案八项英文映射已通过 Apply Plan 写入并核对 GBK IL，Vibe Bridge 未运行，真实菜单视觉确认仍需用户加载当前脚本。
+- 发布：v0.3.4 已公开为 Latest，安装包 87,310,885 bytes（SHA-256 `6C154AA2CEEC37242BDB1FF387A6FCE0A50E9C61BF9453B83DC8DAC762153164`），blockmap 91,526 bytes，远端 `latest.yml` 版本/路径/大小均为 0.3.4。GitHub Actions run `31510012054` 成功。
+- 发布流程注意：推送 `v0.3.4` tag 已自动触发 workflow；此时再在本地运行 `publish:github` 会与 CI 并行上传并可能返回 404。两条发布路径必须二选一，本次最终远端只有一个完整 Release。
 
 ## 2026-08-11 17.2 中文菜单标签显示为 `Æ÷¼þ`
 

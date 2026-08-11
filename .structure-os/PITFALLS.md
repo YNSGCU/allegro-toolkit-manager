@@ -489,8 +489,8 @@
 - Root cause: electron-builder 为 exe 与 blockmap 启动并发 GitHub publisher；两个 publisher 同时判断 tag 对应 release 不存在并各自创建草稿，三项资产被拆分。
 - Wrong attempts: 只延长轮询超时；直接公开资产不全的草稿；每次发布后手工合并重复草稿。
 - Correct fix: electron-builder 使用 `--publish never` 只构建本地产物；脚本用 `gh release create` 创建唯一草稿，再用一次 `gh release upload --clobber` 串行上传 exe、blockmap、latest.yml，资产齐全后公开为 latest。
-- Guardrail: 正式发布必须验证唯一 tag、非 draft、三项资产齐全及 `latest.yml` 版本/路径；发布脚本不得把 GitHub Release 创建交给多个并发 publisher。
+- Guardrail: 正式发布必须验证唯一 tag、非 draft、三项资产齐全及 `latest.yml` 版本/路径；发布脚本不得把 GitHub Release 创建交给多个并发 publisher。仓库 tag 会自动触发发布 workflow，因此“推 tag 后等待 CI”和“本地执行 `publish:github`”只能二选一，禁止并行启动。
 - Related files: `scripts/publish-github.mjs`, `.github/workflows/package-windows.yml`, `tests/publishScript.test.ts`
 - Detection: 发布日志出现两次 `creating GitHub release`；API 返回两个相同 name/tag 的 draft，资产互补。
-- Verification: 静态回归测试固定 `--publish never + gh release upload`；下一版本真实 tag 发布确认只生成一个 Release。
+- Verification: 静态回归测试固定 `--publish never + gh release upload`；v0.3.4 tag workflow 成功且只生成一个完整 Release。本地发布器因与 workflow 竞争返回 404，进一步确认必须使用单一发布入口。
 - Last seen: 2026-08-11
