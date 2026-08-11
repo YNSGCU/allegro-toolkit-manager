@@ -468,3 +468,16 @@
 - Detection: 检查原始字节；UTF-8 文件按 GBK 解码能稳定复现“甯冨眬”，GBK “测试”按西文代码页显示能稳定复现 `²âÊÔ`。
 - Verification: `tests/allegroTextEncoding.test.ts`、`tests/applyPlanEngine.test.ts` 覆盖版本映射、自动识别、精确字节和 JSON 不转码；真实 17.2/17.4 重启验证仍需人工完成。
 - Last seen: 2026-08-09
+
+## PIT-2026-08-11-02: electron-builder 并发发布会拆出两个同名 Draft Release
+
+- Area: GitHub Release、electron-builder、electron-updater、Windows 安装包
+- Symptom: Windows 打包成功，但发布脚本等待资产超时；一个 v0.3.3 草稿只有 exe/latest.yml，另一个同名草稿只有 blockmap。
+- Root cause: electron-builder 为 exe 与 blockmap 启动并发 GitHub publisher；两个 publisher 同时判断 tag 对应 release 不存在并各自创建草稿，三项资产被拆分。
+- Wrong attempts: 只延长轮询超时；直接公开资产不全的草稿；每次发布后手工合并重复草稿。
+- Correct fix: electron-builder 使用 `--publish never` 只构建本地产物；脚本用 `gh release create` 创建唯一草稿，再用一次 `gh release upload --clobber` 串行上传 exe、blockmap、latest.yml，资产齐全后公开为 latest。
+- Guardrail: 正式发布必须验证唯一 tag、非 draft、三项资产齐全及 `latest.yml` 版本/路径；发布脚本不得把 GitHub Release 创建交给多个并发 publisher。
+- Related files: `scripts/publish-github.mjs`, `.github/workflows/package-windows.yml`, `tests/publishScript.test.ts`
+- Detection: 发布日志出现两次 `creating GitHub release`；API 返回两个相同 name/tag 的 draft，资产互补。
+- Verification: 静态回归测试固定 `--publish never + gh release upload`；下一版本真实 tag 发布确认只生成一个 Release。
+- Last seen: 2026-08-11

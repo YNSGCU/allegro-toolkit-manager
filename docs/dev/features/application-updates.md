@@ -44,6 +44,7 @@ ApplicationUpdatePanel -> window.atm update methods -> preload -> app:update-* I
 - 未下载完成时拒绝安装；安装始终使用 `quitAndInstall(true, true)`。
 - 检查前先完成网络/更新源配置，再进入 `checking`；检查调用有 30 秒超时并归类为可重试的网络错误。
 - 普通 `npm run package:win` 不生成 `latest.yml`，但运行时仍认识官方源；`package:win:update` / `publish:github` 才生成和发布更新元数据。
+- `publish:github` 让 electron-builder 以 `--publish never` 只生成 exe、blockmap 和 `latest.yml`，随后由 `gh release create/upload` 串行上传三项资产。不要恢复 electron-builder 的 GitHub 并发发布，否则 exe 与 blockmap 可能各自创建一个同名 draft。
 
 ## Tests and Verification
 

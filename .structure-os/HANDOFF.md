@@ -7,6 +7,9 @@
 - 修复：`env:list-workspaces` 返回只读主机 HOME/CDSROOT；侧栏恢复显式隔离启动并显示错配警告；菜单 Apply Plan 完成提示要求关闭旧窗口后从 ATM 启动。
 - 验证：`tests/environmentSwitcher.test.tsx`、`tests/allegroLauncher.test.ts`、`tests/menuWorkspace.test.tsx` 共 9 项通过；前后端 TypeScript 检查通过。
 - 手工验证：安装修复版后，先在 17.2 菜单页点击“审阅并应用”并确认写入，再关闭所有旧 Allegro 窗口，从侧栏点击“按此环境启动”；确认旧 `²âÊÔ` 消失且 `MySkill/器件聚拢` 出现。
+- 发布：v0.3.3 已公开为 Latest；安装包 87,310,140 bytes、SHA-256 `1FD28B6509CCCD0E5A46D3F2AC8DDD9B76FD71E4D5295DC953E5A26D06599D16`，blockmap 91,467 bytes，`latest.yml` 明确指向 0.3.3。
+- CI：Windows runner 因 CRLF/LF 策略误判曾失败，`.prettierrc.json` 改为 `endOfLine=auto` 后完整门禁成功。
+- 发布脚本：v0.3.3 实际发布暴露 electron-builder 并发创建两个 Draft 的竞态；已改为 `--publish never` 后由 gh 串行创建/上传，需在下一真实版本发布时确认只产生一个 Release。
 
 ## 2026-08-11 菜单页面切换丢失草稿修复
 

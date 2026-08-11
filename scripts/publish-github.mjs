@@ -8,8 +8,8 @@
  *
  * 流程：
  *   1. 完整构建（Electron + 前端）
- *   2. electron-builder 用 GitHub provider 打包 NSIS 安装包
- *   3. 自动创建/更新 GitHub Release，上传 latest.yml + exe + blockmap
+ *   2. electron-builder 只负责打包 NSIS 安装包和更新元数据
+ *   3. gh 串行创建/更新 GitHub Release，上传 latest.yml + exe + blockmap
  *   4. 安装包内置 atmUpdateFeedUrl，装完软件即自动配好更新源
  *
  * 软件端更新源指向：
@@ -17,7 +17,7 @@
  * （electron-updater generic provider 会请求该目录下的 latest.yml）
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -101,8 +101,8 @@ writeFileSync(
   ),
 );
 
-let version = '0.0.0';
 const fsPromises = (await import('node:fs')).promises;
+let version = '0.0.0';
 try {
   try {
     const pkg = JSON.parse(await fsPromises.readFile(join(projectRoot, 'package.json'), 'utf-8'));
@@ -111,19 +111,38 @@ try {
     // 读不到时保持默认
   }
 
-  // --publish always：electron-builder 自动创建 GitHub Release（draft）并上传资产
-  run('npx', ['electron-builder', '--config', configPath, '--win', 'nsis', '--publish', 'always']);
+  // electron-builder 的 GitHub publisher 会并发上传 exe / blockmap；两个 publisher
+  // 可能同时判断 release 不存在并创建重复 draft。这里明确禁止它发布，只保留打包和 latest.yml 生成。
+  run('npx', ['electron-builder', '--config', configPath, '--win', 'nsis', '--publish', 'never']);
 
-  // electron-builder 创建的 release 默认是 draft，且大文件上传可能在 job 结束前被中断。
-  // 这里显式等待资产齐全，再把 release 公开为 latest（与 PiAgent 发布流程一致）。
   const tag = `v${version}`;
   const expectAssets = [
     `ATM-Setup-${version}-x64.exe`,
     `ATM-Setup-${version}-x64.exe.blockmap`,
     'latest.yml',
   ];
+  const assetPaths = expectAssets.map((name) => join(projectRoot, 'release', name));
+  const missingAssets = assetPaths.filter((assetPath) => !existsSync(assetPath));
+  if (missingAssets.length > 0) {
+    process.stderr.write(`打包完成但缺少发布资产：${missingAssets.join(', ')}\n`);
+    process.exit(1);
+  }
+
+  const existingRelease = spawnSync('gh', ['release', 'view', tag, '--repo', repo, '--json', 'tagName'], {
+    cwd: projectRoot,
+    encoding: 'utf-8',
+    windowsHide: true,
+  });
+  if (existingRelease.status !== 0) {
+    run('gh', ['release', 'create', tag, '--repo', repo, '--draft', '--title', version, '--verify-tag']);
+  }
+
+  // gh 对同一个 release 串行上传全部资产，避免 electron-builder 并发创建重复草稿。
+  run('gh', ['release', 'upload', tag, '--repo', repo, '--clobber', ...assetPaths]);
+
+  // 显式等待 GitHub API 返回完整资产，再公开为 latest。
   let ready = false;
-  for (let attempt = 0; attempt < 24; attempt += 1) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
     const view = spawnSync('gh', ['release', 'view', tag, '--repo', repo, '--json', 'assets,isDraft'], {
       cwd: projectRoot,
       encoding: 'utf-8',
@@ -150,7 +169,7 @@ try {
         break;
       }
     }
-    await new Promise((resolveDelay) => setTimeout(resolveDelay, 5000));
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 2000));
   }
   if (!ready) {
     process.stderr.write('等待 Release 资产上传超时，请检查 GitHub Actions 日志或手动补充资产。\n');
