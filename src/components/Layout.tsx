@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from 'react';
+import { useState, type ComponentType, type MouseEvent, type ReactNode } from 'react';
 import {
   Archive,
   Blocks,
@@ -10,9 +10,10 @@ import {
   Palette,
   ShieldCheck,
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { APP_NAV_ITEMS, type AppNavItem } from '../config/appShell';
 import { preloadWorkspaceRoute } from '../config/routePageLoaders';
+import { runEnvironmentSwitchGuards } from '../services/environmentSwitchGuard';
 import AllegroEnvironmentSwitcher from './AllegroEnvironmentSwitcher';
 
 interface LayoutProps {
@@ -30,8 +31,36 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
 };
 
 export default function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const primaryItems = APP_NAV_ITEMS.filter((item) => item.group === 'primary');
   const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
+
+  const handleNavigation = async (event: MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (
+      event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+      || location.pathname === path
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (pendingNavigation) return;
+
+    setPendingNavigation(path);
+    try {
+      if (await runEnvironmentSwitchGuards()) {
+        navigate(path);
+      }
+    } finally {
+      setPendingNavigation(null);
+    }
+  };
 
   const renderNavGroup = (
     title: string,
@@ -58,6 +87,9 @@ export default function Layout({ children }: LayoutProps) {
               }}
               onFocus={() => {
                 void preloadWorkspaceRoute(item.path).catch(() => undefined);
+              }}
+              onClick={(event) => {
+                void handleNavigation(event, item.path);
               }}
             >
               <Icon className="atm-nav-item-icon" aria-hidden />

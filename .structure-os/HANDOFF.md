@@ -1,5 +1,12 @@
 # Handoff
 
+## 2026-08-11 菜单页面切换丢失草稿修复
+
+- 根因：普通侧栏页面导航未执行菜单草稿保存，`MenuPage` 卸载后只存在于 React 状态的编辑内容被丢弃。
+- 修复：`Layout` 侧栏导航和 `MenuPage` 内部关联跳转复用 `environmentSwitchGuard`；保存失败时保持当前页面。
+- 验证：`npx.cmd tsc --noEmit`、`npx.cmd tsc -p tsconfig.electron.json --noEmit`、专项测试均通过。
+- 手工验证：打开菜单页编辑一项，点击 Skill/快捷键/系统状态后返回菜单页，确认菜单项仍存在。
+
 ## 2026-08-10：应用内检查更新无反应
 
 - 本机证据：`C:\Users\89539\AppData\Roaming\allegro-toolkit-manager` 无 `update-settings.json`，说明运行的是未内置更新源的发布前 0.3.0；旧 `check()` 对空 feed 静默返回。

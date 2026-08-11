@@ -1,3 +1,16 @@
+## PIT-2026-08-11-01: 页面导航必须执行菜单草稿离开保护
+
+- Area: 菜单页面、React Router、侧栏导航、`menu:save-draft`
+- Symptom: 用户编辑菜单后切换到其他页面，再返回菜单页时，未应用的菜单项消失。
+- Root cause: 菜单页只在菜单方案切换和 Allegro 环境切换时调用草稿保存；侧栏 `NavLink` 直接卸载页面，React 状态中的草稿没有进入 `menu_profile.json`。
+- Wrong attempts: 只在菜单页显示“未保存”状态；依赖页面卸载时异步保存；只保护 Allegro 环境切换而忽略普通页面导航。
+- Correct fix: 侧栏导航先运行现有 `environmentSwitchGuard`，保存成功后再导航；菜单页内部跳转到关联 Skill/快捷键也运行同一保护。
+- Guardrail: 任何会卸载菜单页的导航入口都必须先执行页面离开保护；保存失败或校验失败时保持当前路由和草稿不变。
+- Related files: `src/components/Layout.tsx`, `src/pages/MenuPage.tsx`, `src/services/environmentSwitchGuard.ts`, `tests/layoutPrefetch.test.tsx`
+- Detection: 编辑菜单后点击侧栏 Skill/快捷键/其他页面，返回菜单页确认草稿仍在；模拟保存失败确认路由不变。
+- Verification: `tests/layoutPrefetch.test.tsx`、`tests/environmentSwitchGuard.test.ts`、`tests/menuWorkspace.test.tsx`。
+- Last seen: 2026-08-11
+
 ## PIT-2026-08-10-01: 菜单方案下拉状态与编辑对象必须同步，切换前必须保存
 
 - Area: 菜单方案、React 页面状态、Allegro 环境切换、`menu_profile.json`

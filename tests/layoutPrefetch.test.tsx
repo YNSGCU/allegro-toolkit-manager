@@ -1,6 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  clearEnvironmentSwitchGuardsForTest,
+  registerEnvironmentSwitchGuard,
+} from '../src/services/environmentSwitchGuard';
 
 const mocks = vi.hoisted(() => ({
   preloadWorkspaceRoute: vi.fn(() => Promise.resolve()),
@@ -15,7 +19,12 @@ import Layout from '../src/components/Layout';
 afterEach(() => {
   cleanup();
   mocks.preloadWorkspaceRoute.mockClear();
+  clearEnvironmentSwitchGuardsForTest();
 });
+
+function LocationProbe() {
+  return <output data-testid="location">{useLocation().pathname}</output>;
+}
 
 describe('workspace navigation preload', () => {
   it('preloads a page on pointer intent and keyboard focus', async () => {
@@ -46,5 +55,45 @@ describe('workspace navigation preload', () => {
 
     fireEvent.focus(screen.getByRole('link', { name: '菜单' }));
     expect(mocks.preloadWorkspaceRoute).toHaveBeenCalledWith('/menu');
+  });
+
+  it('runs page leave guards before sidebar navigation', async () => {
+    const guard = vi.fn().mockResolvedValue(true);
+    registerEnvironmentSwitchGuard('menu-draft', guard);
+    window.atm = {
+      listAllegroEnvironments: vi.fn().mockResolvedValue({ success: true, data: { version: 1, activeEnvironmentId: null, updatedAt: new Date().toISOString(), environments: [] } }),
+      setActiveAllegroEnvironment: vi.fn(),
+    } as any;
+
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <Layout><LocationProbe /></Layout>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Skill' }));
+
+    await waitFor(() => expect(guard).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/skills'));
+  });
+
+  it('blocks sidebar navigation when a page cannot save its draft', async () => {
+    const guard = vi.fn().mockResolvedValue(false);
+    registerEnvironmentSwitchGuard('menu-draft', guard);
+    window.atm = {
+      listAllegroEnvironments: vi.fn().mockResolvedValue({ success: true, data: { version: 1, activeEnvironmentId: null, updatedAt: new Date().toISOString(), environments: [] } }),
+      setActiveAllegroEnvironment: vi.fn(),
+    } as any;
+
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <Layout><LocationProbe /></Layout>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Skill' }));
+
+    await waitFor(() => expect(guard).toHaveBeenCalledOnce());
+    expect(screen.getByTestId('location')).toHaveTextContent('/menu');
   });
 });

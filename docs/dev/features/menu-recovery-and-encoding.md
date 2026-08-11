@@ -19,7 +19,7 @@
 
 当前环境为空时，IPC 只读检查环境注册表中的其他 `pcbenv`。用户可显式切换环境，也可调用 `menu:create-environment-copy-plan` 把来源环境的一个非空方案复制为当前环境的新草稿。复制计划只写目标 `menu_profile.json`，使用主进程可信快照、备份和 `environmentId + pcbenvPath` 锁，不生成 IL、不改变来源环境。
 
-`MenuPage` 在切换菜单方案前调用现有 `menu:save-draft`；侧栏或页面内切换 Allegro 环境时，经 `environmentSwitchGuard` 等待菜单草稿保存成功。保存失败、校验失败或页面保护拒绝时，不改变活动环境。菜单仓库使用临时文件加原子替换，CRUD 不再忽略保存失败。
+`MenuPage` 在切换菜单方案、侧栏页面或页面内关联跳转前调用现有 `menu:save-draft`；侧栏或页面内切换 Allegro 环境时，经 `environmentSwitchGuard` 等待菜单草稿保存成功。保存失败、校验失败或页面保护拒绝时，不改变导航或活动环境。菜单仓库使用临时文件加原子替换，CRUD 不再忽略保存失败。
 
 ## 编码约定
 

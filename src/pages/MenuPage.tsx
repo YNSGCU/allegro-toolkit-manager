@@ -820,12 +820,14 @@ const MenuPage: React.FC = () => {
   }, [loadData]);
 
   /** 跳转到 Skill 页 */
-  const handleNavigateSkill = useCallback((skillId: string) => {
+  const handleNavigateSkill = useCallback(async (skillId: string) => {
+    if (!await runEnvironmentSwitchGuards()) return;
     navigate(`/skills?skill=${encodeURIComponent(skillId)}`);
   }, [navigate]);
 
   /** 跳转到快捷键页 */
-  const handleNavigateHotkey = useCallback((command: string) => {
+  const handleNavigateHotkey = useCallback(async (command: string) => {
+    if (!await runEnvironmentSwitchGuards()) return;
     navigate(`/hotkeys?search=${encodeURIComponent(command)}`);
   }, [navigate]);
 

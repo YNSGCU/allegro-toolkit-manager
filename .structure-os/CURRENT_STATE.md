@@ -1,5 +1,10 @@
 # Current State
 
+## 2026-08-11 菜单页面导航丢失草稿修复
+- 根因：侧栏 `NavLink` 直接卸载 `MenuPage`，未调用已有菜单草稿保存保护。
+- 修复：侧栏导航和菜单页内关联 Skill/快捷键跳转统一先执行 `environmentSwitchGuard`；保存失败时阻止导航。
+- 验证：前端/后端 TypeScript 检查通过；导航保护、环境保护、菜单工作区与菜单管理专项测试共 24 项通过。
+
 ## 2026-08-10 应用内更新无反馈修复
 - 根因：发布前本地 0.3.0 没有内置 feed，且 `UpdateService.check()` 在 feed 为空时直接返回旧状态；本机没有 `update-settings.json`。
 - 修复：更新源增加 ATM 官方 GitHub Release 兜底，检查时立即显示连接状态并设置 30 秒超时；版本提升为 0.3.1。
