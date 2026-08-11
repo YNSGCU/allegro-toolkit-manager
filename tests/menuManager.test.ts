@@ -159,6 +159,48 @@ describe('generateMenuIlContent', () => {
     expect(il).toContain('axlCmdUnregister("atmLoadMenus")');
   });
 
+  it('17.2 使用 ASCII 兼容显示名，但 17.4 继续生成中文标签', () => {
+    const items = [menuItem({
+      id: 'root',
+      label: '我的工具',
+      compatibilityLabel: 'My Tools',
+      type: 'menu',
+      children: [menuItem({
+        id: 'align',
+        label: '器件对齐',
+        compatibilityLabel: 'Component Align',
+        type: 'command',
+        parentId: 'root',
+        command: 'align components',
+      })],
+    })];
+
+    const legacyIl = generateMenuIlContent(profile(items), { allegroVersion: '17.2 S083' });
+    const modernIl = generateMenuIlContent(profile(items), { allegroVersion: '17.4' });
+
+    expect(legacyIl).toContain("'popup \"My Tools\"");
+    expect(legacyIl).toContain('"Component Align" "align components"');
+    expect(legacyIl).not.toContain("'popup \"我的工具\"");
+    expect(modernIl).toContain("'popup \"我的工具\"");
+    expect(modernIl).toContain('"器件对齐" "align components"');
+  });
+
+  it('17.2 拒绝缺失或包含非 ASCII 字符的兼容显示名', () => {
+    const missing = profile([menuItem({ id: 'root', label: '中文工具', type: 'menu', children: [] })]);
+    const invalid = profile([menuItem({
+      id: 'root',
+      label: '中文工具',
+      compatibilityLabel: 'English 工具',
+      type: 'menu',
+      children: [],
+    })]);
+
+    expect(() => generateMenuIlContent(missing, { allegroVersion: '17.2' }))
+      .toThrow('需要填写仅含英文/ASCII 的兼容显示名');
+    expect(() => generateMenuIlContent(invalid, { allegroVersion: '17.2' }))
+      .toThrow('需要填写仅含英文/ASCII 的兼容显示名');
+  });
+
   it('不生成被禁用或隐藏的菜单项，并正确转义 SKILL 字符串', () => {
     const il = generateMenuIlContent(profile([
       menuItem({

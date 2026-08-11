@@ -9,7 +9,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Save, Trash2, XCircle } from 'lucide-react';
 import type { MenuItemConfig, MenuItemType, MenuSource, MenuCommandSource, MenuIssue } from '../types/menu';
-import { getMenuSourceLabel, getMenuSourceBadge, isMenuSourceReadOnly, ISSUE_SEVERITY_STYLES } from '../types/menu';
+import {
+  getMenuSourceLabel,
+  getMenuSourceBadge,
+  isMenuSourceReadOnly,
+  ISSUE_SEVERITY_STYLES,
+  isPrintableAsciiMenuLabel,
+  requiresAsciiMenuLabelCompatibility,
+} from '../types/menu';
 
 interface MenuItemEditorProps {
   item: MenuItemConfig | null;
@@ -21,6 +28,7 @@ interface MenuItemEditorProps {
   onSelectCommand: (itemId: string) => void;
   onNavigateSkill?: (skillId: string) => void;
   onNavigateHotkey?: (command: string) => void;
+  allegroVersion?: string | null;
 }
 
 const itemTypes: { value: MenuItemType; label: string }[] = [
@@ -48,9 +56,11 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
   onSelectCommand,
   onNavigateSkill,
   onNavigateHotkey,
+  allegroVersion,
 }) => {
   // 本地编辑状态
   const [label, setLabel] = useState('');
+  const [compatibilityLabel, setCompatibilityLabel] = useState('');
   const [type, setType] = useState<MenuItemType>('command');
   const [command, setCommand] = useState('');
   const [enabled, setEnabled] = useState(true);
@@ -62,6 +72,7 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
   useEffect(() => {
     if (item) {
       setLabel(item.label || '');
+      setCompatibilityLabel(item.compatibilityLabel || '');
       setType(item.type || 'command');
       setCommand(item.command || '');
       setEnabled(item.enabled !== false);
@@ -76,18 +87,28 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
     if (!item) return;
     const changed =
       label !== (item.label || '') ||
+      compatibilityLabel !== (item.compatibilityLabel || '') ||
       type !== (item.type || 'command') ||
       command !== (item.command || '') ||
       enabled !== (item.enabled !== false) ||
       visible !== (item.visible !== false) ||
       menuSource !== (item.menuSource || 'atm_managed');
     setHasChanges(changed);
-  }, [item, label, type, command, enabled, visible, menuSource]);
+  }, [item, label, compatibilityLabel, type, command, enabled, visible, menuSource]);
+
+  const requiresCompatibilityLabel = type !== 'separator'
+    && requiresAsciiMenuLabelCompatibility(allegroVersion)
+    && !isPrintableAsciiMenuLabel(label);
+  const compatibilityLabelError = requiresCompatibilityLabel
+    && !isPrintableAsciiMenuLabel(compatibilityLabel)
+    ? `Allegro ${allegroVersion || '17.2'} 需要仅含英文、数字和 ASCII 符号的显示名`
+    : '';
 
   const handleSave = () => {
     if (!item) return;
     onSave(item.id, {
       label,
+      compatibilityLabel: compatibilityLabel.trim(),
       type,
       command: type === 'command' ? command : undefined,
       enabled,
@@ -168,27 +189,57 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* 菜单名称（separator 不显示） */}
         {!isSeparator && (
-          <div>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-              菜单名称
-            </label>
-            <input
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              disabled={isReadOnly}
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                borderRadius: '4px',
-                border: `1px solid var(--border-color)`,
-                background: isReadOnly ? 'var(--bg-surface)' : 'var(--bg-input)',
-                color: 'var(--text-primary)',
-                fontSize: '13px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+          <>
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                菜单名称（中文原名）
+              </label>
+              <input
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                disabled={isReadOnly}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  borderRadius: '4px',
+                  border: `1px solid var(--border-color)`,
+                  background: isReadOnly ? 'var(--bg-surface)' : 'var(--bg-input)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="menu-compatibility-label" style={{ fontSize: '12px', color: requiresCompatibilityLabel ? '#f59e0b' : 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                17.2 英文兼容显示名{requiresCompatibilityLabel ? '（必填）' : '（可选）'}
+              </label>
+              <input
+                id="menu-compatibility-label"
+                type="text"
+                value={compatibilityLabel}
+                onChange={(e) => setCompatibilityLabel(e.target.value)}
+                disabled={isReadOnly}
+                placeholder="例如 Component Align"
+                aria-invalid={Boolean(compatibilityLabelError)}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  borderRadius: '4px',
+                  border: `1px solid ${compatibilityLabelError ? '#f59e0b' : 'var(--border-color)'}`,
+                  background: isReadOnly ? 'var(--bg-surface)' : 'var(--bg-input)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ marginTop: '4px', fontSize: '11px', lineHeight: 1.5, color: compatibilityLabelError ? '#f59e0b' : 'var(--text-secondary)' }}>
+                {compatibilityLabelError
+                  || '仅 Allegro 17.2 及更早版本使用；17.4 及以后仍显示上方中文名称。'}
+              </div>
+            </div>
+          </>
         )}
 
         {/* 菜单类型 */}
@@ -417,15 +468,15 @@ const MenuItemEditor: React.FC<MenuItemEditorProps> = ({
       }}>
         <button
           onClick={handleSave}
-          disabled={!hasChanges || isReadOnly}
+          disabled={!hasChanges || isReadOnly || Boolean(compatibilityLabelError)}
           className="btn btn-sm btn-primary"
           style={{
             padding: '6px 16px',
-            background: hasChanges && !isReadOnly ? 'var(--accent-blue)' : 'var(--bg-hover)',
-            color: hasChanges && !isReadOnly ? '#fff' : 'var(--text-secondary)',
+            background: hasChanges && !isReadOnly && !compatibilityLabelError ? 'var(--accent-blue)' : 'var(--bg-hover)',
+            color: hasChanges && !isReadOnly && !compatibilityLabelError ? '#fff' : 'var(--text-secondary)',
             border: 'none',
             borderRadius: '4px',
-            cursor: hasChanges && !isReadOnly ? 'pointer' : 'not-allowed',
+            cursor: hasChanges && !isReadOnly && !compatibilityLabelError ? 'pointer' : 'not-allowed',
             fontWeight: 600,
             fontSize: '12px',
           }}

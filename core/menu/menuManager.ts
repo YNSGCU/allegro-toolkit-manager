@@ -22,6 +22,10 @@ import type {
   MenuProfileRecoveryCandidate,
 } from '../../src/types/menu';
 import { validateMenuTree } from '../../src/types/menu';
+import {
+  isPrintableAsciiMenuLabel,
+  requiresAsciiMenuLabelCompatibility,
+} from '../../src/types/menu';
 import type { ApplyPlanStepType } from '../../src/types/applyPlan';
 
 // ═══════════════════════════════════════════════════
@@ -338,6 +342,7 @@ export function addMenuItem(
   const newItem: MenuItemConfig = {
     id: generateMenuId(),
     label: input.label || '',
+    compatibilityLabel: input.compatibilityLabel,
     type: input.type || 'command',
     parentId,
     children: input.type === 'menu' ? [] : undefined,
@@ -401,6 +406,7 @@ export function updateMenuItem(
     for (const item of list) {
       if (item.id === itemId) {
         if (updates.label !== undefined) item.label = updates.label;
+        if (updates.compatibilityLabel !== undefined) item.compatibilityLabel = updates.compatibilityLabel;
         if (updates.type !== undefined) {
           item.type = updates.type;
           if (updates.type === 'menu' && !item.children) item.children = [];
@@ -699,7 +705,14 @@ export function deleteProfile(store: MenuProfileStore, profileId: string): MenuP
 /**
  * 从 Profile 生成 generated_menu.il 内容
  */
-export function generateMenuIlContent(profile: MenuProfile): string {
+export interface MenuIlGenerationOptions {
+  allegroVersion?: string | null;
+}
+
+export function generateMenuIlContent(
+  profile: MenuProfile,
+  options: MenuIlGenerationOptions = {},
+): string {
   const validation = validateMenuTree(profile.items);
   if (validation.hasError) {
     throw new Error(validation.errors.map(issue => issue.message).join('；'));
@@ -710,7 +723,7 @@ export function generateMenuIlContent(profile: MenuProfile): string {
   );
 
   // Allegro 的菜单栈最多支持 8 层。先生成插入语句也能在返回预览前完成深度校验。
-  const rootInsertBlocks = rootItems.map(item => generateRootMenuInsertLines(item));
+  const rootInsertBlocks = rootItems.map(item => generateRootMenuInsertLines(item, options));
   const lines: string[] = [
     ';; ========================================================',
     ';; ATM Generated Menu Loader',
@@ -806,10 +819,13 @@ export function generateMenuIlContent(profile: MenuProfile): string {
 /**
  * 生成一个顶级菜单的 Find/Insert 语句。
  */
-function generateRootMenuInsertLines(item: MenuItemConfig): string[] {
+function generateRootMenuInsertLines(
+  item: MenuItemConfig,
+  options: MenuIlGenerationOptions,
+): string[] {
   assertMenuDepth(item, 1);
 
-  const label = escapeSkillString(item.label);
+  const label = escapeSkillString(resolveMenuDisplayLabel(item, options));
   const lines = [
     '    atmAnchor = axlUIMenuFind(nil -1)',
     '    if(atmAnchor then',
@@ -819,7 +835,7 @@ function generateRootMenuInsertLines(item: MenuItemConfig): string[] {
   ];
 
   for (const child of item.children ?? []) {
-    lines.push(...generateChildMenuInsertLines(child, 2, 4));
+    lines.push(...generateChildMenuInsertLines(child, 2, 4, options));
   }
 
   lines.push("        axlUIMenuInsert(nil 'end)");
@@ -838,11 +854,14 @@ function generateChildMenuInsertLines(
   item: MenuItemConfig,
   menuDepth: number,
   indentLevel: number,
+  options: MenuIlGenerationOptions,
 ): string[] {
   if (!item.enabled || !item.visible) return [];
 
   const indent = '  '.repeat(indentLevel);
-  const label = escapeSkillString(item.label);
+  const label = item.type === 'separator'
+    ? ''
+    : escapeSkillString(resolveMenuDisplayLabel(item, options));
 
   if (item.type === 'separator') {
     return [`${indent}axlUIMenuInsert(nil 'separator)`];
@@ -856,11 +875,25 @@ function generateChildMenuInsertLines(
   assertMenuDepth(item, menuDepth);
   const lines = [`${indent}when(axlUIMenuInsert(nil 'popup "${label}")`];
   for (const child of item.children ?? []) {
-    lines.push(...generateChildMenuInsertLines(child, menuDepth + 1, indentLevel + 1));
+    lines.push(...generateChildMenuInsertLines(child, menuDepth + 1, indentLevel + 1, options));
   }
   lines.push(`${indent}  axlUIMenuInsert(nil 'end)`);
   lines.push(`${indent})`);
   return lines;
+}
+
+/** 根据目标 Allegro 版本选择实际写入 axlUIMenuInsert 的显示标签。 */
+export function resolveMenuDisplayLabel(
+  item: Pick<MenuItemConfig, 'label' | 'compatibilityLabel'>,
+  options: MenuIlGenerationOptions = {},
+): string {
+  if (!requiresAsciiMenuLabelCompatibility(options.allegroVersion)) return item.label;
+  if (isPrintableAsciiMenuLabel(item.label)) return item.label;
+  if (isPrintableAsciiMenuLabel(item.compatibilityLabel)) return item.compatibilityLabel!.trim();
+
+  throw new Error(
+    `菜单“${item.label}”在 Allegro ${options.allegroVersion || '17.2'} 中需要填写仅含英文/ASCII 的兼容显示名`,
+  );
 }
 
 /** Allegro axlUIMenuInsert 的菜单栈最大深度为 8。 */
@@ -968,6 +1001,7 @@ export function getMenuApplyPlanSteps(
   menuIlPath: string,
   profile: MenuProfile,
   store: MenuProfileStore,
+  options: MenuIlGenerationOptions = {},
 ): Array<{
   type: ApplyPlanStepType;
   title: string;
@@ -976,7 +1010,7 @@ export function getMenuApplyPlanSteps(
   before?: string;
   after?: string;
 }> {
-  const menuIl = generateMenuIlContent(profile);
+  const menuIl = generateMenuIlContent(profile, options);
   const activeItems = profile.items.filter(i => i.enabled);
   const itemCount = countMenuItems(profile.items);
   const appliedStore: MenuProfileStore = {
@@ -1030,7 +1064,10 @@ export function countMenuItems(items: MenuItemConfig[]): { total: number; comman
 /**
  * 获取 Apply Plan 风险信息
  */
-export function getMenuApplyPlanRisks(profile: MenuProfile): Array<{
+export function getMenuApplyPlanRisks(
+  profile: MenuProfile,
+  options: MenuIlGenerationOptions = {},
+): Array<{
   severity: 'info' | 'warning' | 'error';
   title: string;
   description: string;
@@ -1054,6 +1091,22 @@ export function getMenuApplyPlanRisks(profile: MenuProfile): Array<{
       title: '包含只读来源菜单项',
       description: `${readonlyItems.length} 个菜单项来自只读来源，修改可能不会被保存`,
     });
+  }
+
+  if (requiresAsciiMenuLabelCompatibility(options.allegroVersion)) {
+    const compatibilityItems = allItems.filter(item =>
+      item.type !== 'separator'
+      && item.enabled
+      && item.visible
+      && !isPrintableAsciiMenuLabel(item.label),
+    );
+    if (compatibilityItems.length > 0) {
+      risks.push({
+        severity: 'info',
+        title: '已启用 Allegro 17.2 英文兼容显示',
+        description: `${compatibilityItems.length} 个中文菜单项将在 Allegro 中显示英文兼容名，ATM 方案仍保留中文原名`,
+      });
+    }
   }
 
   // 通用提示

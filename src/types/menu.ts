@@ -38,6 +38,8 @@ export type MenuItemStatus = 'normal' | 'warning' | 'error' | 'disabled' | 'read
 export interface MenuItemConfig {
   id: string;
   label: string;
+  /** Allegro 17.2 及更早版本动态菜单使用的 ASCII 显示名；中文原名仍保存在 label。 */
+  compatibilityLabel?: string;
   originalLabel?: string;
   description?: string;
 
@@ -150,6 +152,7 @@ export interface MenuEnvironmentAlternative {
 export interface MenuItemCreateInput {
   type: MenuItemType;
   label: string;
+  compatibilityLabel?: string;
   parentId?: string;
   command?: string;
   commandSource?: MenuCommandSource;
@@ -164,6 +167,7 @@ export interface MenuItemCreateInput {
 
 export interface MenuItemUpdateInput {
   label?: string;
+  compatibilityLabel?: string;
   type?: MenuItemType;
   command?: string;
   commandSource?: MenuCommandSource;
@@ -174,6 +178,21 @@ export interface MenuItemUpdateInput {
   enabled?: boolean;
   visible?: boolean;
   icon?: string;
+}
+
+/** Allegro 17.2 及更早版本的动态菜单 UI 不能可靠显示 Unicode 标签。 */
+export function requiresAsciiMenuLabelCompatibility(allegroVersion?: string | null): boolean {
+  const match = allegroVersion?.match(/(\d+)(?:\.(\d+))?/);
+  if (!match) return false;
+
+  const major = Number(match[1]);
+  const minor = Number(match[2] ?? 0);
+  return major < 17 || (major === 17 && minor <= 2);
+}
+
+/** 17.2 兼容显示名仅允许可打印 ASCII，避免控制字符和 Unicode 再次进入旧版菜单 UI。 */
+export function isPrintableAsciiMenuLabel(label?: string | null): boolean {
+  return Boolean(label?.trim()) && /^[\x20-\x7e]+$/.test(label!);
 }
 
 // ═══════════════════════════════════════════════════

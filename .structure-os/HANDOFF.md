@@ -1,5 +1,19 @@
 # Handoff
 
+## 2026-08-11 17.2 菜单英文兼容显示名
+
+- 实现：`MenuItemConfig.compatibilityLabel` 保存 17.2 可打印 ASCII 显示名，`label` 保留中文；`resolveMenuDisplayLabel()` 按目标版本决定 IL 输出，17.2 缺失/非法时阻断，17.4 继续中文。
+- UI：菜单详情新增“17.2 英文兼容显示名”；活动环境为 17.2 且原名非 ASCII 时必填，说明兼容名只影响旧版本显示。
+- 链路：新版/旧版预览与菜单 Apply Plan 均从 `locateEnvironment().allegroVersion` 传入生成器；Apply Plan 仍负责 GBK/UTF-8 写入、备份、历史和撤销。
+- 验证：`tests/menuManager.test.ts`、`tests/menuItemEditorCompatibility.test.tsx`、`tests/pcbenvApplyIntegration.test.ts` 共 25 项通过；完整门禁 69 个测试文件 / 412 项全绿。当前用户方案八项英文映射已通过 Apply Plan 写入并核对 GBK IL，Vibe Bridge 未运行，真实菜单视觉确认仍需用户加载当前脚本。
+
+## 2026-08-11 17.2 中文菜单标签显示为 `Æ÷¼þ`
+
+- 实机字节证据：`generated_menu.il` 的“器件”为 GBK `C6 F7 BC FE`，不存在对应 UTF-8 `E5 99 A8 E4 BB B6`；截图逐字显示其西文解释 `Æ÷¼þ`。
+- 根因：17.2 脚本加载器要求 GBK，但动态菜单 API 的 UI 路径不支持 Unicode；GBK、UTF-8 和 UTF-8 八进制字节均已实机产生乱码。
+- 处理：整个文件 UTF-8 与八进制标签两个实验均已通过 Apply Plan 撤销；生成器代码/测试恢复基线。17.2 菜单标签必须改用 ASCII 英文或拼音，不能继续承诺中文编码修复。
+- 验证：`skill (load "...")` 已确认能真实热重载并插入第二个 `MySkill1`，新标签仍按字节乱码；这使八进制方案从 provisional 降为 deprecated。当前内存重复菜单可执行 `skill (atmDeleteMenus)` 或重启清理。
+
 ## 2026-08-11 17.2 仍显示 17.4 乱码旧菜单
 
 - 只读实机证据：PID 29792 是 `Cadence17_2/.../allegro.exe`，但系统 `HOME/CDSROOT` 指向 17.4。17.2 的 `menu_profile.json` 已有 `MySkill/器件聚拢`，却没有 `generated_menu.il` 或 ATM bootstrap；17.4 的 GBK `generated_menu.il` 仍包含“测试/测试3/测试4/测试5”，与截图逐项一致。
@@ -43,7 +57,7 @@
 ## 2026-08-09 追加：17.2 中文 Skill 路径加载失败
 
 - 实机证据：17.2 S083 Command 窗口把 `01-布局`、`03-检查调整` 显示为 `01-甯冨眬`、`03-妫€鏌ヨ皟鏁`，并对 11 个实际存在的 `.il` 报 `can't access file`。当前 `allegro.ilinit` 为无 BOM UTF-8；同字节按 GBK 解码可精确复现截图。
-- 修复：新增 `core/environment/allegroTextEncoding.ts`，17.2 及更早写 CP936/GBK，17.4 写 UTF-8；读取现有 `.il`/`allegro.ilinit` 自动识别。统一 Apply Plan 仅给 Allegro 脚本步骤附加编码，JSON 与历史仍为 UTF-8，备份/回滚仍按原始字节。
+- 修复：新增 `core/environment/allegroTextEncoding.ts`，脚本在 17.2 及更早写 CP936/GBK、17.4 写 UTF-8；读取现有 `.il`/`allegro.ilinit` 自动识别。动态菜单标签使用 UTF-8 字节八进制转义；JSON 与历史仍为 UTF-8，备份/回滚仍按原始字节。
 - 接入：Menu、Skill Profile、旧 Skill Toggle、Vibe Bridge 和 Hotkey 加载上下文均使用版本策略；重新应用 17.2 当前 Skill 方案会备份并转换 `generated_skill_loader.il`、`bootstrap.il` 与 `allegro.ilinit`。
 - 验证：`npm run verify` 全绿，66 个测试文件 / 394 项测试通过；安全审计、lint、格式、双端 TypeScript 和生产构建均通过。仍需在用户确认 Apply Plan 后重启真实 17.2 复测。
 - 独立问题：`SPMHOD-29` 表示板文件副本由更高版本保存；应在 17.4 使用 File → Export → Downrev Design 另存 17.2 副本，不能靠脚本编码修复。
@@ -54,7 +68,7 @@
 - 系统证据：当前 Windows 用户 `HOME=D:\application\Cadence\Cadence17\Cadence\SPB_Data`、`CDSROOT=...\SPB_17.4`。因此直接启动 17.2 执行文件仍可能读取 17.4 `pcbenv`。
 - 修复：新增 `core/environment/allegroLauncher.ts`、`env:launch-workspace`、preload/window 类型和侧栏“按此环境启动”；新进程使用所选环境自己的 `HOME/CDSROOT`，不修改全局环境变量。HOME 不一致时侧栏明确告警。
 - 验证：`npm run verify` 全绿；65 个测试文件 / 390 项测试通过，安全审计、lint、格式、双端 TypeScript 和生产构建均通过。
-- 待确认：重新构建并重启 ATM，从侧栏选择 17.2 后点击“按此环境启动”，确认新 17.2 会话不再加载 17.4 旧菜单。菜单 UTF-8 重建仍需走原菜单 Apply Plan，不得直接覆盖用户文件。
+- 待确认：重新构建并重启 ATM，从侧栏选择 17.2 后点击“按此环境启动”，确认新 17.2 会话不再加载 17.4 旧菜单。菜单重建仍需走原 Apply Plan；17.2 脚本保持 GBK，标签使用 UTF-8 八进制转义。
 
 ## 2026-08-08 追加：菜单拖动有影子但不换位修复
 

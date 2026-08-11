@@ -16,6 +16,7 @@ import {
 import { undoLastChange as undoHotkeyChange } from '../core/changeHistory/changeHistory';
 import { generateSkillProfileLoader } from '../core/skill/skillProfileManager';
 import { getMenuApplyPlanSteps } from '../core/menu/menuManager';
+import { decodeAllegroText } from '../core/environment/allegroTextEncoding';
 import { createDefaultSkillProfile } from '../src/types/skillProfile';
 import type { MenuProfile, MenuProfileStore } from '../src/types/menu';
 
@@ -162,6 +163,66 @@ describe('临时 pcbenv Skill 方案事务', () => {
 });
 
 describe('临时 pcbenv 菜单方案事务', () => {
+  it('17.2 菜单脚本写入 GBK 英文显示名，同时 JSON 保留中文原名', async () => {
+    const pcbenv = createPcbenv('atm-menu-172-compat-');
+    const atmDir = path.join(pcbenv, 'atm_generated');
+    const profilePath = path.join(atmDir, 'menu_profile.json');
+    const menuPath = path.join(atmDir, 'generated_menu.il');
+    fs.mkdirSync(atmDir, { recursive: true });
+
+    const now = new Date().toISOString();
+    const profile: MenuProfile = {
+      id: 'menu_172',
+      name: '17.2 中文菜单方案',
+      enabled: true,
+      createdAt: now,
+      updatedAt: now,
+      items: [{
+        id: 'root',
+        label: '中文工具',
+        compatibilityLabel: 'Chinese Tools',
+        type: 'menu',
+        path: ['中文工具'],
+        order: 0,
+        menuSource: 'atm_managed',
+        enabled: true,
+        visible: true,
+        status: 'normal',
+        children: [],
+      }],
+    };
+    const store: MenuProfileStore = {
+      version: '2.0', activeProfileId: profile.id, profiles: [profile], updatedAt: now,
+    };
+    const plan = createApplyPlan({
+      title: '应用 17.2 菜单修改',
+      module: 'menu',
+      steps: getMenuApplyPlanSteps(
+        profilePath,
+        menuPath,
+        profile,
+        store,
+        { allegroVersion: '17.2 S083' },
+      ),
+      allegroTextEncoding: 'gbk',
+    });
+
+    expect((await executeApplyPlan(plan, {
+      backupDir: path.join(atmDir, 'backups'),
+      historyDir: path.join(atmDir, 'history'),
+    })).success).toBe(true);
+
+    const generated = decodeAllegroText(fs.readFileSync(menuPath), 'gbk');
+    const persisted = JSON.parse(fs.readFileSync(profilePath, 'utf8')) as MenuProfileStore;
+    expect(generated.detectedEncoding).toBe('gbk');
+    expect(generated.text).toContain("'popup \"Chinese Tools\"");
+    expect(generated.text).not.toContain("'popup \"中文工具\"");
+    expect(persisted.profiles[0].items[0]).toMatchObject({
+      label: '中文工具',
+      compatibilityLabel: 'Chinese Tools',
+    });
+  });
+
   it('使用菜单步骤生成器写入 UTF-8 脚本，失败时恢复旧配置并清理新文件', async () => {
     const pcbenv = createPcbenv('atm-menu-rollback-');
     const atmDir = path.join(pcbenv, 'atm_generated');

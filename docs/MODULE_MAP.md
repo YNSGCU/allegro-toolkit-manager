@@ -59,9 +59,9 @@ Skill profile apply chain: `SkillPage` -> `skillProfileCreateApplyPlan/skillProf
 
 `src/pages/MenuPage.tsx` -> `window.atm.*menu methods*` -> `electron/preload.ts` -> `electron/ipc/menu.ipc.ts` -> `core/menu/*`, `core/apply/*`
 
-菜单恢复链：`menu:load-profiles` -> `findMenuProfileRecovery()` 只读扫描当前环境的 ATM 备份 -> `menu:create-recovery-plan` -> 可信一次性 Apply Plan -> 仅恢复 `menu_profile.json`。恢复后必须再次审阅普通菜单 Apply Plan，才会按目标版本重建 `generated_menu.il`（17.2=GBK，17.4=UTF-8）。
+菜单恢复链：`menu:load-profiles` -> `findMenuProfileRecovery()` 只读扫描当前环境的 ATM 备份 -> `menu:create-recovery-plan` -> 可信一次性 Apply Plan -> 仅恢复 `menu_profile.json`。恢复后必须再次审阅普通菜单 Apply Plan，才会按目标版本重建 `generated_menu.il`。
 
-Allegro 文本编码链：`locateEnvironment().allegroVersion` -> `getAllegroTextEncoding()` -> Menu/Skill/Bridge 计划的 `.il` / `allegro.ilinit` 步骤携带 `textEncoding` -> `applyPlanEngine` 按版本写入。读取旧脚本使用 `readAllegroTextFile()` 自动识别 UTF-8/GBK；JSON 和历史文件不参与转码。
+Allegro 文本编码链：`locateEnvironment().allegroVersion` -> `getAllegroTextEncoding()` -> Menu/Skill/Bridge 计划的 `.il` / `allegro.ilinit` 步骤携带 `textEncoding` -> `applyPlanEngine` 按版本写入。读取旧脚本使用 `readAllegroTextFile()` 自动识别 UTF-8/GBK；JSON 和历史文件不参与转码。菜单标签链：`MenuItemConfig.label + compatibilityLabel` -> `menu:generate-preview/menu:create-apply-plan` 注入目标版本 -> `resolveMenuDisplayLabel()`；17.2 的非 ASCII 原名必须映射到 ASCII 兼容名，17.4 继续输出中文原名。
 
 多环境提示链：菜单页加载当前环境为空时，IPC 只读检查注册表中的其他 `pcbenv/atm_generated`，返回存在源方案、恢复备份或旧 IL 的环境；不会自动跨环境复制，用户可选择切换查看或审阅显式复制计划。
 

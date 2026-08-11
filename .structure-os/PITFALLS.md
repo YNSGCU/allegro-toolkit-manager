@@ -419,7 +419,7 @@
 - Correct fix:
   1. 菜单加载结果必须携带活动环境，并只读提示其他环境中的源方案、备份或旧 IL。
   2. 仅当当前源仓库为空时扫描 ATM 自身备份；恢复必须经过 Apply Plan，且先只恢复源 JSON。
-  3. 用户审阅恢复内容后，再通过普通 Apply Plan 按目标版本重建派生 IL（17.2=GBK，17.4=UTF-8）。
+  3. 用户审阅恢复内容后，再通过普通 Apply Plan 以 UTF-8 重建菜单派生 IL；17.2 的启动/路径脚本才使用 GBK。
   4. 在目标 Allegro 会话执行 `atmLoadMenus` 或重启，确认运行时中文显示。
 - Guardrail: 禁止用旧 IL 的存在推断源方案完整；禁止自动跨环境复制；禁止不看目标版本就固定使用 GBK 或 UTF-8；恢复和派生文件生成保持两个显式确认步骤。
 - Related files: `core/menu/menuManager.ts`, `core/apply/applyPlanEngine.ts`, `electron/ipc/menu.ipc.ts`, `src/pages/MenuPage.tsx`
@@ -461,13 +461,26 @@
 - Area: Allegro 17.2/17.4、SKILL、`allegro.ilinit`、Apply Plan
 - Symptom: 真正隔离启动 17.2 后，Command 窗口把 `01-布局` 显示为 `01-甯冨眬`，随后所有中文目录中的 `.il` 都提示 `can't access file`。
 - Root cause: 17.2 Windows 会话按 CP936/GBK 读取启动 SKILL 文本，但现有 `allegro.ilinit` 是 UTF-8；UTF-8 中文字节被当作 GBK 解码。17.4 的已观测行为相反，固定 GBK 会显示为 `²âÊÔ`。
-- Wrong attempts: 全版本强制 UTF-8；全版本强制 GBK；只改菜单生成器而遗漏 Skill loader、bootstrap 和 ilinit；直接覆盖用户 pcbenv 文件。
-- Correct fix: 从活动环境的 `allegroVersion` 选择 17.2=GBK、17.4=UTF-8；读取旧 `.il`/`allegro.ilinit` 时自动识别 UTF-8/GBK，Apply Plan 步骤显式携带 `textEncoding` 后再写入。JSON、历史和备份清单始终为 UTF-8，备份/回滚按原始字节复制。
-- Guardrail: 编码策略只能应用于 Allegro 直接读取的 `.il`、`.ils` 和 `allegro.ilinit`；计划必须锁定环境并经过可信快照、备份和确认。未知版本默认维持 UTF-8并要求运行时验证。
+- Wrong attempts: 全版本强制 UTF-8；全版本强制 GBK；把启动脚本编码修复误认为能够补齐 17.2 动态菜单的 Unicode UI 能力；直接覆盖用户 pcbenv 文件。
+- Correct fix: 从活动环境的 `allegroVersion` 为脚本选择 17.2=GBK、17.4=UTF-8；读取旧文件时自动识别，Apply Plan 步骤显式携带 `textEncoding`。17.2 动态菜单标签另受 ASCII 限制；JSON、历史和备份清单始终为 UTF-8，备份/回滚按原始字节复制。
+- Guardrail: 编码策略必须同时区分目标版本和脚本职责；计划必须锁定环境并经过可信快照、备份和确认。未知版本默认维持 UTF-8 并要求运行时验证。
 - Related files: `core/environment/allegroTextEncoding.ts`, `core/apply/applyPlanEngine.ts`, `electron/ipc/menu.ipc.ts`, `electron/ipc/skill.profile.ipc.ts`, `electron/ipc/skill.apply.ipc.ts`
 - Detection: 检查原始字节；UTF-8 文件按 GBK 解码能稳定复现“甯冨眬”，GBK “测试”按西文代码页显示能稳定复现 `²âÊÔ`。
 - Verification: `tests/allegroTextEncoding.test.ts`、`tests/applyPlanEngine.test.ts` 覆盖版本映射、自动识别、精确字节和 JSON 不转码；真实 17.2/17.4 重启验证仍需人工完成。
-- Last seen: 2026-08-09
+- Last seen: 2026-08-11
+
+## PIT-2026-08-11-03: 17.2 动态菜单 API 不支持 Unicode 标签
+
+- Area: Allegro 17.2、菜单 UI、SKILL 文件编码、Apply Plan
+- Symptom: 顶层 ASCII 菜单名正常，但中文“器件”显示为 `Æ÷¼þ`，中文命令项全部呈现同类西文乱码。
+- Root cause: 17.2 的 SKILL 文件必须按 CP936/GBK 加载，而 `axlUIMenuInsert` 所在 UI 路径并不支持 Unicode；SKILL 字符串可以保存多字节序列，但 UI 逐字节显示。
+- Wrong attempts: 所有 `.il` 统一写成 GBK；把整个 `generated_menu.il` 改成 UTF-8；只清除旧菜单而不检查实际 `t_display` 字节；自动化命令没有确认 Command 输出就误认为热重载成功；在普通 `Command >` 直接输入 `load(...)`，导致 `Command not found`。
+- Correct fix: `MenuItemConfig.label` 保留中文原名，独立 `compatibilityLabel` 保存用户确认的 ASCII 英文名；预览和 Apply Plan 都按目标版本解析，17.2 缺失/非法时阻断，17.4 忽略兼容名。
+- Guardrail: 禁止再尝试 GBK/UTF-8/八进制转码来宣称修复 17.2 中文菜单；普通 `Command >` 热重载必须使用 `skill (load "...")`，并确认 `ATM: menu loaded` 后才算有效运行测试。
+- Related files: `core/environment/allegroTextEncoding.ts`, `core/menu/menuManager.ts`, `electron/ipc/menu.ipc.ts`, `docs/user/features/menu-recovery-and-encoding.md`
+- Detection: “器件”GBK `C6 F7 BC FE` 显示为 `Æ÷¼þ`；UTF-8 `E5 99 A8 E4 BB B6` 及其八进制等价序列显示为另一组西文乱码，证明 UI 未进行 Unicode 解码。
+- Verification: 17.2 S083 实机完成 GBK、UTF-8 文件、UTF-8 八进制三组对照；两个实验均已回滚。产品已实现 ASCII 兼容名字段、Renderer 校验、版本化生成和 GBK IL/UTF-8 JSON 集成测试；最终英文菜单仍需实机会话确认。
+- Last seen: 2026-08-11
 
 ## PIT-2026-08-11-02: electron-builder 并发发布会拆出两个同名 Draft Release
 

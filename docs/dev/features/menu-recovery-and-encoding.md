@@ -23,13 +23,16 @@
 
 ## 编码约定
 
-Allegro 直接读取的文本不能跨版本使用单一编码：17.2 及更早版本使用 CP936/GBK，17.4 使用 UTF-8。该策略覆盖 `generated_menu.il`、`generated_skill_loader.il`、`bootstrap.il` 和 `allegro.ilinit`；`menu_profile.json`、历史记录等 ATM 数据始终保持 UTF-8。
+Allegro 直接加载的脚本按版本编码：17.2 及更早版本使用 CP936/GBK，17.4 使用 UTF-8。17.2 的动态菜单 API `axlUIMenuInsert` 不具备 Unicode UI 支持：GBK 中文按西文字节显示，UTF-8 原文或 UTF-8 八进制转义同样被逐字节显示。
 
-读取现有脚本时先按字节自动识别 UTF-8/GBK，写入时再按当前环境版本统一编码。这样可以把 17.2 中误写为 UTF-8、显示为“甯冨眬”的路径安全转换为 GBK，同时不会把 17.4 的脚本错误转码成显示为 `²âÊÔ` 的 GBK 字节。所有转换都属于普通 Apply Plan 步骤，必须先备份、预览并确认。
+`MenuItemConfig.label` 始终保存用户的中文原名，`compatibilityLabel` 保存可选的 17.2 ASCII 显示名。`generateMenuIlContent(profile, { allegroVersion })` 与 `getMenuApplyPlanSteps(..., { allegroVersion })` 通过同一个版本策略选择标签：17.2 及更早版本遇到非 ASCII 原名时必须使用合法 `compatibilityLabel`，否则生成失败；17.4 及以后忽略兼容名并输出原始 `label`。Renderer 编辑器在 17.2 环境中同步执行必填和可打印 ASCII 校验。
+
+读取现有脚本时先按字节自动识别 UTF-8/GBK，写入时由 Apply Plan 附加目标版本编码。禁止为了修复标签而把整个 17.2 `.il` 改成 UTF-8，也禁止把八进制字节转义宣传为 Unicode UI 修复。所有写入仍必须先备份、预览并确认。
 
 ## 可信度与验证
 
 - 官方文档确认：`axlUIMenuInsert` 接收显示字符串，可用于插入 popup、command 和 separator；触发器回调有既有 API 限制。
-- 项目证据确认：17.4 旧 IL 中“测试”为 GBK 字节，截图显示为 `²âÊÔ`；17.2 的 UTF-8 `allegro.ilinit` 路径被按 GBK 解释为“甯冨眬”，两类乱码可由原始字节稳定复现。
-- 静态验证：版本策略、UTF-8/GBK 自动识别、两种编码精确字节、JSON 保持 UTF-8、跨环境复制、切换保护、原子保存、回滚/撤销和 IPC/Renderer 契约由 Vitest 覆盖。
-- 运行时边界：17.2 与 17.4 仍需分别在目标会话重启后确认中文菜单和 Skill 路径；完成前运行时状态为 provisional。
+- 官方 17.2 文档确认：`axlUIMenuInsert` 的 `t_display` 是普通显示字符串；Cadence 官方专家说明 SKILL 字符串可以存储 Unicode 字节，但同代 UI 控件并不会统一解释为 Unicode。
+- 项目实机确认：17.2 S083 的 GBK 中文、UTF-8 整体脚本和 UTF-8 八进制字节均显示为乱码；八进制实验已通过 Apply Plan 撤销。
+- 静态验证：脚本版本编码、17.2/17.4 标签选择、兼容名 UI 校验、GBK IL 与 UTF-8 JSON 分流、原子保存、回滚/撤销和 IPC/Renderer 契约由 Vitest 覆盖。
+- 运行时边界：ASCII 标签是 17.2 当前可信的兼容范围；中文动态菜单标签标记为不支持，英文兼容名仍需在目标 17.2 会话确认视觉结果。

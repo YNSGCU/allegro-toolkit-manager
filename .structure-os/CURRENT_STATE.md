@@ -1,5 +1,16 @@
 # Current State
 
+## 2026-08-11 17.2 菜单英文兼容显示名
+- 数据模型新增 `compatibilityLabel`：ATM 方案的 `label` 继续保存中文原名，17.2 及更早版本生成 IL 时使用用户确认的可打印 ASCII 显示名，17.4 继续使用中文原名。
+- 菜单编辑器在 17.2 中文项上将兼容名标为必填并阻止非法保存；预览、可信 Apply Plan 和旧兼容入口统一传入活动 Allegro 版本，避免预览与实际写入不一致。
+- 验证：菜单生成、Renderer 表单和临时 pcbenv GBK IL/UTF-8 JSON 定向测试共 25 项通过；完整门禁 69 个测试文件 / 412 项、双端类型检查与生产构建全绿。当前真实 17.2 配置已通过 Apply Plan 写入英文标签，视觉结果待会话加载确认。
+
+## 2026-08-11 17.2 中文动态菜单限制确认与实验回滚
+- 实机证据：17.2 当前 `generated_menu.il` 中“器件”为 GBK 字节 `C6 F7 BC FE`，运行菜单显示为 `Æ÷¼þ`；这与此前 17.2 启动脚本必须用 GBK 的路径证据形成职责差异。
+- 根因：17.2 SKILL 加载器要求 GBK，而 `axlUIMenuInsert` 所在 UI 路径不支持 Unicode；GBK、UTF-8 整体脚本和 UTF-8 八进制字节会分别产生不同乱码。
+- 处理：两个编码实验均已通过 Apply Plan 撤销；最终实现采用独立 ASCII `compatibilityLabel`，不再尝试对中文标签转码。
+- 验证：同一台 17.2 S083 实机完成三种字节路径对照；完整门禁 68 个测试文件 / 407 项此前已通过，回滚后代码与测试恢复基线。当前会话的重复菜单需执行 `skill (atmDeleteMenus)` 或重启清理。
+
 ## 2026-08-11 17.2 加载 17.4 遗留菜单回归修复
 - 实机证据：运行进程是 17.2，但 Windows `HOME/CDSROOT` 指向 17.4；17.2 已保存 `MySkill` 草稿却没有派生 IL/bootstrap，17.4 则仍有 7 月 GBK“测试”菜单，字节与截图 `²âÊÔ` 一致。
 - 根因：侧栏隔离启动入口曾被移除，用户只能从桌面启动 17.2，进程继续继承 17.4 HOME；同时草稿保存不等于执行菜单 Apply Plan。
@@ -28,12 +39,12 @@
 - “切换环境”仍只切换 ATM 管理目标；因桌面启动器会继承错误 HOME，侧栏已恢复独立的“按此环境启动”入口。
 
 ## Snapshot
-- 2026-08-09：确认真实 17.2 会把 UTF-8 `allegro.ilinit` 按 CP936/GBK 读取，中文路径因此变成“甯冨眬”并加载失败；已实现 17.2=GBK、17.4=UTF-8 的版本编码策略、旧文件自动识别及 Apply Plan 安全转码，等待真实会话重启复测。
+- 2026-08-09：确认真实 17.2 会把 UTF-8 `allegro.ilinit` 按 CP936/GBK 读取，中文路径因此变成“甯冨眬”并加载失败；脚本实现 17.2=GBK、17.4=UTF-8，菜单标签额外使用 UTF-8 字节八进制转义。
 - 2026-08-09：定位到“打开 17.2 仍显示 17.4 乱码菜单”的根因是 Windows `HOME/CDSROOT` 仍指向 17.4；新增按所选环境隔离启动链路与 HOME 不匹配告警。定向测试和前后端类型检查通过，17.2 实机仍待复测。
 - Last updated: 2026-08-11
 - Current branch: master；v0.3.1 已发布，应用内检查更新无反馈、统一工作区安全与一致性缺陷已修复
 - App status: 七个侧栏入口（统一工作区/快捷键/Skill/菜单/配色/备份与恢复/系统状态）；工作区支持环境与四类方案绑定、复制、预览和顺序应用；配色支持捕获、自定义颜色、应用预览与撤销
-- Test status: 67 files / 403 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
+- Test status: 69 files / 412 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、17.2 英文兼容显示名、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
 - Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认
 
 ## Implemented Behavior
@@ -46,7 +57,7 @@
 - Menu 拖放状态由整棵树共享，不依赖 Chromium `dragover` 读取 DataTransfer；同级项目向上或向下拖动都会实际换位，并显示目标行反馈。
 - 环境下拉框按 Allegro 版本唯一；同版本多个 `pcbenv` 候选优先保留当前选择，否则优先版本安装目录配置。刷新会重建共享关系并移除已消失的自动记录。
 - 配色页手动桥接命令使用运行时发现的 `serverFile`，不再包含开发机用户名；空状态不再重复展示捕获按钮。
-- Menu、Skill Profile、Skill Toggle 和 Vibe Bridge 计划按环境版本标注 Allegro 文本编码；旧 UTF-8/GBK 脚本可自动识别，JSON 与历史记录保持 UTF-8。
+- Menu、Skill Profile、Skill Toggle 和 Vibe Bridge 脚本按环境版本标注 Allegro 文本编码；17.2 菜单标签使用用户确认的 ASCII 兼容名，17.4 使用中文原名；旧 UTF-8/GBK 脚本可自动识别，JSON 与历史记录保持 UTF-8。
 
 - Environment page locates and inspects Allegro config paths.
 - Hotkey page supports layered visualization, conflict checks, profile preview/application, import/export, and change history.

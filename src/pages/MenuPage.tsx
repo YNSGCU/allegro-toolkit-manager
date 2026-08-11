@@ -1218,6 +1218,7 @@ const MenuPage: React.FC = () => {
                   onSelectCommand={handleOpenCommandSelector}
                   onNavigateSkill={handleNavigateSkill}
                   onNavigateHotkey={handleNavigateHotkey}
+                  allegroVersion={environment?.version}
                 />
               </div>
             )}

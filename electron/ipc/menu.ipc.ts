@@ -273,8 +273,11 @@ export function registerMenuIpc(): void {
   // ═══════════════════════════════════════════════════
   ipcMain.handle('menu:generate-preview', async (_event, profileJson: string) => {
     try {
+      const envInfo = locateEnvironment();
       const profile = JSON.parse(profileJson);
-      const ilContent = generateMenuIlContent(profile);
+      const ilContent = generateMenuIlContent(profile, {
+        allegroVersion: envInfo.allegroVersion,
+      });
       const counts = countMenuItems(profile.items || []);
       return {
         success: true,
@@ -315,8 +318,15 @@ export function registerMenuIpc(): void {
       currentStore.updatedAt = new Date().toISOString();
 
       // 生成步骤
-      const steps = getMenuApplyPlanSteps(profilePath, menuIlPath, profile, currentStore);
-      const risks = getMenuApplyPlanRisks(profile);
+      const generationOptions = { allegroVersion: envInfo.allegroVersion };
+      const steps = getMenuApplyPlanSteps(
+        profilePath,
+        menuIlPath,
+        profile,
+        currentStore,
+        generationOptions,
+      );
+      const risks = getMenuApplyPlanRisks(profile, generationOptions);
 
       // 检查 bootstrap
       const bootstrapCheck = checkBootstrapMenuLoad(atmDir);
@@ -618,7 +628,13 @@ export function registerMenuIpc(): void {
       const menuIlPath = path.join(atmDir, 'generated_menu.il');
 
       const store = loadMenuProfileStore(atmDir);
-      const steps = getMenuApplyPlanSteps(profilePath, menuIlPath, getActiveProfile(store)!, store);
+      const steps = getMenuApplyPlanSteps(
+        profilePath,
+        menuIlPath,
+        getActiveProfile(store)!,
+        store,
+        { allegroVersion: envInfo.allegroVersion },
+      );
       const plan = createApplyPlan({
         title: '更新菜单配置',
         module: 'menu',
@@ -647,10 +663,13 @@ export function registerMenuIpc(): void {
    */
   ipcMain.handle('menu:preview-il', async () => {
     try {
+      const envInfo = locateEnvironment();
       const atmDir = getAtmDir();
       const store = loadMenuProfileStore(atmDir);
       const profile = getActiveProfile(store);
-      const ilContent = profile ? generateMenuIlContent(profile) : ';; 暂无菜单配置';
+      const ilContent = profile
+        ? generateMenuIlContent(profile, { allegroVersion: envInfo.allegroVersion })
+        : ';; 暂无菜单配置';
       return { success: true, data: ilContent };
     } catch (err) {
       return { success: false, error: `预览菜单 IL 失败: ${(err as Error).message}` };

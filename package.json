@@ -1,6 +1,6 @@
 {
   "name": "allegro-toolkit-manager",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Allegro Personal Config Manager - 涓汉 Allegro 宸ヤ綔鐜閰嶇疆绠＄悊宸ュ叿",
   "author": "ATM Contributors",
   "main": "dist-electron/electron/main.js",
