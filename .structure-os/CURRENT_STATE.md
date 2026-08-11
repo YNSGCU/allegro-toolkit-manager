@@ -1,5 +1,12 @@
 # Current State
 
+## 2026-08-12 菜单方案跨电脑导入导出
+- 新增 `.atmmenu` 单方案包：保存菜单结构、命令、来源版本和 17.2 兼容显示名，导出时剥离本机 Skill 绝对路径和环境 ID。
+- 菜单页工作区工具提供导出、导入；导入摘要显示名称/ID 冲突、来源/目标版本、命令依赖和 17.2 兼容警告。
+- 导入重新生成 Profile/Item ID 与父子路径，同名自动加“（导入）”，只通过可信 Apply Plan 合并为新草稿，不覆盖现有方案、不生成 IL。
+- 支持 `.atmmenu`、单 Profile JSON 和旧 `menu_profile.json`；5 MB / 5000 项上限和主进程二次校验防止异常输入。
+- 验证：`npm run verify` 全绿，71 个测试文件 / 419 项通过；安全审计、Lint、格式、双端 TypeScript 和生产构建均通过。
+
 ## 2026-08-11 17.2 菜单英文兼容显示名
 - 数据模型新增 `compatibilityLabel`：ATM 方案的 `label` 继续保存中文原名，17.2 及更早版本生成 IL 时使用用户确认的可打印 ASCII 显示名，17.4 继续使用中文原名。
 - 菜单编辑器在 17.2 中文项上将兼容名标为必填并阻止非法保存；预览、可信 Apply Plan 和旧兼容入口统一传入活动 Allegro 版本，避免预览与实际写入不一致。
@@ -45,7 +52,7 @@
 - Last updated: 2026-08-11
 - Current branch: master；v0.3.4 已发布，17.2 菜单使用独立 ASCII 兼容显示名，17.4 继续使用中文原名
 - App status: 七个侧栏入口（统一工作区/快捷键/Skill/菜单/配色/备份与恢复/系统状态）；工作区支持环境与四类方案绑定、复制、预览和顺序应用；配色支持捕获、自定义颜色、应用预览与撤销
-- Test status: 69 files / 412 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/切换保护、17.2 英文兼容显示名、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
+- Test status: 71 files / 419 tests pass；新增工作区目标固定、确认前环境复检、原子持久化、可信 Apply Plan、绑定配置、动态桥接路径、菜单保存/跨环境复制/导入导出/切换保护、17.2 英文兼容显示名、菜单双栏滚动、菜单拖拽 protected-mode/相邻换位、环境按版本唯一/陈旧关系清理、版本编码策略、官方更新源兜底和检查超时覆盖
 - Validation status: security audit, ESLint, Prettier, 前后端 TypeScript, 全量测试, renderer build, `npm run verify` 全绿, Windows 解包版生成；生产路由/资源/asar 巡检通过；Electron 窗口级实机与真实 Allegro 写入仍需桌面会话手动确认
 
 ## Implemented Behavior

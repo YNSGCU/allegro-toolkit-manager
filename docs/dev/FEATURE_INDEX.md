@@ -14,3 +14,4 @@
 | settings-backup-restore | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
 | workspace-unified-profile | complete（M1-M4） | `docs/user/features/workspace-unified-profile.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
 | menu-recovery-and-encoding | complete | `docs/user/features/menu-recovery-and-encoding.md` | `docs/dev/features/menu-recovery-and-encoding.md` | 2026-08-10 |
+| menu-profile-transfer | complete | `docs/user/features/menu-profile-transfer.md` | `docs/dev/features/menu-profile-transfer.md` | 2026-08-12 |

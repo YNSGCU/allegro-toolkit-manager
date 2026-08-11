@@ -71,6 +71,8 @@ Allegro 文本编码链：`locateEnvironment().allegroVersion` -> `getAllegroTex
 
 菜单树排序链：src/components/MenuTree.tsx -> src/pages/MenuPage.tsx -> src/utils/menuTreeOrder.ts -> 现有 Menu Apply Plan。拖动仅改变同级 order，不直接触发 IPC 写入。
 
+菜单方案迁移链：`MenuPage` 工作区工具 -> `menu:export-profile/menu:open-import-profile/menu:create-import-plan` -> `core/menu/menuProfileTransfer.ts` -> 重新生成 Profile/Item ID、清除本机 Skill 路径、检查版本与名称冲突 -> 可信一次性 Menu Apply Plan -> 仅合并目标 `menu_profile.json` 为新草稿 -> `loadData()` 刷新。导入阶段不生成 IL，后续应用仍走普通菜单计划。
+
 
 ### Application Update
 

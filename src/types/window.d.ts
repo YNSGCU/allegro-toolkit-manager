@@ -7,6 +7,7 @@ import type { EnvironmentInfo, EnvSourceList, AtmSettings, EnvironmentRegistry, 
 import type { EnvImportPreview, ImportResult, ImportExecuteParams } from './importEnv';
 import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, SkillConfigFile, UsageTreeNode } from './skill';
 import type { RuntimeInfo } from './runtime';
+import type { MenuProfileImportPreview } from './menu';
 import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
 import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
@@ -193,6 +194,22 @@ declare global {
       menuCreateRecoveryPlan: () => Promise<{ success: boolean; data?: any; error?: string }>;
       /** 从其他 Allegro 环境复制菜单方案到当前环境 */
       menuCreateEnvironmentCopyPlan: (sourceEnvironmentId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+      /** 导出单个菜单方案为 .atmmenu */
+      menuExportProfile: (profileId: string) => Promise<{
+        success: boolean;
+        data?: { filePath: string; fileName: string; itemCount: number } | null;
+        error?: string;
+        info?: string;
+      }>;
+      /** 选择菜单方案包并返回只读导入摘要 */
+      menuOpenImportProfile: () => Promise<{
+        success: boolean;
+        data?: MenuProfileImportPreview | null;
+        error?: string;
+        info?: string;
+      }>;
+      /** 为选中的菜单方案包生成可信导入计划 */
+      menuCreateImportPlan: (filePath: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       /** 执行菜单 Apply Plan */
       menuExecuteApplyPlan: (planJson: string) => Promise<{
         success: boolean;

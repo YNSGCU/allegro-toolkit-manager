@@ -14,6 +14,7 @@ interface UseMenuApplyPlanReturn {
   generatePlan: (profileJson: string, storeJson?: string) => Promise<void>;
   generateRecoveryPlan: () => Promise<void>;
   generateEnvironmentCopyPlan: (sourceEnvironmentId: string) => Promise<void>;
+  generateImportPlan: (filePath: string) => Promise<boolean>;
   executePlan: () => Promise<boolean>;
   clearPlan: () => void;
   clearResult: () => void;
@@ -76,13 +77,35 @@ export function useMenuApplyPlan(): UseMenuApplyPlanReturn {
     }
   }, []);
 
+  const generateImportPlan = useCallback(async (filePath: string) => {
+    try {
+      setApplyResult(null);
+      setApplyError(null);
+      const res = await window.atm.menuCreateImportPlan(filePath);
+      if (res.success && res.data) {
+        setPendingPlan(res.data);
+        return true;
+      } else {
+        setApplyError(res.error || '生成菜单导入计划失败');
+        setPendingPlan(null);
+        return false;
+      }
+    } catch (err) {
+      setApplyError(`生成菜单导入计划异常: ${(err as Error).message}`);
+      setPendingPlan(null);
+      return false;
+    }
+  }, []);
+
   const executePlan = useCallback(async (): Promise<boolean> => {
     if (!pendingPlan) return false;
     setApplying(true);
     try {
       const res = await window.atm.menuExecuteApplyPlan(JSON.stringify(pendingPlan));
       if (res.success) {
-        setApplyResult(`执行成功：已应用 ${res.appliedSteps}/${res.totalSteps} 步。请关闭旧 Allegro 窗口并从左下角按当前环境启动，或在同环境会话中重新加载菜单。`);
+        setApplyResult(pendingPlan.requiresRestart
+          ? `执行成功：已应用 ${res.appliedSteps}/${res.totalSteps} 步。请关闭旧 Allegro 窗口并从左下角按当前环境启动，或在同环境会话中重新加载菜单。`
+          : `执行成功：已完成 ${res.appliedSteps}/${res.totalSteps} 步，菜单草稿已更新。`);
         setPendingPlan(null);
         setApplying(false);
         return true;
@@ -115,6 +138,7 @@ export function useMenuApplyPlan(): UseMenuApplyPlanReturn {
     generatePlan,
     generateRecoveryPlan,
     generateEnvironmentCopyPlan,
+    generateImportPlan,
     executePlan,
     clearPlan,
     clearResult,

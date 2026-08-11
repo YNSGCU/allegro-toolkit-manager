@@ -11,3 +11,4 @@
 | application-updates | complete | `docs/user/features/application-updates.md` | `docs/dev/features/application-updates.md` | 2026-08-10 |
 | workspace-unified-profile | complete | `docs/user/features/workspace-unified-profile.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-08 |
 | menu-recovery-and-encoding | complete | `docs/user/features/menu-recovery-and-encoding.md` | `docs/dev/features/menu-recovery-and-encoding.md` | 2026-08-10 |
+| menu-profile-transfer | complete | `docs/user/features/menu-profile-transfer.md` | `docs/dev/features/menu-profile-transfer.md` | 2026-08-12 |

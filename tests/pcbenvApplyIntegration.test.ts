@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createApplyPlan,
+  createBackupStep,
   executeApplyPlan,
   getChangeHistory,
   undoLastChange as undoUnifiedPlan,
@@ -16,6 +17,12 @@ import {
 import { undoLastChange as undoHotkeyChange } from '../core/changeHistory/changeHistory';
 import { generateSkillProfileLoader } from '../core/skill/skillProfileManager';
 import { getMenuApplyPlanSteps } from '../core/menu/menuManager';
+import {
+  createMenuProfilePackage,
+  importMenuProfilePackage,
+  parseMenuProfilePackage,
+  serializeMenuProfilePackage,
+} from '../core/menu/menuProfileTransfer';
 import { decodeAllegroText } from '../core/environment/allegroTextEncoding';
 import { createDefaultSkillProfile } from '../src/types/skillProfile';
 import type { MenuProfile, MenuProfileStore } from '../src/types/menu';
@@ -163,6 +170,64 @@ describe('临时 pcbenv Skill 方案事务', () => {
 });
 
 describe('临时 pcbenv 菜单方案事务', () => {
+  it('把另一台电脑导出的菜单包通过 Apply Plan 合并为可撤销的新草稿', async () => {
+    const pcbenv = createPcbenv('atm-menu-transfer-');
+    const atmDir = path.join(pcbenv, 'atm_generated');
+    const profilePath = path.join(atmDir, 'menu_profile.json');
+    const backupDir = path.join(atmDir, 'backups');
+    const historyDir = path.join(atmDir, 'history');
+    fs.mkdirSync(atmDir, { recursive: true });
+    const currentStore: MenuProfileStore = {
+      version: '2.0',
+      activeProfileId: 'default',
+      appliedProfileId: 'default',
+      profiles: [{
+        id: 'default', name: '默认菜单方案', enabled: true, items: [],
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      }],
+      updatedAt: new Date().toISOString(),
+    };
+    fs.writeFileSync(profilePath, JSON.stringify(currentStore, null, 2), 'utf8');
+    const sourceProfile: MenuProfile = {
+      id: 'source-profile',
+      name: '办公室菜单',
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      items: [{
+        id: 'source-root', label: 'Office Tools', type: 'menu', path: ['Office Tools'], order: 0,
+        menuSource: 'atm_managed', enabled: true, visible: true, status: 'normal', children: [],
+      }],
+    };
+    const parsed = parseMenuProfilePackage(serializeMenuProfilePackage(
+      createMenuProfilePackage(sourceProfile, { allegroVersion: '17.4' }, '0.3.4'),
+    ));
+    const imported = importMenuProfilePackage(currentStore, parsed, {
+      fileName: 'office.atmmenu', targetEnvironmentId: 'home-pc', targetAllegroVersion: '17.2',
+    });
+    const backup = createBackupStep(profilePath, backupDir);
+    const plan = createApplyPlan({
+      title: '导入菜单方案',
+      module: 'menu',
+      steps: [backup.step, {
+        type: 'update_json',
+        title: '合并菜单方案',
+        targetFile: profilePath,
+        after: JSON.stringify(imported.store, null, 2),
+      }],
+      backups: [backup.backup],
+      requiresRestart: false,
+    });
+
+    expect((await executeApplyPlan(plan, { backupDir, historyDir })).success).toBe(true);
+    const written = JSON.parse(fs.readFileSync(profilePath, 'utf8')) as MenuProfileStore;
+    expect(written.profiles.map(item => item.name)).toEqual(['默认菜单方案', '办公室菜单']);
+    expect(written.activeProfileId).toBe(written.profiles[1].id);
+    expect(written.appliedProfileId).toBe('default');
+    expect((await undoUnifiedPlan(historyDir, backupDir)).success).toBe(true);
+    expect(JSON.parse(fs.readFileSync(profilePath, 'utf8')).profiles).toHaveLength(1);
+  });
+
   it('17.2 菜单脚本写入 GBK 英文显示名，同时 JSON 保留中文原名', async () => {
     const pcbenv = createPcbenv('atm-menu-172-compat-');
     const atmDir = path.join(pcbenv, 'atm_generated');

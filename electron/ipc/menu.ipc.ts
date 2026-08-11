@@ -8,13 +8,16 @@
  * - menu:generate-preview   预览 generated_menu.il
  * - menu:create-apply-plan  生成 Apply Plan
  * - menu:execute-apply-plan 执行菜单 Apply Plan
+ * - menu:export-profile     导出单个菜单方案包
+ * - menu:open-import-profile 选择并预览菜单方案包
+ * - menu:create-import-plan 生成菜单方案导入 Apply Plan
  * - menu:load               兼容旧版 — 加载菜单配置
  * - menu:save               兼容旧版 — 保存菜单配置
  * - menu:preview-il         兼容旧版 — 预览 IL
  * - menu:generate-plan      兼容旧版 — 生成 Apply Plan
  * - menu:check-bootstrap    检查 bootstrap 加载
  */
-import { ipcMain } from 'electron';
+import { app, dialog, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
@@ -44,9 +47,27 @@ import { generateBootstrapLines } from '../../core/generator/generateBootstrap';
 import { insertBootstrapToIlinit } from '../../core/generator/generateManagedEnvBlock';
 import { scanEnhancedSkills } from '../../core/skill/enhancedScan';
 import { buildMenuCommandCatalog } from '../../core/menu/menuCommandCatalog';
+import {
+  MENU_PROFILE_PACKAGE_EXTENSION,
+  createMenuProfilePackage,
+  importMenuProfilePackage,
+  parseMenuProfilePackage,
+  previewMenuProfileImport,
+  sanitizeMenuProfileFileName,
+  serializeMenuProfilePackage,
+} from '../../core/menu/menuProfileTransfer';
 import type { ApplyPlan, ApplyPlanStepType } from '../../src/types/applyPlan';
 import type { MenuProfile } from '../../src/types/menu';
 import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
+
+const MAX_MENU_PROFILE_IMPORT_BYTES = 5 * 1024 * 1024;
+
+function readMenuProfileImportFile(filePath: string): string {
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile()) throw new Error('选择的路径不是文件');
+  if (stat.size > MAX_MENU_PROFILE_IMPORT_BYTES) throw new Error('菜单方案文件超过 5 MB，拒绝导入');
+  return fs.readFileSync(filePath, 'utf-8');
+}
 
 /** 获取 atm_generated 目录路径 */
 function getAtmDir(): string {
@@ -217,6 +238,136 @@ export function registerMenuIpc(): void {
       return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
     } catch (err) {
       return { success: false, error: `生成跨环境菜单复制计划失败: ${(err as Error).message}` };
+    }
+  });
+
+  // 导出当前单个菜单方案为便携 .atmmenu 文件。
+  ipcMain.handle('menu:export-profile', async (_event, profileId: string) => {
+    try {
+      const envInfo = locateEnvironment();
+      const atmDir = getAtmDir();
+      const store = loadMenuProfileStore(atmDir);
+      const profile = store.profiles.find(item => item.id === profileId);
+      if (!profile) return { success: false, error: '未找到要导出的菜单方案' };
+
+      const profilePackage = createMenuProfilePackage(profile, {
+        environmentName: envInfo.allegroVersion ? `Allegro ${envInfo.allegroVersion}` : '当前环境',
+        allegroVersion: envInfo.allegroVersion ?? null,
+      }, app.getVersion());
+      const defaultName = `${sanitizeMenuProfileFileName(profile.name)}.${MENU_PROFILE_PACKAGE_EXTENSION}`;
+      const result = await dialog.showSaveDialog({
+        title: '导出菜单方案',
+        defaultPath: defaultName,
+        filters: [
+          { name: 'ATM 菜单方案', extensions: [MENU_PROFILE_PACKAGE_EXTENSION] },
+          { name: 'JSON 文件', extensions: ['json'] },
+        ],
+      });
+      if (result.canceled || !result.filePath) {
+        return { success: true, data: null, info: '取消导出' };
+      }
+
+      fs.writeFileSync(result.filePath, serializeMenuProfilePackage(profilePackage), 'utf-8');
+      return {
+        success: true,
+        data: {
+          filePath: result.filePath,
+          fileName: path.basename(result.filePath),
+          itemCount: countMenuItems(profile.items || []).total,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `导出菜单方案失败: ${(err as Error).message}` };
+    }
+  });
+
+  // 选择并解析菜单方案文件，只返回摘要，不写入当前环境。
+  ipcMain.handle('menu:open-import-profile', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: '导入菜单方案',
+        properties: ['openFile'],
+        filters: [
+          { name: 'ATM 菜单方案', extensions: [MENU_PROFILE_PACKAGE_EXTENSION] },
+          { name: 'JSON 文件', extensions: ['json'] },
+          { name: '所有文件', extensions: ['*'] },
+        ],
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null, info: '取消选择' };
+      }
+
+      const filePath = result.filePaths[0];
+      const parsed = parseMenuProfilePackage(readMenuProfileImportFile(filePath));
+      const envInfo = locateEnvironment();
+      const store = loadMenuProfileStore(getAtmDir());
+      const preview = previewMenuProfileImport(store, parsed, {
+        filePath,
+        fileName: path.basename(filePath),
+        targetEnvironmentId: envInfo.environmentId ?? null,
+        targetAllegroVersion: envInfo.allegroVersion ?? null,
+      });
+      return { success: true, data: preview };
+    } catch (err) {
+      return { success: false, error: `读取菜单方案失败: ${(err as Error).message}` };
+    }
+  });
+
+  // 重新读取所选文件并构造可信 Apply Plan。只合并为新草稿，不生成或加载菜单 IL。
+  ipcMain.handle('menu:create-import-plan', async (_event, filePath: string) => {
+    try {
+      const envInfo = locateEnvironment();
+      const atmDir = getAtmDir();
+      const store = loadMenuProfileStore(atmDir);
+      const parsed = parseMenuProfilePackage(readMenuProfileImportFile(filePath));
+      const imported = importMenuProfilePackage(store, parsed, {
+        filePath,
+        fileName: path.basename(filePath),
+        targetEnvironmentId: envInfo.environmentId ?? null,
+        targetAllegroVersion: envInfo.allegroVersion ?? null,
+      });
+      const profilePath = getMenuProfilePath(atmDir);
+      const backupDir = path.join(atmDir, 'backups');
+      const backupEntry = fs.existsSync(profilePath) ? createBackupStep(profilePath, backupDir) : null;
+      const plan = createApplyPlan({
+        title: `导入菜单方案“${imported.profile.name}”`,
+        description: `从 ${path.basename(filePath)} 导入 ${imported.preview.itemCount} 个菜单项；导入后仅保存为草稿。`,
+        module: 'menu',
+        steps: [
+          ...(backupEntry ? [backupEntry.step] : []),
+          {
+            type: 'update_json',
+            title: '合并菜单方案',
+            description: `新增方案“${imported.profile.name}”，不覆盖现有方案`,
+            targetFile: profilePath,
+            after: JSON.stringify(imported.store, null, 2),
+          },
+        ],
+        backups: backupEntry ? [backupEntry.backup] : [],
+        risks: [
+          {
+            id: 'menu-import-draft-only',
+            severity: 'info',
+            title: '导入后仅保存为草稿',
+            description: '本计划不会生成 generated_menu.il，也不会立即改变 Allegro 菜单。',
+          },
+          ...imported.preview.warnings.map((warning, index) => ({
+            id: `menu-import-warning-${index}`,
+            severity: imported.preview.compatibilityWarningCount > 0 && warning.includes('英文兼容显示名')
+              ? 'warning' as const
+              : 'info' as const,
+            title: '导入检查提示',
+            description: warning,
+          })),
+        ],
+        requiresRestart: false,
+        targetFiles: [profilePath],
+        environmentId: envInfo.environmentId ?? null,
+        environmentPcbenvPath: envInfo.pcbenvPath,
+      });
+      return { success: true, data: registerTrustedApplyPlan(plan, 'menu') };
+    } catch (err) {
+      return { success: false, error: `生成菜单导入计划失败: ${(err as Error).message}` };
     }
   });
 

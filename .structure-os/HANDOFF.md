@@ -1,5 +1,12 @@
 # Handoff
 
+## 2026-08-12 菜单方案跨电脑导入导出
+
+- 完整链路：`MenuPage` -> preload -> 三个 `menu:*` IPC -> `menuProfileTransfer.ts` -> trusted Apply Plan -> `menu_profile.json` -> 页面刷新。
+- 导出格式为 UTF-8 `.atmmenu` schema 1；清除本机 `sourceSkillFile/sourceEnvironmentId`。导入兼容旧 Store/Profile JSON，全部 ID/路径重建并只增加一个草稿。
+- 风险边界：不携带 Skill 文件；跨版本和 17.2 缺兼容名只警告并允许导入，普通菜单应用阶段继续执行严格校验。
+- 定向测试覆盖核心包、导入对话框、preload 链和临时 pcbenv 事务；完整 `npm run verify` 通过，71 个测试文件 / 419 项全绿。
+
 ## 2026-08-11 17.2 菜单英文兼容显示名
 
 - 实现：`MenuItemConfig.compatibilityLabel` 保存 17.2 可打印 ASCII 显示名，`label` 保留中文；`resolveMenuDisplayLabel()` 按目标版本决定 IL 输出，17.2 缺失/非法时阻断，17.4 继续中文。

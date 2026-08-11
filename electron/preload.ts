@@ -438,6 +438,18 @@ contextBridge.exposeInMainWorld('atm', {
   menuCreateEnvironmentCopyPlan: (sourceEnvironmentId: string) =>
     ipcRenderer.invoke('menu:create-environment-copy-plan', sourceEnvironmentId),
 
+  /** 导出单个菜单方案为便携包 */
+  menuExportProfile: (profileId: string) =>
+    ipcRenderer.invoke('menu:export-profile', profileId),
+
+  /** 选择并预览菜单方案包 */
+  menuOpenImportProfile: () =>
+    ipcRenderer.invoke('menu:open-import-profile'),
+
+  /** 生成菜单方案导入 Apply Plan */
+  menuCreateImportPlan: (filePath: string) =>
+    ipcRenderer.invoke('menu:create-import-plan', filePath),
+
   /** 执行菜单 Apply Plan */
   menuExecuteApplyPlan: (planJson: string) =>
     ipcRenderer.invoke('menu:execute-apply-plan', planJson),

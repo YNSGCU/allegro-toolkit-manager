@@ -1135,6 +1135,105 @@
 .menu-operation-toast--success { border-color: #a8d7b6; color: var(--ui-success); }
 .menu-operation-toast--error { border-color: #efb3b3; color: var(--ui-danger); }
 
+.menu-transfer-file,
+.menu-transfer-ready,
+.menu-transfer-warnings > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-transfer-file {
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-surface-subtle);
+}
+
+.menu-transfer-file svg,
+.menu-transfer-ready svg,
+.menu-transfer-warnings svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.menu-transfer-file > div,
+.menu-transfer-commands {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.menu-transfer-file span,
+.menu-transfer-commands span {
+  color: var(--ui-text-muted);
+  font-size: 12px;
+}
+
+.menu-transfer-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-border);
+}
+
+.menu-transfer-summary > div {
+  padding: 10px 12px;
+  background: var(--ui-surface);
+}
+
+.menu-transfer-summary dt {
+  margin-bottom: 4px;
+  color: var(--ui-text-muted);
+  font-size: 11px;
+}
+
+.menu-transfer-summary dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.menu-transfer-commands,
+.menu-transfer-warnings,
+.menu-transfer-ready {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.menu-transfer-commands {
+  border: 1px solid var(--ui-border);
+}
+
+.menu-transfer-warnings {
+  border: 1px solid #e6c66b;
+  background: #fff9e8;
+  color: #795b08;
+}
+
+.menu-transfer-warnings ul {
+  margin: 8px 0 0 28px;
+  padding: 0;
+}
+
+.menu-transfer-warnings li + li { margin-top: 5px; }
+
+.menu-transfer-ready {
+  border: 1px solid #a8d7b6;
+  background: #f0faf3;
+  color: var(--ui-success);
+}
+
+@media (max-width: 760px) {
+  .menu-transfer-summary { grid-template-columns: 1fr; }
+}
+
 .menu-recovery-banner {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

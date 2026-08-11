@@ -494,3 +494,15 @@
 - Detection: 发布日志出现两次 `creating GitHub release`；API 返回两个相同 name/tag 的 draft，资产互补。
 - Verification: 静态回归测试固定 `--publish never + gh release upload`；v0.3.4 tag workflow 成功且只生成一个完整 Release。本地发布器因与 workflow 竞争返回 404，进一步确认必须使用单一发布入口。
 - Last seen: 2026-08-11
+## PIT-2026-08-12-01: 菜单方案导入不能复用来源机器的 ID 和绝对路径
+
+- Area: 菜单方案、跨电脑迁移、`menu_profile.json`、可信 Apply Plan
+- Symptom: 导入后覆盖同名/同 ID 方案，子项 `parentId` 指向旧树，或命令引用旧电脑的 `D:\...\skill.il` 路径。
+- Root cause: 把来源 Profile 原样追加到目标 Store，混入机器相关环境 ID、Skill 绝对路径、运行时状态和已应用标记。
+- Wrong attempts: 直接覆盖目标 `menu_profile.json`；仅修改 Profile ID 而保留菜单项 ID/parentId；把 Skill 文件打包进菜单方案而不做来源和安全审阅；导入时立即生成 IL。
+- Correct fix: `.atmmenu` 只携带一个白名单化方案；导出清除机器路径，导入重新生成全部 ID 并按嵌套树重建 `parentId/path/order`，同名自动改名，仅通过可信 Apply Plan 合并为未应用草稿。
+- Guardrail: 导入预览和计划生成必须由主进程分别读取并校验文件；保持目标 `appliedProfileId` 不变。菜单包不负责 Skill 分发，命令可用性必须在目标电脑另行确认。
+- Related files: `core/menu/menuProfileTransfer.ts`, `electron/ipc/menu.ipc.ts`, `src/components/MenuProfileImportDialog.tsx`, `src/pages/MenuPage.tsx`
+- Detection: 导入后检查所有 Item ID 与来源不同、子项 parentId 指向新父项、`sourceSkillFile` 为空、现有 Profile 数量只增加 1、已应用方案未改变。
+- Verification: `tests/menuProfileTransfer.test.ts`、`tests/pcbenvApplyIntegration.test.ts`、`tests/menuProfileImportDialog.test.tsx`。
+- Last seen: 2026-08-12

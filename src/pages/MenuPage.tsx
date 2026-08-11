@@ -23,6 +23,7 @@ import type {
   MenuItemConfig,
   MenuIssue,
   MenuProfile,
+  MenuProfileImportPreview,
   MenuProfileRecoveryCandidate,
   MenuProfileStore,
   MenuTreeValidationIssue,
@@ -39,6 +40,7 @@ import MenuItemEditor from '../components/MenuItemEditor';
 import CommandSelector from '../components/CommandSelector';
 import MenuPreviewDialog from '../components/MenuPreviewDialog';
 import MenuApplyPlanDialog from '../components/MenuApplyPlanDialog';
+import MenuProfileImportDialog from '../components/MenuProfileImportDialog';
 import { useMenuApplyPlan } from '../hooks/useMenuApplyPlan';
 import {
   registerEnvironmentSwitchGuard,
@@ -118,6 +120,8 @@ const MenuPage: React.FC = () => {
   const [previewContent, setPreviewContent] = useState('');
   const [previewJson, setPreviewJson] = useState('');
   const [previewCounts, setPreviewCounts] = useState<any>(null);
+  const [importPreview, setImportPreview] = useState<MenuProfileImportPreview | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
 
   // Apply Plan
   const {
@@ -128,6 +132,7 @@ const MenuPage: React.FC = () => {
     generatePlan,
     generateRecoveryPlan,
     generateEnvironmentCopyPlan,
+    generateImportPlan,
     executePlan,
     clearPlan,
     clearResult,
@@ -793,11 +798,45 @@ const MenuPage: React.FC = () => {
     await generateEnvironmentCopyPlan(sourceEnvironmentId);
   }, [generateEnvironmentCopyPlan]);
 
+  /** 导出当前方案为可跨电脑传输的 .atmmenu 文件。 */
+  const handleExportProfile = useCallback(async () => {
+    if (!profile) return;
+    if (hasUnsavedChanges && !await handleSaveDraft()) return;
+    try {
+      const res = await window.atm.menuExportProfile(profile.id);
+      if (!res.success) throw new Error(res.error || '导出菜单方案失败');
+      if (res.data) showToast('success', `已导出 ${res.data.itemCount} 个菜单项：${res.data.fileName}`);
+    } catch (err) {
+      showToast('error', formatUserError(err, '导出菜单方案失败'));
+    }
+  }, [profile, hasUnsavedChanges, handleSaveDraft]);
+
+  /** 选择方案包并打开只读摘要；此时不写 menu_profile.json。 */
+  const handleOpenImportProfile = useCallback(async () => {
+    if (hasUnsavedChanges && !await handleSaveDraft()) return;
+    try {
+      const res = await window.atm.menuOpenImportProfile();
+      if (!res.success) throw new Error(res.error || '读取菜单方案失败');
+      if (res.data) setImportPreview(res.data);
+    } catch (err) {
+      showToast('error', formatUserError(err, '读取菜单方案失败'));
+    }
+  }, [hasUnsavedChanges, handleSaveDraft]);
+
+  const handleConfirmImportProfile = useCallback(async () => {
+    if (!importPreview) return;
+    setImportBusy(true);
+    const opened = await generateImportPlan(importPreview.filePath);
+    setImportBusy(false);
+    if (opened) setImportPreview(null);
+  }, [importPreview, generateImportPlan]);
+
   /** 执行 Apply Plan（真正写文件） */
   const handleExecutePlan = useCallback(async () => {
     const isRecoveryPlan = pendingPlan?.title === '恢复菜单方案备份';
     const isEnvironmentCopyPlan = pendingPlan?.title.startsWith('复制菜单方案到') === true;
-    const isDraftOnlyPlan = isRecoveryPlan || isEnvironmentCopyPlan;
+    const isImportPlan = pendingPlan?.title.startsWith('导入菜单方案') === true;
+    const isDraftOnlyPlan = pendingPlan?.requiresRestart !== true;
     const success = await executePlan();
     if (success) {
       setNeedsAllegroRestart(!isDraftOnlyPlan);
@@ -805,6 +844,8 @@ const MenuPage: React.FC = () => {
         ? '菜单方案已从备份恢复。请检查内容后点击“审阅并应用”，重新生成 Allegro 菜单。'
         : isEnvironmentCopyPlan
           ? '菜单方案已复制到当前环境并保存为草稿。请检查后点击“审阅并应用”。'
+          : isImportPlan
+            ? '菜单方案已作为新草稿导入，现有方案未被覆盖。请检查命令和兼容显示名后再审阅应用。'
           : '菜单配置已写入。请关闭旧 Allegro 窗口，再从左下角点击“按此环境启动”；同环境已加载过 ATM 菜单时也可执行 atmLoadMenus。');
       clearPlan();
       // 重新加载数据
@@ -1002,6 +1043,8 @@ const MenuPage: React.FC = () => {
                 { label: '预览 IL', onClick: handlePreview },
                 { label: '重新扫描', onClick: handleRescan },
                 { label: '新建顶级菜单', onClick: handleAddRootMenu },
+                { label: '导出当前方案', onClick: handleExportProfile, disabled: !profile || items.length === 0 },
+                { label: '导入菜单方案', onClick: handleOpenImportProfile },
                 { label: '查看命令清单', onClick: () => setTab('commands') },
                 { label: `引用检查（${refIssues.length}）`, onClick: () => setTab('refs') },
               ]}
@@ -1184,8 +1227,8 @@ const MenuPage: React.FC = () => {
                     <GuideCard
                       icon={FileDown}
                       title="导入菜单方案"
-                      desc="从已有的 menu_profile.json 或其他格式导入菜单配置"
-                      onClick={() => showToast('info', '导入功能将在后续版本中提供')}
+                      desc="从 .atmmenu 或旧 menu_profile.json 导入为新草稿，不覆盖现有方案"
+                      onClick={handleOpenImportProfile}
                     />
                   </div>
                 </div>
@@ -1415,6 +1458,13 @@ const MenuPage: React.FC = () => {
         itemCount={previewCounts}
         onApplyPlan={handleGeneratePlan}
         items={items}
+      />
+
+      <MenuProfileImportDialog
+        preview={importPreview}
+        busy={importBusy}
+        onClose={() => setImportPreview(null)}
+        onConfirm={handleConfirmImportProfile}
       />
 
       {/* Apply Plan 确认弹窗 */}

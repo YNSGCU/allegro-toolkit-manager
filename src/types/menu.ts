@@ -125,6 +125,41 @@ export interface MenuProfileStore {
   updatedAt: string;
 }
 
+/** 可跨电脑传输的单个菜单方案包。文件扩展名为 .atmmenu，内容为 UTF-8 JSON。 */
+export interface MenuProfilePackage {
+  kind: 'atm-menu-profile';
+  schemaVersion: 1;
+  exportedAt: string;
+  exportedByVersion?: string;
+  source: {
+    environmentName?: string;
+    allegroVersion?: string | null;
+  };
+  profile: MenuProfile;
+}
+
+export type MenuProfileImportFormat = 'atm-menu-profile' | 'menu-profile' | 'menu-profile-store';
+
+/** 导入前提供给 Renderer 的只读摘要。 */
+export interface MenuProfileImportPreview {
+  filePath: string;
+  fileName: string;
+  format: MenuProfileImportFormat;
+  schemaVersion: number;
+  sourceProfileName: string;
+  proposedProfileName: string;
+  itemCount: number;
+  commandCount: number;
+  menuCount: number;
+  separatorCount: number;
+  sourceAllegroVersion?: string | null;
+  targetAllegroVersion?: string | null;
+  nameConflict: boolean;
+  compatibilityWarningCount: number;
+  commands: string[];
+  warnings: string[];
+}
+
 /** menu_profile.json 为空/损坏时，从 ATM 历史备份发现的只读恢复候选。 */
 export interface MenuProfileRecoveryCandidate {
   backupPath: string;

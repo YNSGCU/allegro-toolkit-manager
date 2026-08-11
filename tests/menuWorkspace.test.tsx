@@ -147,6 +147,12 @@ describe('菜单编辑工作区', () => {
     expect(preloadSource).toContain("ipcRenderer.invoke('menu:execute-apply-plan'");
     expect(preloadSource).toContain("ipcRenderer.invoke('menu:create-recovery-plan'");
     expect(preloadSource).toContain("ipcRenderer.invoke('menu:create-environment-copy-plan'");
+    expect(preloadSource).toContain("ipcRenderer.invoke('menu:export-profile'");
+    expect(preloadSource).toContain("ipcRenderer.invoke('menu:open-import-profile'");
+    expect(preloadSource).toContain("ipcRenderer.invoke('menu:create-import-plan'");
+    expect(pageSource).toContain('导出当前方案');
+    expect(pageSource).toContain('<MenuProfileImportDialog');
+    expect(pageSource).not.toContain('导入功能将在后续版本中提供');
     expect(pageSource).toContain('发现可恢复的菜单方案');
     expect(pageSource).toContain('当前 menu_profile.json 为空');
     expect(pageSource).toContain('setActiveAllegroEnvironment');
