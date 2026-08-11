@@ -162,6 +162,11 @@ export interface EnvironmentRegistry {
   version: number;
   activeEnvironmentId: string | null;
   environments: AllegroEnvironmentWorkspace[];
+  /** ATM 进程从 Windows 继承的默认环境，仅用于提示桌面启动可能加载哪套配置。 */
+  hostEnvironment?: {
+    homePath: string | null;
+    cdsRoot: string | null;
+  };
   /** 手动指定的 Allegro 安装根目录（SPB_xx.x 级别），用于新电脑上自动扫描找不到时的补充 */
   manualInstallRoots?: string[];
   updatedAt: string;

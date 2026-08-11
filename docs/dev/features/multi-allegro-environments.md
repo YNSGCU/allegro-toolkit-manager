@@ -15,7 +15,7 @@
 ## 数据模型
 
 - `AllegroEnvironmentWorkspace`：版本、安装根目录、可执行文件、HOME、pcbenv、env、ilinit、共享关系。
-- `EnvironmentRegistry`：环境列表与 `activeEnvironmentId`。
+- `EnvironmentRegistry`：环境列表与 `activeEnvironmentId`；IPC 响应额外携带 ATM 进程继承的只读 `hostEnvironment`，不写入注册表文件。
 - `HotkeyProfile`：可选的 `sourceEnvironmentId`、`sourceAllegroVersion`、`testedAllegroVersions`。
 - `SkillProfile`、`MenuProfile`：使用相同来源/测试版本字段；新建方案时由对应 IPC 填充。
 - `ProfileCompatibilityReport`：`portable / warning / blocked` 和结构化 findings。
@@ -52,7 +52,7 @@ list(axlVersion('tVersion) axlVersion('fullVersion) axlVersion('programName))
 
 ## 按环境切换管理目标
 
-侧栏版本选择器只决定 ATM 的管理与写入目标，不启动 Allegro，也不尝试修改 Windows 全局 `HOME/CDSROOT`。这样可以避免点击环境控件时误启动错误版本；已经运行的 Allegro 进程仍保持原有环境。
+侧栏版本选择器只决定 ATM 的管理与写入目标，不会在“切换环境”时隐式启动 Allegro，也不修改 Windows 全局 `HOME/CDSROOT`。已经运行的 Allegro 进程仍保持原有环境。
 
 切换链路为：
 
@@ -65,6 +65,19 @@ AllegroEnvironmentSwitcher
   -> window.location.reload()
 ```
 
-切换提交前会执行页面级保护器，避免未保存的工作区被切换覆盖。`env:launch-workspace` 和 `allegroLauncher.ts` 仍保留为后端隔离启动能力，但不再由左下角环境控件调用。
+切换提交前会执行页面级保护器，避免未保存的工作区被切换覆盖。IPC 列表响应将 `process.env.HOME/CDSROOT` 作为只读主机上下文返回；侧栏按 Windows 路径规范化后与活动环境比较，不一致时显示警告。
 
-自动化测试覆盖下拉选择、切换按钮调用、切换按钮不启动 Allegro 和页面刷新前的环境保护。实际 Allegro 17.2 是否读取预期 `pcbenv` 仍需在对应启动器打开的新会话中确认。
+显式启动链路为：
+
+```txt
+AllegroEnvironmentSwitcher
+  -> window.atm.launchAllegroEnvironment(activeEnvironmentId)
+  -> env:launch-workspace
+  -> environmentRegistry.ts 重新解析环境 ID
+  -> allegroLauncher.ts 构造子进程 HOME/CDSROOT
+  -> spawn(allegro.exe)
+```
+
+Renderer 只提交环境 ID，不提交执行文件或 HOME；主进程必须从注册表重新解析。启动环境只作用于新子进程，不得修改 `process.env` 或 Windows 全局环境变量。
+
+自动化测试覆盖下拉选择、切换按钮不隐式启动、显式隔离启动、HOME/CDSROOT 不匹配告警和页面刷新前的环境保护。实际 Allegro 17.2 是否读取预期 `pcbenv` 仍需在“按此环境启动”的新会话中确认。

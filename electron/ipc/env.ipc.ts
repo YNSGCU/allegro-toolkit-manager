@@ -30,7 +30,16 @@ export function registerEnvIpc(): void {
       const registry = refresh || manualPcbenvPath || stored.environments.length === 0
         ? refreshEnvironmentRegistry(manualPcbenvPath)
         : stored;
-      return { success: true, data: registry };
+      return {
+        success: true,
+        data: {
+          ...registry,
+          hostEnvironment: {
+            homePath: process.env.HOME || null,
+            cdsRoot: process.env.CDSROOT || null,
+          },
+        },
+      };
     } catch (err) {
       return { success: false, error: `扫描 Allegro 环境失败: ${err instanceof Error ? err.message : String(err)}` };
     }

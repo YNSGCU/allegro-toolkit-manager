@@ -1,5 +1,13 @@
 # Handoff
 
+## 2026-08-11 17.2 仍显示 17.4 乱码旧菜单
+
+- 只读实机证据：PID 29792 是 `Cadence17_2/.../allegro.exe`，但系统 `HOME/CDSROOT` 指向 17.4。17.2 的 `menu_profile.json` 已有 `MySkill/器件聚拢`，却没有 `generated_menu.il` 或 ATM bootstrap；17.4 的 GBK `generated_menu.il` 仍包含“测试/测试3/测试4/测试5”，与截图逐项一致。
+- Vibe Bridge 只读查询未响应，因此当前会话 HOME 的直接 SKILL 结果仍标记为未验证；进程路径、系统变量和磁盘加载链已形成一致的静态/主机证据。
+- 修复：`env:list-workspaces` 返回只读主机 HOME/CDSROOT；侧栏恢复显式隔离启动并显示错配警告；菜单 Apply Plan 完成提示要求关闭旧窗口后从 ATM 启动。
+- 验证：`tests/environmentSwitcher.test.tsx`、`tests/allegroLauncher.test.ts`、`tests/menuWorkspace.test.tsx` 共 9 项通过；前后端 TypeScript 检查通过。
+- 手工验证：安装修复版后，先在 17.2 菜单页点击“审阅并应用”并确认写入，再关闭所有旧 Allegro 窗口，从侧栏点击“按此环境启动”；确认旧 `²âÊÔ` 消失且 `MySkill/器件聚拢` 出现。
+
 ## 2026-08-11 菜单页面切换丢失草稿修复
 
 - 根因：普通侧栏页面导航未执行菜单草稿保存，`MenuPage` 卸载后只存在于 React 状态的编辑内容被丢弃。

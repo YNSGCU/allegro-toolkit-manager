@@ -448,13 +448,13 @@
 - Area: 多 Allegro 环境、Windows 环境变量、Electron 子进程启动、菜单乱码
 - Symptom: ATM 已选择 Allegro 17.2，用户也打开了 17.2 执行文件，但窗口仍显示 17.4 的旧 ATM 菜单和 `²âÊÔ` 乱码。
 - Root cause: ATM 的环境选择只控制自身读写目标；桌面快捷方式启动的 Allegro 继续继承 Windows 全局 `HOME/CDSROOT`。本机全局变量指向 17.4，17.2 自己的 `pcbenv` 没有 ATM 派生文件，实际显示内容却来自 17.4 的旧 GBK `generated_menu.il`。
-- Wrong attempts: 继续修改 17.2 空目录中的菜单文件；仅按 Allegro 版本号推断实际 `pcbenv`；把 ATM 下拉切换误认为系统环境切换。
-- Correct fix: 由主进程根据已注册环境 ID 启动目标 `allegro.exe`，只为该子进程设置目标 `HOME/CDSROOT`；侧栏检测 Windows HOME 与管理目标不一致并告警。不要修改全局环境变量。
-- Guardrail: “管理目标”和“运行进程环境”必须分别表述；任何运行时结论都要核对实际 HOME、执行文件和加载文件三者。Renderer 不得提交可执行路径，IPC 必须从注册表重新解析。
+- Wrong attempts: 继续修改 17.2 空目录中的菜单文件；仅按 Allegro 版本号推断实际 `pcbenv`；把 ATM 下拉切换误认为系统环境切换；为了避免误启动而从 UI 移除唯一可达的隔离启动入口，转而让用户使用同样会继承错误 HOME 的桌面快捷方式。
+- Correct fix: 由主进程根据已注册环境 ID 启动目标 `allegro.exe`，只为该子进程设置目标 `HOME/CDSROOT`；侧栏检测 Windows HOME 与管理目标不一致并告警，并始终保留显式“按此环境启动”入口。不要修改全局环境变量。
+- Guardrail: “管理目标”和“运行进程环境”必须分别表述；任何运行时结论都要核对实际 HOME、执行文件和加载文件三者。Renderer 不得提交可执行路径，IPC 必须从注册表重新解析。多版本支持不能只保留管理目标切换而移除隔离启动入口。
 - Related files: `core/environment/allegroLauncher.ts`, `electron/ipc/env.ipc.ts`, `electron/preload.ts`, `src/components/AllegroEnvironmentSwitcher.tsx`
 - Detection: 选中 17.2 且全局 HOME 指向 17.4 时必须显示告警；启动规格必须包含 17.2 HOME/CDSROOT 且不改变 `process.env`。
 - Verification: 自动化测试覆盖启动规格与 UI 告警；真实 17.2 会话需确认不再加载 17.4 `generated_menu.il`。
-- Last seen: 2026-08-09
+- Last seen: 2026-08-11
 
 ## PIT-2026-08-09-02: Allegro SKILL 启动文本编码必须绑定目标版本
 

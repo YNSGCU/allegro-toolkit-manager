@@ -805,7 +805,7 @@ const MenuPage: React.FC = () => {
         ? '菜单方案已从备份恢复。请检查内容后点击“审阅并应用”，重新生成 Allegro 菜单。'
         : isEnvironmentCopyPlan
           ? '菜单方案已复制到当前环境并保存为草稿。请检查后点击“审阅并应用”。'
-          : '菜单配置已写入。首次应用请重启 Allegro；已加载过 ATM 菜单时可执行 atmLoadMenus。');
+          : '菜单配置已写入。请关闭旧 Allegro 窗口，再从左下角点击“按此环境启动”；同环境已加载过 ATM 菜单时也可执行 atmLoadMenus。');
       clearPlan();
       // 重新加载数据
       await loadData();

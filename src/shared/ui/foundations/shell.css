@@ -176,7 +176,8 @@
   font-size: var(--ui-font-size-sm);
 }
 
-.atm-environment-switch {
+.atm-environment-switch,
+.atm-environment-launch {
   width: 100%;
   justify-content: center;
 }
@@ -185,6 +186,13 @@
   font-size: var(--ui-font-size-xs);
   line-height: 1.35;
   color: var(--ui-text-muted);
+}
+
+.atm-environment-switch-status.is-warning {
+  padding: 6px 7px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-warning-soft);
+  color: var(--ui-warning);
 }
 
 .atm-sidebar-footer svg {

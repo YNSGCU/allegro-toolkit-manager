@@ -25,7 +25,7 @@
 
 多版本链：`Layout/EnvironmentPage` -> `listAllegroEnvironments/setActiveAllegroEnvironment` -> `env:list-workspaces/env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `%APPDATA%/AllegroToolkitManager/environments.json`。侧栏挂载时刷新环境，注册表清理已消失的自动记录、按版本归并为一个活动 `pcbenv`，再按最终路径重建共享关系；当前选择优先，没有当前选择时优先版本安装目录旁的 `SPB_Data/pcbenv`。`locateEnvironment()` 统一解析活动环境，快捷键、Skill、菜单 Apply Plan 生成时锁定 `environmentId + pcbenvPath`，执行前拒绝环境漂移。
 
-环境切换链：`AllegroEnvironmentSwitcher` -> `setActiveAllegroEnvironment` -> `env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `environments.json`。左下角控件只切换 ATM 管理目标，不启动 Allegro；隔离启动能力仍由 `allegroLauncher.ts` 提供给显式启动入口。
+环境切换链：`AllegroEnvironmentSwitcher` -> `setActiveAllegroEnvironment` -> `env:set-active-workspace` -> `core/environment/environmentRegistry.ts` -> `environments.json`。“切换环境”只改变 ATM 管理目标；同一控件的“按此环境启动”通过 `env:launch-workspace` -> `allegroLauncher.ts` 为新 Allegro 子进程注入匹配的 HOME/CDSROOT。环境列表还返回只读系统 HOME/CDSROOT，用于识别桌面快捷方式会加载错误配置的风险。
 
 迁移链：`HotkeyProfileMigrationDialog` -> `profile:check-compatibility/profile:migrate` -> `core/environment/compatibility.ts` + `core/profile/hotkeyProfile.ts` -> 目标环境 `atm_generated/profiles`。
 

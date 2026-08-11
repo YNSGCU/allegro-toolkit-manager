@@ -82,7 +82,7 @@ export function useMenuApplyPlan(): UseMenuApplyPlanReturn {
     try {
       const res = await window.atm.menuExecuteApplyPlan(JSON.stringify(pendingPlan));
       if (res.success) {
-        setApplyResult(`执行成功：已应用 ${res.appliedSteps}/${res.totalSteps} 步。请重启 Allegro 或重新加载菜单后查看。`);
+        setApplyResult(`执行成功：已应用 ${res.appliedSteps}/${res.totalSteps} 步。请关闭旧 Allegro 窗口并从左下角按当前环境启动，或在同环境会话中重新加载菜单。`);
         setPendingPlan(null);
         setApplying(false);
         return true;

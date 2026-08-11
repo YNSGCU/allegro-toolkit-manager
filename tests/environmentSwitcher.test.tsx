@@ -63,8 +63,17 @@ describe('AllegroEnvironmentSwitcher', () => {
     expect(listAllegroEnvironments).toHaveBeenCalledWith(true);
   });
 
-  it('切换按钮只切换 ATM 管理目标，不启动 Allegro', async () => {
-    const launchAllegroEnvironment = vi.fn();
+  it('切换按钮不会隐式启动 Allegro，但提供按活动环境隔离启动入口', async () => {
+    const launchAllegroEnvironment = vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        pid: 123,
+        environmentId: 'v172-install',
+        allegroVersion: '17.2',
+        homePath: 'D:\\Cadence\\SPB_Data',
+        executablePath: 'D:\\Cadence\\SPB_17.2\\tools\\bin\\allegro.exe',
+      },
+    });
     window.atm = {
       listAllegroEnvironments: vi.fn().mockResolvedValue({
         success: true,
@@ -81,8 +90,37 @@ describe('AllegroEnvironmentSwitcher', () => {
 
     render(<AllegroEnvironmentSwitcher />);
 
-    expect(await screen.findByText('只切换 ATM 管理目标，不启动 Allegro')).toBeInTheDocument();
+    const launchButton = await screen.findByRole('button', { name: '按当前环境启动 Allegro' });
     expect(screen.getByRole('button', { name: '切换 Allegro 环境' })).toBeDisabled();
     expect(launchAllegroEnvironment).not.toHaveBeenCalled();
+    fireEvent.click(launchButton);
+    await waitFor(() => expect(launchAllegroEnvironment).toHaveBeenCalledWith('v172-install'));
+    expect(await screen.findByText('已按独立环境启动 Allegro 17.2')).toBeInTheDocument();
+  });
+
+  it('系统 HOME 指向其他版本时显示阻断性提示', async () => {
+    window.atm = {
+      listAllegroEnvironments: vi.fn().mockResolvedValue({
+        success: true,
+        data: {
+          version: 1,
+          activeEnvironmentId: 'v172-install',
+          updatedAt: new Date().toISOString(),
+          hostEnvironment: {
+            homePath: 'D:\\Cadence174\\SPB_Data',
+            cdsRoot: 'D:\\Cadence174\\SPB_17.4',
+          },
+          environments: [environment({ id: 'v172-install' })],
+        },
+      }),
+      setActiveAllegroEnvironment: vi.fn(),
+      launchAllegroEnvironment: vi.fn(),
+    } as any;
+
+    render(<AllegroEnvironmentSwitcher />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '系统 HOME/CDSROOT 与管理目标不一致',
+    );
   });
 });
