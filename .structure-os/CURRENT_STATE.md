@@ -6,6 +6,8 @@
 - 导入重新生成 Profile/Item ID 与父子路径，同名自动加“（导入）”，只通过可信 Apply Plan 合并为新草稿，不覆盖现有方案、不生成 IL。
 - 支持 `.atmmenu`、单 Profile JSON 和旧 `menu_profile.json`；5 MB / 5000 项上限和主进程二次校验防止异常输入。
 - 验证：`npm run verify` 全绿，71 个测试文件 / 419 项通过；安全审计、Lint、格式、双端 TypeScript 和生产构建均通过。
+- 发布：`v0.3.5` 已公开为 GitHub Latest；Windows 安装包、blockmap、`latest.yml` 三项资产齐全，发布 workflow `31512503977` 与同提交 CI 均成功，远端更新元数据明确指向 0.3.5。
+- 待桌面验收：在已安装 Electron 应用导出一个 `.atmmenu`，复制到另一台电脑导入并确认生成独立草稿；导入本身不依赖 Allegro 会话。
 
 ## 2026-08-11 17.2 菜单英文兼容显示名
 - 数据模型新增 `compatibilityLabel`：ATM 方案的 `label` 继续保存中文原名，17.2 及更早版本生成 IL 时使用用户确认的可打印 ASCII 显示名，17.4 继续使用中文原名。

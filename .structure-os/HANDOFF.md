@@ -6,6 +6,8 @@
 - 导出格式为 UTF-8 `.atmmenu` schema 1；清除本机 `sourceSkillFile/sourceEnvironmentId`。导入兼容旧 Store/Profile JSON，全部 ID/路径重建并只增加一个草稿。
 - 风险边界：不携带 Skill 文件；跨版本和 17.2 缺兼容名只警告并允许导入，普通菜单应用阶段继续执行严格校验。
 - 定向测试覆盖核心包、导入对话框、preload 链和临时 pcbenv 事务；完整 `npm run verify` 通过，71 个测试文件 / 419 项全绿。
+- 发布：`v0.3.5` 已公开为 Latest。安装包 87,314,874 bytes（SHA-256 `97A9B21B04781F78C3F2D41657E20DD097ED8D4720F0E54CBF6EE0EBCF4B9F07`），blockmap 91,749 bytes，远端 `latest.yml` 版本、路径、大小均为 0.3.5；GitHub Actions 发布 run `31512503977` 与 CI run `31512464270` 成功。
+- 手工验收：安装 0.3.5 后，在菜单页“工作区工具”导出一个 `.atmmenu`，复制到目标电脑导入，核对摘要后执行可信 Apply Plan；预期新增独立草稿且不覆盖现有方案。导入阶段不需要启动 Allegro，实际应用菜单时再按目标版本验证命令与 17.2 兼容显示名。
 
 ## 2026-08-11 17.2 菜单英文兼容显示名
 
