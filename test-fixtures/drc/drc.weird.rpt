@@ -1,0 +1,32 @@
+DRC Report
+
+report name: weird report
+Report Time: Tue Aug 12 15:00:00 2026
+Design: C:\x\weird.brd
+units: mils
+
+Summary Statistics :
+   Total errors : 2
+   Total WARNINGS : 1
+
+Some Unknown Section
+-------------------
+
+# 1 error(SPMHCS-1): missing solder mask
+   this is a
+   multi-line description
+Class: soldermask
+Layer: top
+Net: vcc
+Location: (1 2)
+Actual: 0
+Expected: 3
+
+#2 WARNING(spmhge-16): thermal relief missing
+Class: thermal
+Layer: bottom
+
+#3 ERROR(SPMHCS-1): missing solder mask
+Class: soldermask
+Layer: TOP
+Net: gnd

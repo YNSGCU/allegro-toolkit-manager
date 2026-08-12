@@ -645,6 +645,41 @@ contextBridge.exposeInMainWorld('atm', {
   /** 生成工作区应用计划（环境锁 + 执行序列） */
   workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) =>
     ipcRenderer.invoke('workspace:apply-plan', workspaceId, options),
+
+  // ===== DRC 设计问题报告（V0.4） =====
+  /** 打开 DRC 报告文件选择对话框 */
+  drcOpenDialog: () => ipcRenderer.invoke('drc:open-dialog'),
+  /** 解析 DRC 报告文件（预览，未落盘） */
+  drcParseFile: (filePath: string) =>
+    ipcRenderer.invoke('drc:parse-file', filePath),
+  /** 导入报告（SHA-256 去重，原子落盘） */
+  drcImportReport: (input: any) =>
+    ipcRenderer.invoke('drc:import-report', input),
+  /** 报告列表（摘要级） */
+  drcListReports: () => ipcRenderer.invoke('drc:list-reports'),
+  /** 完整报告 */
+  drcGetReport: (id: string) =>
+    ipcRenderer.invoke('drc:get-report', id),
+  /** 原始报告文本（原文回看） */
+  drcGetRaw: (id: string) =>
+    ipcRenderer.invoke('drc:get-raw', id),
+  /** 删除报告 */
+  drcDeleteReport: (id: string) =>
+    ipcRenderer.invoke('drc:delete-report', id),
+  /** 批量更新违规状态 */
+  drcUpdateStatus: (input: any) =>
+    ipcRenderer.invoke('drc:update-status', input),
+  /** 导出报告（Markdown / HTML / CSV） */
+  drcExportReport: (input: any) =>
+    ipcRenderer.invoke('drc:export-report', input),
+  /** 探测 Vibe Bridge 连接与版本匹配 */
+  drcBridgeProbe: () => ipcRenderer.invoke('drc:bridge-probe'),
+  /** 在线抓取当前 Allegro 会话 DRC 数据 */
+  drcBridgeFetch: () => ipcRenderer.invoke('drc:bridge-fetch'),
+  /** 确认导入在线抓取结果 */
+  drcBridgeImport: (input: any) =>
+    ipcRenderer.invoke('drc:bridge-import', input),
+
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
   saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>

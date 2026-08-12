@@ -1,0 +1,9 @@
+# Extracta DRC Report
+# Design Name: C:\projects\demo.brd
+# Allegro Version: 17.4-2019 S039
+# Units: Mils
+# Generated: 2026-08-12 14:30:00
+Rule,Class,Constraint,Layer,Net,Component,Pin,X,Y,Actual,Expected,Severity
+SPMHCS-1,Soldermask,SolderMask,TOP,VCC,U1,5,1234.56,789.01,0.00,3.00,ERROR
+SPMHGE-16,Thermal Relief,ThermalRelief,BOTTOM,GND,R1,2,10.00,20.00,,,WARNING
+SPMHCS-1,Soldermask,SolderMask,TOP,GND,U2,3,1300.00,800.00,0.00,3.00,ERROR

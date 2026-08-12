@@ -20,6 +20,20 @@ import type {
   WorkspaceProfileStore,
 } from './workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
+import type {
+  DrcImportInput,
+  DrcImportFileInput,
+  DrcImportResult,
+  DrcExportInput,
+  DrcExportResult,
+  DrcBridgeFetchResult,
+  DrcBridgeImportInput,
+  DrcParseFileResult,
+  DrcRawResult,
+  DrcReport,
+  DrcReportSummary,
+  DrcStatusUpdateInput,
+} from './drc';
 
 declare global {
   interface Window {
@@ -302,6 +316,21 @@ declare global {
       workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspacePreview: (workspaceId: string) => Promise<{ success: boolean; data?: { preview: WorkspacePreview }; error?: string }>;
       workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) => Promise<{ success: boolean; data?: WorkspaceApplyPlanView; error?: string }>;
+
+      // DRC 设计问题报告（V0.4）
+      drcOpenDialog: () => Promise<{ success: boolean; data?: string | null; error?: string }>;
+      drcParseFile: (filePath: string) => Promise<{ success: boolean; data?: DrcParseFileResult; error?: string }>;
+      drcImportReport: (input: DrcImportFileInput) => Promise<{ success: boolean; data?: DrcImportResult; error?: string }>;
+      drcListReports: () => Promise<{ success: boolean; data?: DrcReportSummary[]; error?: string }>;
+      drcGetReport: (id: string) => Promise<{ success: boolean; data?: DrcReport; error?: string }>;
+      drcGetRaw: (id: string) => Promise<{ success: boolean; data?: DrcRawResult; error?: string }>;
+      drcDeleteReport: (id: string) => Promise<{ success: boolean; data?: { id: string }; error?: string }>;
+      drcUpdateStatus: (input: DrcStatusUpdateInput) => Promise<{ success: boolean; data?: { report: DrcReport }; error?: string }>;
+      drcExportReport: (input: DrcExportInput) => Promise<{ success: boolean; data?: DrcExportResult | null; error?: string }>;
+      drcBridgeProbe: () => Promise<{ success: boolean; data?: { connected: boolean; message?: string } | AllegroRuntimeVerificationResult; error?: string }>;
+      drcBridgeFetch: () => Promise<{ success: boolean; data?: DrcBridgeFetchResult; error?: string }>;
+      drcBridgeImport: (input: DrcBridgeImportInput) => Promise<{ success: boolean; data?: DrcImportResult; error?: string }>;
+
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;
       saveUpdateSettings: (settings: UpdateSettings) => Promise<UpdateSettingsView>;

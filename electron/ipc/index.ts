@@ -21,6 +21,7 @@ import { registerColorIpc } from './color.ipc';
 import { registerUpdateIpc } from './update.ipc';
 import { registerBackupIpc } from './backup.ipc';
 import { registerWorkspaceIpc } from './workspace.ipc';
+import { registerDrcIpc } from './drc.ipc';
 import type { UpdateService } from '../services/updateService';
 
 export function registerIpcHandlers(updateService?: UpdateService): void {
@@ -45,5 +46,6 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerColorIpc();
   registerBackupIpc();
   registerWorkspaceIpc();
+  registerDrcIpc();
   if (updateService) registerUpdateIpc(updateService);
 }

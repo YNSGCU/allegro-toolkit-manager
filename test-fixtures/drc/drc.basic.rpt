@@ -1,0 +1,54 @@
+Design Rules Check Report
+
+Report Name:  DRC Report
+Report Time:  Mon Aug 12 14:30:00 2026
+Design Name:  C:\projects\demo.brd
+Allegro Version:  17.4-2019 S039
+Units:  Mils
+
+Summary Statistics :
+
+   Total Warnings : 3
+   Total Errors   : 7
+
+DRC ERROR DETAILS
+
+#1 ERROR(SPMHCS-1):  Missing solder mask.
+Class:  Soldermask
+Constraint:  SolderMask
+Layer:  TOP
+Net:  VCC
+Component:  U1
+Pin:  5
+Location:  (1234.56 789.01)
+Actual:  0.00
+Expected:  3.00
+
+#2 ERROR(SPMHGE-16):  Thermal relief connection missing.
+Class:  Thermal Relief
+Constraint:  ThermalRelief
+Layer:  BOTTOM
+Net:  GND
+Component:  R1
+Pin:  2
+Location:  (10.00 20.00)
+
+#3 ERROR(SPMHCS-1):  Missing solder mask.
+Class:  Soldermask
+Constraint:  SolderMask
+Layer:  TOP
+Net:  VCC
+Component:  U2
+Pin:  3
+Location:  (1300.00 800.00)
+Actual:  0.00
+Expected:  3.00
+
+#4 WARNING(SPMHGE-16):  Thermal relief connection missing.
+Class:  Thermal Relief
+Constraint:  ThermalRelief
+Layer:  TOP
+Net:  GND
+Component:  R2
+Pin:  1
+Location:  (50.00 60.00)

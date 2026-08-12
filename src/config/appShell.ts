@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'overview' | 'backup' | 'workspace';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'overview' | 'backup' | 'workspace';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -49,6 +49,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'primary',
     shortLabel: 'CL',
     summary: '复制板子配色方案并可视化，跨板子应用',
+  },
+  {
+    key: 'drc',
+    label: 'DRC 看板',
+    path: '/drc',
+    group: 'primary',
+    shortLabel: 'DRC',
+    summary: '导入或抓取 DRC 报告，按层 / 网络 / 规则分组统计并跟踪解决状态',
   },
   {
     key: 'backup',

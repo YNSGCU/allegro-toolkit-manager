@@ -17,6 +17,7 @@ describe('app shell config', () => {
       'skills',
       'menu',
       'colors',
+      'drc',
     ]);
   });
 
