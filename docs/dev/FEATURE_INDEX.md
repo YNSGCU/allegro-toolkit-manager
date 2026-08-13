@@ -16,3 +16,4 @@
 | menu-recovery-and-encoding | complete | `docs/user/features/menu-recovery-and-encoding.md` | `docs/dev/features/menu-recovery-and-encoding.md` | 2026-08-10 |
 | menu-profile-transfer | complete | `docs/user/features/menu-profile-transfer.md` | `docs/dev/features/menu-profile-transfer.md` | 2026-08-12 |
 | drc-report-visualization | complete（M1-M6，M7 收尾中） | `docs/user/features/drc-report-visualization.md` | `docs/dev/features/drc-report-visualization.md` | 2026-08-12 |
+| env-visual-editor | complete（M1-M4） | `docs/user/features/env-visual-editor.md` | `docs/dev/features/env-visual-editor.md` | 2026-08-13 |
