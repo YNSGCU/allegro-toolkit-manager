@@ -1,0 +1,205 @@
+/* ATM - Env 可视化编辑器页面样式（V0.4） */
+
+.env-editor-page .ui-workspace-header {
+  margin-bottom: 0;
+}
+
+.env-editor-add-type {
+  min-height: 34px;
+}
+
+.env-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.env-editor-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 12px;
+  background: var(--bg-surface, #ffffff);
+}
+
+.env-editor-row.dirty {
+  border-color: var(--warning-color, #b7791f);
+}
+
+.env-editor-row.deleted {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.env-editor-type {
+  display: inline-flex;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-subtle, #faf8f5);
+  color: var(--text-secondary, #5f5a52);
+}
+
+.env-editor-type--funckey {
+  background: rgba(47, 111, 79, 0.1);
+  color: var(--success-color, #2f6f4f);
+}
+
+.env-editor-type--alias {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.env-editor-type--variable {
+  background: rgba(183, 121, 31, 0.12);
+  color: var(--warning-color, #b7791f);
+}
+
+.env-editor-content {
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-primary, #171717);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-editor-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.env-editor-icon-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #5f5a52);
+  cursor: pointer;
+}
+
+.env-editor-icon-btn:hover:not(:disabled) {
+  background: var(--bg-subtle, #faf8f5);
+  color: var(--text-primary, #171717);
+}
+
+.env-editor-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.env-editor-icon-btn.danger:hover:not(:disabled) {
+  color: var(--danger-color, #b42318);
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.env-editor-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.env-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.env-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.env-editor-field span {
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+}
+
+.env-editor-field input,
+.env-editor-field select {
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 7px 10px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: var(--bg-input, #ffffff);
+  color: var(--text-primary, #171717);
+}
+
+.env-editor-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.env-editor-diff-step {
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--bg-subtle, #faf8f5);
+}
+
+.env-editor-diff-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+  margin-bottom: 4px;
+}
+
+.env-editor-diff-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.env-editor-diff-tag--add {
+  color: var(--success-color, #2f6f4f);
+  background: rgba(47, 111, 79, 0.1);
+}
+
+.env-editor-diff-tag--modify {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.env-editor-diff-tag--delete {
+  color: var(--danger-color, #b42318);
+  background: rgba(180, 35, 24, 0.1);
+}
+
+.env-editor-diff-line {
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.env-editor-diff-line.before {
+  color: var(--danger-color, #b42318);
+}
+
+.env-editor-diff-line.after {
+  color: var(--success-color, #2f6f4f);
+}
+
+.env-editor-empty-diff {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #8d877f);
+}

@@ -24,7 +24,7 @@ describe('app shell config', () => {
   it('keeps backup/restore and overview in the system group', () => {
     const utilityItems = APP_NAV_ITEMS.filter((item) => item.group === 'utility');
 
-    expect(utilityItems.map((item) => item.key)).toEqual(['backup', 'overview']);
+    expect(utilityItems.map((item) => item.key)).toEqual(['backup', 'env-editor', 'overview']);
     expect(utilityItems[0].label).toBe('备份与恢复');
   });
 });

@@ -680,6 +680,16 @@ contextBridge.exposeInMainWorld('atm', {
   drcBridgeImport: (input: any) =>
     ipcRenderer.invoke('drc:bridge-import', input),
 
+  // ===== Env 可视化编辑器（V0.4） =====
+  /** 加载当前环境的 env 文档 */
+  envEditorLoad: () => ipcRenderer.invoke('env:editor-load'),
+  /** 生成编辑预览（不写文件） */
+  envEditorPreview: (entries: any[]) =>
+    ipcRenderer.invoke('env:editor-preview', entries),
+  /** 应用编辑（走 Apply Plan） */
+  envEditorApply: (input: any) =>
+    ipcRenderer.invoke('env:editor-apply', input),
+
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
   saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>

@@ -13,6 +13,7 @@ export const routePageLoaders = {
   backup: () => import('../pages/BackupPage'),
   workspace: () => import('../pages/UnifiedWorkspacePage'),
   drc: () => import('../pages/DrcPage'),
+  envEditor: () => import('../pages/EnvEditorPage'),
 } satisfies Record<string, RoutePageLoader>;
 
 const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
@@ -25,6 +26,7 @@ const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
   ['/backup', routePageLoaders.backup],
   ['/workspace', routePageLoaders.workspace],
   ['/drc', routePageLoaders.drc],
+  ['/env-editor', routePageLoaders.envEditor],
 ];
 
 const preloadRequests = new Map<RoutePageLoader, Promise<void>>();

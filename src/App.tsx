@@ -19,6 +19,7 @@ const ColorPage = lazy(routePageLoaders.colors);
 const BackupPage = lazy(routePageLoaders.backup);
 const UnifiedWorkspacePage = lazy(routePageLoaders.workspace);
 const DrcPage = lazy(routePageLoaders.drc);
+const EnvEditorPage = lazy(routePageLoaders.envEditor);
 
 function RouteLoadingFallback() {
   return (
@@ -58,6 +59,7 @@ function RoutedWorkspace() {
           <Route path="/backup" element={<BackupPage />} />
           <Route path="/workspace" element={<UnifiedWorkspacePage />} />
           <Route path="/drc" element={<DrcPage />} />
+          <Route path="/env-editor" element={<EnvEditorPage />} />
           <Route
             path="*"
             element={<Navigate to={getDefaultWorkspaceRoute()} replace />}

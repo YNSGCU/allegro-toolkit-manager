@@ -34,6 +34,12 @@ import type {
   DrcReportSummary,
   DrcStatusUpdateInput,
 } from './drc';
+import type {
+  EnvEditorApplyInput,
+  EnvEditorEntry,
+  EnvEditorLoadResult,
+  EnvEditorPreviewResult,
+} from './envEditor';
 
 declare global {
   interface Window {
@@ -330,6 +336,11 @@ declare global {
       drcBridgeProbe: () => Promise<{ success: boolean; data?: { connected: boolean; message?: string } | AllegroRuntimeVerificationResult; error?: string }>;
       drcBridgeFetch: () => Promise<{ success: boolean; data?: DrcBridgeFetchResult; error?: string }>;
       drcBridgeImport: (input: DrcBridgeImportInput) => Promise<{ success: boolean; data?: DrcImportResult; error?: string }>;
+
+      // Env 可视化编辑器（V0.4）
+      envEditorLoad: () => Promise<{ success: boolean; data?: EnvEditorLoadResult; error?: string }>;
+      envEditorPreview: (entries: EnvEditorEntry[]) => Promise<{ success: boolean; data?: EnvEditorPreviewResult; error?: string }>;
+      envEditorApply: (input: EnvEditorApplyInput) => Promise<{ success: boolean; data?: any; error?: string }>;
 
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;

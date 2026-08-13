@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'overview' | 'backup' | 'workspace';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'overview' | 'backup' | 'env-editor' | 'workspace';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -65,6 +65,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'utility',
     shortLabel: 'BK',
     summary: '备份软件设置并在新电脑 / 新板子复用',
+  },
+  {
+    key: 'env-editor',
+    label: 'Env 编辑器',
+    path: '/env-editor',
+    group: 'utility',
+    shortLabel: 'ENV',
+    summary: '可视化编辑当前环境的 env 文件',
   },
   {
     key: 'overview',
