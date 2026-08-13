@@ -169,6 +169,34 @@ describe('DrcPage - 筛选与分组', () => {
     fireEvent.change(severitySelect, { target: { value: 'error' } });
     expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(3);
   });
+
+  it('按类型下钻「未分类」应保留无约束类型的违规', async () => {
+    const mixedReport: DrcReport = {
+      ...buildReport('drc_mixed', 'Mixed', readFixture('drc.basic.rpt')),
+    };
+    mixedReport.violations[0].constraintType = undefined;
+    mixedReport.violations[0].category = undefined;
+    mixedReport.summary = buildSummary(mixedReport.violations);
+
+    mockAtm({
+      reports: [toSummary(mixedReport)],
+      getReport: vi.fn().mockResolvedValue({ success: true, data: mixedReport }),
+    });
+    const { container } = render(<DrcPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(4);
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: '按类型' }));
+    const uncategorizedRow = [...container.querySelectorAll('.drc-group-row')].find(
+      (row) => row.querySelector('.drc-group-name')?.textContent === '未分类',
+    ) as HTMLElement;
+    expect(uncategorizedRow).toBeDefined();
+    fireEvent.click(uncategorizedRow);
+
+    expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(1);
+    expect(container.querySelector('.drc-cell-rule')?.textContent).toBe('SPMHCS-1');
+  });
 });
 
 describe('DrcPage - 状态跟踪', () => {

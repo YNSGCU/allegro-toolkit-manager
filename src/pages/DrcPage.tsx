@@ -8,7 +8,7 @@
  *   4. 违规明细表：关键词 / 维度筛选，单条与批量状态标记（只存 ATM）
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Cable, Download, FileUp, MoreHorizontal } from 'lucide-react';
+import { Cable, Download, FileUp, Trash2 } from 'lucide-react';
 import type {
   DrcBridgeFetchResult,
   DrcExportFormat,
@@ -63,6 +63,11 @@ function matchKeyword(violation: DrcViolation, keyword: string): boolean {
     violation.pin,
   ].filter(Boolean).join(' ').toLowerCase();
   return haystack.includes(needle);
+}
+
+/** 类型分组的归一化 key（与 DrcSummary.byType 的占位一致） */
+function typeKeyOf(violation: DrcViolation): string {
+  return violation.constraintType || violation.category || '未分类';
 }
 
 const DrcPage: React.FC = () => {
@@ -265,7 +270,7 @@ const DrcPage: React.FC = () => {
       if (filter.layer && v.layer !== filter.layer) return false;
       if (filter.net && v.net !== filter.net) return false;
       if (filter.rule && v.rule !== filter.rule) return false;
-      if (filter.type && v.constraintType !== filter.type && v.category !== filter.type) return false;
+      if (filter.type && typeKeyOf(v) !== filter.type) return false;
       if (filter.severity && v.severity !== filter.severity) return false;
       if (filter.status && v.status !== filter.status) return false;
       return true;
@@ -398,7 +403,7 @@ const DrcPage: React.FC = () => {
           disabled={!report}
           title="删除当前报告"
         >
-          <MoreHorizontal aria-hidden="true" /> 更多
+          <Trash2 aria-hidden="true" /> 删除当前报告
         </button>
       </div>
 

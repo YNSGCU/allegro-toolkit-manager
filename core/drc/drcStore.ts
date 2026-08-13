@@ -106,7 +106,7 @@ function saveReport(report: DrcReport): void {
 
 /** 生成报告 id */
 export function makeDrcReportId(content: string): string {
-  return `drc_${sha256(content).slice(0, 16)}`;
+  return `drc_${sha256(content)}`;
 }
 
 /**
@@ -115,6 +115,9 @@ export function makeDrcReportId(content: string): string {
  */
 export function importDrcReport(input: DrcImportInput): DrcImportResult {
   const parsed = parseDrcReport(input.content);
+  if (!parsed.name && input.fileName) {
+    parsed.name = input.fileName.replace(/\.[^.]+$/, '');
+  }
   return importParsedDrcReport(parsed, input.content, input.sourceType);
 }
 

@@ -44,6 +44,18 @@ const FILE_FILTERS = [
   { name: '所有文件', extensions: ['*'] },
 ];
 
+/** 最近一次由文件选择对话框确认的路径（白名单，防 renderer 传任意路径读取） */
+let dialogApprovedPath: string | null = null;
+
+function normalizePathForCompare(filePath: string): string {
+  return path.normalize(filePath).toLowerCase();
+}
+
+function isDialogApprovedPath(filePath: string | undefined | null): boolean {
+  if (!filePath || !dialogApprovedPath) return false;
+  return normalizePathForCompare(filePath) === dialogApprovedPath;
+}
+
 function sha256(content: string): string {
   return crypto.createHash('sha256').update(content, 'utf-8').digest('hex');
 }
@@ -58,11 +70,16 @@ export function registerDrcIpc(): void {
     if (result.canceled || result.filePaths.length === 0) {
       return { success: true, data: null };
     }
-    return { success: true, data: result.filePaths[0] };
+    const selectedPath = result.filePaths[0];
+    dialogApprovedPath = normalizePathForCompare(selectedPath);
+    return { success: true, data: selectedPath };
   });
 
   ipcMain.handle('drc:parse-file', async (_event, filePath: string) => {
     try {
+      if (!isDialogApprovedPath(filePath)) {
+        return { success: false, error: '未经选择的文件路径，已拒绝读取。' };
+      }
       if (!filePath || !fs.existsSync(filePath)) {
         return { success: false, error: '文件不存在，请重新选择。' };
       }
@@ -83,6 +100,9 @@ export function registerDrcIpc(): void {
 
   ipcMain.handle('drc:import-report', (_event, input: DrcImportFileInput) => {
     try {
+      if (!isDialogApprovedPath(input?.filePath)) {
+        return { success: false, error: '未经选择的文件路径，已拒绝导入。' };
+      }
       if (!input?.filePath || !fs.existsSync(input.filePath)) {
         return { success: false, error: '文件不存在，无法导入。' };
       }

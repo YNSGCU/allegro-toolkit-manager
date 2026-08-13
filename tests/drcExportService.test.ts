@@ -77,6 +77,7 @@ describe('exportDrcCsv', () => {
   it('应输出元数据头、表头与数据行', () => {
     const report = buildReport();
     const csv = exportDrcCsv({ report });
+    expect(csv.startsWith('\uFEFF')).toBe(true);
     const lines = csv.split(/\r?\n/);
     expect(lines[0]).toContain('# 设计:');
     expect(lines[2]).toContain('# 单位:Mils');

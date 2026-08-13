@@ -4,12 +4,11 @@
  */
 import type { DrcLocation, DrcViolation } from '../../src/types/drc';
 
-/** 层名大小写归一：全小写的单层名转大写（top -> TOP），保留混合写法 */
+/** 层名大小写归一：统一转为大写（top / Top / TOP 都归并为 TOP） */
 export function normalizeLayer(layer: string | undefined): string | undefined {
   const value = normalizeOptional(layer);
   if (value === undefined) return undefined;
-  if (value === value.toLowerCase()) return value.toUpperCase();
-  return value;
+  return value.toUpperCase();
 }
 
 /** 可选字符串规范化：trim、压缩空白、空串转 undefined */

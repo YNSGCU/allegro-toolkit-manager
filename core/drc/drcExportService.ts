@@ -174,7 +174,7 @@ export function exportDrcCsv(options: DrcExportOptions): string {
     `# 单位:${report.units ?? ''}`,
     `# 导出时间:${new Date().toLocaleString('zh-CN', { hour12: false })}`,
   ];
-  return [...meta, header.join(','), ...rows].join('\r\n') + '\r\n';
+  return '\uFEFF' + [...meta, header.join(','), ...rows].join('\r\n') + '\r\n';
 }
 
 export function drcExportFileName(options: DrcExportOptions, format: DrcExportFormat): string {

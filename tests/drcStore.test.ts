@@ -58,7 +58,7 @@ describe('importDrcReport - 导入', () => {
   it('应解析并落盘完整报告', () => {
     const { report, duplicate } = importBasic();
     expect(duplicate).toBe(false);
-    expect(report.id).toMatch(/^drc_[0-9a-f]{16}$/);
+    expect(report.id).toMatch(/^drc_[0-9a-f]{64}$/);
     expect(report.sourceType).toBe('file');
     expect(report.format).toBe('rpt-text');
     expect(report.rawHash).toMatch(/^[0-9a-f]{64}$/);

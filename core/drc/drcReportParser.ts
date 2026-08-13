@@ -136,12 +136,19 @@ export function detectFormat(content: string): DrcFileFormat {
     .map((line) => line.trim())
     .filter(Boolean)
     .slice(0, 20);
-  const csvScore = head.filter((line) => line.includes(',') && !/^[\w\u4e00-\u9fa5\s-]+\s*:/.test(line)).length;
   const rptScore = head.filter(
     (line) => VIOLATION_HEAD.test(line) || /Summary Statistics/i.test(line),
   ).length;
-  if (csvScore > 0 && csvScore >= rptScore) return 'extracta-csv';
   if (rptScore > 0) return 'rpt-text';
+  // CSV：第一个非注释行应为表头（含逗号且可拆成多列，且不是违规头）
+  const firstDataLine = head.find(
+    (line) => !line.startsWith('#') && !/^[\w\u4e00-\u9fa5\s-]+\s*:/.test(line),
+  );
+  const looksCsv = firstDataLine !== undefined
+    && firstDataLine.includes(',')
+    && !VIOLATION_HEAD.test(firstDataLine)
+    && splitCsvLine(firstDataLine).length >= 2;
+  if (looksCsv) return 'extracta-csv';
   return 'unknown';
 }
 
@@ -239,10 +246,7 @@ export function parseRptText(content: string): DrcParsedReport {
     const trimmed = rawLine.trim();
     const lineNumber = i + 1;
 
-    if (trimmed === '') {
-      if (current) flush();
-      continue;
-    }
+    if (trimmed === '') continue;
 
     // section 标题
     if (SECTION_HEADERS.some((re) => re.test(trimmed))) {
@@ -305,7 +309,7 @@ export function parseRptText(content: string): DrcParsedReport {
 
   return {
     format: 'rpt-text',
-    name: header.name || 'DRC 报告',
+    name: header.name || '',
     designName: header.designName,
     allegroVersion: header.allegroVersion,
     units: header.units,
@@ -431,7 +435,7 @@ export function parseExtractaCsv(content: string): DrcParsedReport {
   if (headerIndex < 0) {
     return {
       format: 'extracta-csv',
-      name: 'DRC 报告',
+      name: '',
       parseWarnings: ['CSV 文件中未找到数据表头'],
       summary: emptySummary(),
       violations: [],
@@ -504,7 +508,7 @@ export function parseExtractaCsv(content: string): DrcParsedReport {
 
   return {
     format: 'extracta-csv',
-    name: header.name || 'DRC 报告（CSV）',
+    name: header.name || '',
     designName: header.designName,
     allegroVersion: header.allegroVersion,
     units: header.units,

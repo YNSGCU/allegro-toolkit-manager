@@ -23,7 +23,7 @@ describe('normalizeRule / normalizeLayer / normalizeOptional', () => {
     expect(normalizeLayer('top')).toBe('TOP');
     expect(normalizeLayer('bottom')).toBe('BOTTOM');
     expect(normalizeLayer('TOP')).toBe('TOP');
-    expect(normalizeLayer('Top')).toBe('Top');
+    expect(normalizeLayer('Top')).toBe('TOP');
     expect(normalizeLayer(undefined)).toBeUndefined();
   });
 

@@ -152,7 +152,7 @@ export async function fetchDrcViaBridge(timeoutMs = 20000): Promise<DrcBridgeFet
   const { violations, total, warnings } = parseBridgeDrcResponse(rawText);
   const parsed: DrcParsedReport = {
     format: 'bridge',
-    name: `DRC 报告（${total} 条）`,
+    name: `DRC 报告（${violations.length} 条）`,
     parseWarnings: warnings,
     summary: buildSummary(violations),
     violations,
