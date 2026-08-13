@@ -5,8 +5,9 @@
  * 执行只读 SKILL，遍历 axlDBGetDesign()->drcs 抓取结构化 DRC 数据。
  *
  * 只读红线：本模块生成的 SKILL 只调用读取 API，不修改设计数据库。
- * 响应格式：首行 `SUCCESS <count>`，随后每行 `R|rule|type|actual|expected|
- * layer|net|component|pin|x|y|waived|fixed`（%L 输出，可能带引号或 nil）。
+ * Vibe Bridge 服务端会给 SKILL 返回值加 `SUCCESS ` 前缀，因此脚本返回纯数据：
+ * 首行 count，随后每行 `R|rule|type|actual|expected|layer|net|component|pin|x|y|
+ * waived|fixed`（%L 输出，可能带引号或 nil）。
  */
 import crypto from 'crypto';
 import type { DrcBridgeFetchResult, DrcParsedReport, DrcViolation } from '../../src/types/drc';
@@ -20,7 +21,7 @@ export function buildDrcSnapshotSkill(): string {
     'let((design drcs out)',
     'design = axlDBGetDesign()',
     'drcs = design->drcs',
-    'out = sprintf(nil "SUCCESS %d\n" length(drcs))',
+    'out = sprintf(nil "%d\n" length(drcs))',
     'foreach(drc drcs',
     'out = strcat(out sprintf(nil "R|%L|%L|%L|%L|%L|%L|%L|%L|%L|%L|%L|%L\n"',
     'if(drc->?rule drc->rule nil)',
@@ -65,16 +66,24 @@ export function parseBridgeDrcResponse(raw: string): {
 } {
   const warnings: string[] = [];
   const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length === 0 || !lines[0].startsWith('SUCCESS')) {
-    warnings.push('Bridge 响应不是 SUCCESS 格式');
+  if (lines.length === 0) {
+    warnings.push('Bridge 响应为空');
     return { violations: [], total: 0, warnings };
   }
 
-  const totalMatch = /^SUCCESS\s+(\d+)/i.exec(lines[0]);
-  const total = totalMatch ? Number(totalMatch[1]) : 0;
+  let total = 0;
+  let dataStart = 0;
+  const successHead = /^SUCCESS\s+(\d+)/i.exec(lines[0]);
+  if (successHead) {
+    total = Number(successHead[1]);
+    dataStart = 1;
+  } else if (/^\d+$/.test(lines[0])) {
+    total = Number(lines[0]);
+    dataStart = 1;
+  }
   const violations: DrcViolation[] = [];
 
-  for (const line of lines.slice(1)) {
+  for (const line of lines.slice(dataStart)) {
     if (!line.startsWith('R|')) continue;
     const cells = line.slice(2).split('|').map(normalizeCell);
     if (cells.length < 2) {
@@ -105,6 +114,10 @@ export function parseBridgeDrcResponse(raw: string): {
       fixed: fixed === 't' || fixed === 'true' || fixed === '1',
     });
     violations.push(violation);
+  }
+
+  if (violations.length === 0) {
+    warnings.push('未解析到有效的 DRC 数据行');
   }
 
   return { violations, total, warnings };

@@ -93,6 +93,7 @@ const HEADER_KEYS: Record<string, keyof ReportHeader> = {
 };
 
 interface AttributeTarget {
+  description?: string;
   category?: string;
   constraintType?: string;
   layer?: string;
@@ -135,7 +136,7 @@ export function detectFormat(content: string): DrcFileFormat {
   const head = splitLines(content)
     .map((line) => line.trim())
     .filter(Boolean)
-    .slice(0, 20);
+    .slice(0, 80);
   const rptScore = head.filter(
     (line) => VIOLATION_HEAD.test(line) || /Summary Statistics/i.test(line),
   ).length;
@@ -379,6 +380,8 @@ const CSV_COLUMNS: Record<string, keyof AttributeTarget | 'x' | 'y' | 'severity'
   expected: 'expected',
   waived: 'waived',
   fixed: 'fixed',
+  description: 'description',
+  说明: 'description',
 };
 
 function mapCsvColumn(headerName: string): keyof AttributeTarget | 'x' | 'y' | 'severity' | 'rule' | null {
@@ -395,6 +398,7 @@ function mapCsvColumn(headerName: string): keyof AttributeTarget | 'x' | 'y' | '
   if (key.includes('actual')) return 'actual';
   if (key.includes('expected') || key.includes('required')) return 'expected';
   if (key.includes('class') || key.includes('category')) return 'category';
+  if (key.includes('description') || key.includes('说明')) return 'description';
   return null;
 }
 
@@ -486,7 +490,7 @@ export function parseExtractaCsv(content: string): DrcParsedReport {
       {
         rule: rule ?? '未知规则',
         severity,
-        description: '',
+        description: read('description'),
         sourceLine: i + 1,
         raw: line,
         category: read('category'),

@@ -42,15 +42,16 @@ describe('buildDrcSnapshotSkill - 只读红线', () => {
     }
   });
 
-  it('应输出 SUCCESS 头与 R| 数据行', () => {
-    expect(skill).toContain('SUCCESS');
+  it('应输出 count 头与 R| 数据行，且不自带 SUCCESS 前缀', () => {
+    expect(skill).not.toContain('SUCCESS');
     expect(skill).toContain('R|');
+    expect(skill).toContain('%d');
     expect(skill).not.toContain(';');
   });
 });
 
 describe('parseBridgeDrcResponse - 响应解析', () => {
-  it('应解析 SUCCESS 头与字段行', () => {
+  it('应解析带 SUCCESS 前缀的字段行（直接读文件场景）', () => {
     const raw = [
       'SUCCESS 2',
       'R|SPMHCS-1|ERROR|0.00|3.00|TOP|VCC|U1|5|1234.56|789.01|nil|nil',
@@ -79,6 +80,18 @@ describe('parseBridgeDrcResponse - 响应解析', () => {
     expect(second.actual).toBeUndefined();
     expect(second.waived).toBe(true);
     expect(second.location).toEqual({ x: 10, y: 20 });
+  });
+
+  it('应解析 executeSkillViaBridge 剥离前缀后的纯数据', () => {
+    const raw = [
+      '1',
+      'R|SPMHCS-1|ERROR|0|3|TOP|VCC|U1|5|1|2|nil|nil',
+    ].join('\n');
+    const { violations, total, warnings } = parseBridgeDrcResponse(raw);
+    expect(total).toBe(1);
+    expect(warnings).toEqual([]);
+    expect(violations[0].rule).toBe('SPMHCS-1');
+    expect(violations[0].location).toEqual({ x: 1, y: 2 });
   });
 
   it('应容忍 %L 输出的引号包裹', () => {
@@ -137,7 +150,7 @@ describe('fetchDrcViaBridge - 抓取流程', () => {
     vi.mocked(executeSkillViaBridge).mockResolvedValue({
       success: true,
       output: [
-        'SUCCESS 1',
+        '1',
         'R|SPMHCS-1|ERROR|0|3|TOP|VCC|U1|5|1|2|nil|nil',
       ].join('\n'),
     });

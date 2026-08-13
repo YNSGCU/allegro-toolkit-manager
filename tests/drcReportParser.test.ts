@@ -41,6 +41,15 @@ describe('detectFormat - 格式识别', () => {
     expect(detectFormat('')).toBe('unknown');
     expect(detectFormat('随便一段文本\n没有报告结构')).toBe('unknown');
   });
+
+  it('头部较长、违规头在 20 行之后的 .rpt 仍应识别为 rpt-text', () => {
+    const lines = ['Design Rules Check Report'];
+    for (let i = 0; i < 30; i++) {
+      lines.push(`Metadata ${i}: value`);
+    }
+    lines.push('', '#1 ERROR(SPMHCS-1): missing mask', 'Layer: TOP', 'Net: VCC');
+    expect(detectFormat(lines.join('\n'))).toBe('rpt-text');
+  });
 });
 
 describe('parseRptText - 标准英文报告', () => {
@@ -190,6 +199,16 @@ describe('parseExtractaCsv - CSV 报告', () => {
     const result = parseExtractaCsv(csv);
     expect(result.violations).toHaveLength(1);
     expect(result.parseWarnings.some((w) => w.includes('无法识别'))).toBe(true);
+  });
+
+  it('应解析说明 / Description 列', () => {
+    const csv = [
+      'Rule,Layer,Net,Description',
+      'SPMHCS-1,TOP,VCC,"missing solder mask"',
+    ].join('\n');
+    const result = parseExtractaCsv(csv);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0].description).toBe('missing solder mask');
   });
 });
 
