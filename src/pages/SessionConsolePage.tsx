@@ -13,6 +13,14 @@ import ToastContainer, { useToast } from '../components/common/Toast';
 import { formatUserError, PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 import './session-console-page.css';
 
+/** 预置只读快捷命令（点击即执行，无需手敲 SKILL） */
+const PRESET_COMMANDS: Array<{ label: string; code: string }> = [
+  { label: '版本信息', code: "list(axlVersion('fullVersion) axlVersion('programName))" },
+  { label: '当前设计', code: 'axlCurrentDesign()' },
+  { label: '设计单位', code: 'axlDBGetDesignUnits()' },
+  { label: 'DRC 数量', code: 'length(axlDBGetDesign()->drcs)' },
+];
+
 // 与 core/session/sessionCommand.ts 的 WRITE_APIS 保持同步（仅用于执行前二次确认提示）
 const WRITE_KEYWORDS = [
   'axlDBChangeDesign', 'axlDBDeleteObject', 'axlDeleteObject', 'axlAddSimpleMove',
@@ -137,6 +145,22 @@ const SessionConsolePage: React.FC = () => {
               rows={6}
               spellCheck={false}
             />
+            <div className="session-presets">
+              {PRESET_COMMANDS.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  className="session-preset"
+                  onClick={() => {
+                    setCode(preset.code);
+                    void runCommand(preset.code);
+                  }}
+                  disabled={busy}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <div className="session-command-actions">
               <span className="session-command-hint">
                 {detectWriteRisk(code) === 'write' ? '检测到可能修改设计的命令，执行前会二次确认。' : '只读命令，直接执行。'}
