@@ -34,7 +34,7 @@ export default function DrcExportDialog({
       dismissDisabled={busy}
       size="sm"
       footer={
-        <button type="button" className="ui-button" onClick={onClose} disabled={busy}>
+        <button type="button" className="btn" onClick={onClose} disabled={busy}>
           取消
         </button>
       }

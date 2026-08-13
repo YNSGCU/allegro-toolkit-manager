@@ -383,29 +383,25 @@ const DrcPage: React.FC = () => {
         description="导入或抓取 DRC 报告，按层 / 网络 / 规则分组统计，跟踪问题解决状态。"
         actions={
           <>
-            <button type="button" className="ui-button ui-button--primary" onClick={() => void handleImport()} disabled={busy}>
+            <button type="button" className="btn btn-primary" onClick={() => void handleImport()} disabled={busy}>
               <FileUp aria-hidden="true" /> 导入报告
             </button>
-            <button type="button" className="ui-button drc-fetch-button" onClick={() => void handleBridgeFetch()} disabled={busy}>
+            <button type="button" className="btn drc-fetch-button" onClick={() => void handleBridgeFetch()} disabled={busy}>
               <Cable aria-hidden="true" /> 在线抓取
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => { if (report) setDeleteTarget(reports.find((r) => r.id === report.id) ?? null); }}
+              disabled={!report}
+              title="删除当前报告"
+            >
+              <Trash2 aria-hidden="true" /> 删除
             </button>
           </>
         }
       />
       <GlobalStatusBar items={statusItems} />
-
-      <div className="drc-toolbar">
-        <span className="drc-toolbar-title">报告管理</span>
-        <button
-          type="button"
-          className="ui-button drc-toolbar-more"
-          onClick={() => { if (report) setDeleteTarget(reports.find((r) => r.id === report.id) ?? null); }}
-          disabled={!report}
-          title="删除当前报告"
-        >
-          <Trash2 aria-hidden="true" /> 删除当前报告
-        </button>
-      </div>
 
       {loading ? (
         <PageState kind="loading" title="正在加载 DRC 报告" />
@@ -440,13 +436,13 @@ const DrcPage: React.FC = () => {
                   <div className="drc-detail-actions">
                     <button
                       type="button"
-                      className="ui-button"
+                      className="btn"
                       onClick={() => setExportOpen(true)}
                       disabled={report.violations.length === 0}
                     >
                       <Download aria-hidden="true" /> 导出
                     </button>
-                    <button type="button" className="ui-button" onClick={() => void openRaw()}>
+                    <button type="button" className="btn" onClick={() => void openRaw()}>
                       查看原文
                     </button>
                   </div>
@@ -505,10 +501,10 @@ const DrcPage: React.FC = () => {
                 <div className="drc-table-header">
                   <span>明细（{filteredViolations.length} / {report.violations.length}）</span>
                   <div className="drc-batch-actions">
-                    <button type="button" className="ui-button" disabled={filteredViolations.length === 0 || busy} onClick={() => void batchUpdateStatus('resolved')}>
+                    <button type="button" className="btn" disabled={filteredViolations.length === 0 || busy} onClick={() => void batchUpdateStatus('resolved')}>
                       批量标记已解决
                     </button>
-                    <button type="button" className="ui-button" disabled={filteredViolations.length === 0 || busy} onClick={() => void batchUpdateStatus('ignored')}>
+                    <button type="button" className="btn" disabled={filteredViolations.length === 0 || busy} onClick={() => void batchUpdateStatus('ignored')}>
                       批量忽略
                     </button>
                   </div>

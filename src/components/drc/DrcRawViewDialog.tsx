@@ -27,7 +27,7 @@ export default function DrcRawViewDialog({
       onClose={onClose}
       size="xl"
       footer={
-        <button type="button" className="ui-button" onClick={onClose}>
+        <button type="button" className="btn" onClick={onClose}>
           关闭
         </button>
       }

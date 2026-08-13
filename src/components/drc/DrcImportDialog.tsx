@@ -33,10 +33,10 @@ export default function DrcImportDialog({
       size="lg"
       footer={
         <>
-          <button type="button" className="ui-button" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn" onClick={onClose} disabled={busy}>
             取消
           </button>
-          <button type="button" className="ui-button ui-button--primary" onClick={onConfirm} disabled={busy}>
+          <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={busy}>
             {busy ? '正在导入…' : '确认导入'}
           </button>
         </>
