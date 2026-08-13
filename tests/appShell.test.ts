@@ -18,6 +18,7 @@ describe('app shell config', () => {
       'menu',
       'colors',
       'drc',
+      'session',
     ]);
   });
 

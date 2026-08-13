@@ -17,3 +17,4 @@
 | menu-profile-transfer | complete | `docs/user/features/menu-profile-transfer.md` | `docs/dev/features/menu-profile-transfer.md` | 2026-08-12 |
 | drc-report-visualization | complete（M1-M6，M7 收尾中） | `docs/user/features/drc-report-visualization.md` | `docs/dev/features/drc-report-visualization.md` | 2026-08-12 |
 | env-visual-editor | complete（M1-M4） | `docs/user/features/env-visual-editor.md` | `docs/dev/features/env-visual-editor.md` | 2026-08-13 |
+| session-console | complete（M1-M4 收尾中） | `docs/user/features/session-console.md` | `docs/dev/features/session-console.md` | 2026-08-13 |

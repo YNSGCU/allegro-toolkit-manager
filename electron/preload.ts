@@ -690,6 +690,13 @@ contextBridge.exposeInMainWorld('atm', {
   envEditorApply: (input: any) =>
     ipcRenderer.invoke('env:editor-apply', input),
 
+  // ===== Allegro 会话控制台（V0.4） =====
+  /** 探测当前会话快照 */
+  sessionProbe: () => ipcRenderer.invoke('session:probe'),
+  /** 执行 SKILL 命令 */
+  sessionCommand: (code: string) =>
+    ipcRenderer.invoke('session:command', code),
+
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
   saveUpdateSettings: (settings: { feedUrl: string; connectionMode: 'system' | 'direct' }) =>

@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'overview' | 'backup' | 'env-editor' | 'workspace';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'session' | 'overview' | 'backup' | 'env-editor' | 'workspace';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -57,6 +57,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'primary',
     shortLabel: 'DRC',
     summary: '导入或抓取 DRC 报告，按层 / 网络 / 规则分组统计并跟踪解决状态',
+  },
+  {
+    key: 'session',
+    label: '会话控制台',
+    path: '/session',
+    group: 'primary',
+    shortLabel: 'SES',
+    summary: '查看当前 Allegro 会话并执行 SKILL 命令',
   },
   {
     key: 'backup',
