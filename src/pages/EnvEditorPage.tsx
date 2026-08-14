@@ -236,6 +236,32 @@ const EnvEditorPage: React.FC = () => {
     await runCompare();
   }, [runCompare]);
 
+  const copyMissingToUser = () => {
+    if (!compareResult) return;
+    const existing = new Set(entries.map((e) => `${e.type}:${e.key}`));
+    const missing = compareResult.diffs.filter(
+      (d) => d.status === 'only_b' && !existing.has(`${d.type}:${d.key}`),
+    );
+    if (missing.length === 0) {
+      addToast('info', '参考 env 中没有可复制的缺失条目。');
+      return;
+    }
+    const newEntries: EnvEditorEntry[] = missing.map((d) => ({
+      id: newId(),
+      type: d.type,
+      key: d.key,
+      value: d.bValue,
+      raw: '',
+      lineNumber: 0,
+      source: 'user_original' as const,
+      dirty: true,
+      deleted: false,
+    }));
+    setEntries([...entries, ...newEntries]);
+    setCompareOpen(false);
+    addToast('success', `已将 ${newEntries.length} 个缺失条目加入草稿，点击「审阅并应用」写入 env。`);
+  };
+
   const statusItems = [
     { label: '环境', value: loadResult ? loadResult.document.filePath : '-', status: 'muted' as const },
     { label: '编码', value: loadResult ? loadResult.encoding.toUpperCase() : '-', status: 'muted' as const },
@@ -454,7 +480,18 @@ const EnvEditorPage: React.FC = () => {
         onClose={() => setCompareOpen(false)}
         size="lg"
         footer={
-          <button type="button" className="btn" onClick={() => setCompareOpen(false)}>关闭</button>
+          <>
+            <button type="button" className="btn" onClick={() => setCompareOpen(false)}>关闭</button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!compareResult || compareResult.summary.onlyB === 0}
+              onClick={copyMissingToUser}
+              title="把参考 env 中有而用户 env 缺失的条目复制进草稿"
+            >
+              复制缺失项（{compareResult?.summary.onlyB ?? 0}）
+            </button>
+          </>
         }
       >
         {compareResult ? (

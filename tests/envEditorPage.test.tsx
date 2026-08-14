@@ -151,4 +151,44 @@ describe('EnvEditorPage - 对比参考', () => {
     expect(screen.getByText('仅在用户 1')).toBeInTheDocument();
     expect(screen.getByText('值不同 1')).toBeInTheDocument();
   });
+
+  it('复制缺失项应把参考独有条目加入草稿', async () => {
+    mockAtm();
+    window.atm.envCompareSources = vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        result: {
+          aLabel: '用户配置 env',
+          aPath: 'C:/pcbenv/env',
+          bLabel: '安装默认 env',
+          bPath: 'C:/Cadence/SPB_17.4/share/pcb/text/env',
+          diffs: [
+            { type: 'funckey', key: 'F5', bValue: 'add connect', status: 'only_b' },
+            { type: 'alias', key: 'zv', bValue: 'zoom out', status: 'only_b' },
+          ],
+          summary: { onlyA: 0, onlyB: 2, different: 0, total: 2 },
+        },
+        sources: [
+          { id: 's1', path: 'C:/pcbenv/env', role: 'user_env', exists: true, displayName: '用户配置 env' },
+          { id: 's2', path: 'C:/Cadence/SPB_17.4/share/pcb/text/env', role: 'install_default_env', exists: true, displayName: '安装默认 env' },
+        ],
+      },
+    });
+    const { container } = render(<EnvEditorPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.env-editor-row')).toHaveLength(3);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '对比参考' }));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '对比参考 env' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /复制缺失项/ }));
+    await waitFor(() => {
+      expect(container.querySelectorAll('.env-editor-row')).toHaveLength(5);
+    });
+    expect(screen.getByText('F5 → add connect')).toBeInTheDocument();
+    expect(screen.getByText('zv → zoom out')).toBeInTheDocument();
+  });
 });
