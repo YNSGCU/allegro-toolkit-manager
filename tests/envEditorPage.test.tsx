@@ -82,3 +82,29 @@ describe('EnvEditorPage - 渲染', () => {
     expect(screen.getByText('F2 → zoom fit')).toBeInTheDocument();
   });
 });
+
+describe('EnvEditorPage - 搜索与筛选', () => {
+  it('关键词搜索与类型筛选应过滤条目', async () => {
+    mockAtm();
+    const { container } = render(<EnvEditorPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.env-editor-row')).toHaveLength(3);
+    });
+
+    const search = container.querySelector('.env-editor-search') as HTMLInputElement;
+    fireEvent.change(search, { target: { value: 'zoom' } });
+    expect(container.querySelectorAll('.env-editor-row')).toHaveLength(2);
+
+    fireEvent.change(search, { target: { value: '' } });
+    const typeSelect = container.querySelector('.env-editor-type-filter') as HTMLSelectElement;
+    fireEvent.change(typeSelect, { target: { value: 'variable' } });
+    expect(container.querySelectorAll('.env-editor-row')).toHaveLength(1);
+
+    fireEvent.change(search, { target: { value: 'path' } });
+    expect(container.querySelectorAll('.env-editor-row')).toHaveLength(1);
+
+    fireEvent.change(search, { target: { value: 'zzz-nomatch' } });
+    expect(container.querySelectorAll('.env-editor-row')).toHaveLength(0);
+    expect(screen.getByText('没有匹配的条目')).toBeInTheDocument();
+  });
+});

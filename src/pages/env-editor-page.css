@@ -8,6 +8,49 @@
   min-height: 34px;
 }
 
+.env-editor-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.env-editor-search {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: var(--bg-input, #ffffff);
+  color: var(--text-primary, #171717);
+}
+
+.env-editor-type-filter {
+  font-size: 13px;
+  padding: 7px 8px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: var(--bg-input, #ffffff);
+  color: var(--text-primary, #171717);
+}
+
+.env-editor-filter-clear {
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #5f5a52);
+  cursor: pointer;
+}
+
+.env-editor-filter-count {
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+  white-space: nowrap;
+}
+
 .env-editor-list {
   display: flex;
   flex-direction: column;

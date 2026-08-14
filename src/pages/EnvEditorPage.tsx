@@ -51,6 +51,8 @@ const EnvEditorPage: React.FC = () => {
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const [preview, setPreview] = useState<EnvEditorPreviewResult | null>(null);
   const [confirmApply, setConfirmApply] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'' | EnvEditorEntryType>('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,6 +79,21 @@ const EnvEditorPage: React.FC = () => {
   }, [load]);
 
   const dirtyEntries = useMemo(() => entries.filter((e) => e.dirty || e.deleted), [entries]);
+
+  const visibleEntries = useMemo(() => {
+    const needle = keyword.trim().toLowerCase();
+    return entries.filter((entry) => {
+      if (typeFilter && entry.type !== typeFilter) return false;
+      if (!needle) return true;
+      const haystack = [
+        entry.key,
+        entry.value,
+        entry.raw,
+        TYPE_LABELS[entry.type],
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [entries, keyword, typeFilter]);
 
   const openEdit = (entry: EnvEditorEntry) => {
     setEditDraft({
@@ -238,8 +255,42 @@ const EnvEditorPage: React.FC = () => {
       {entries.length === 0 ? (
         <PageState kind="empty" title="env 文件为空" description="点击右上角「新增条目」添加内容。" />
       ) : (
-        <div className="env-editor-list" role="list">
-          {entries.map((entry) => (
+        <>
+          <div className="env-editor-filter">
+            <input
+              className="env-editor-search"
+              placeholder="搜索键名 / 值 / 内容…"
+              value={keyword}
+              aria-label="搜索条目"
+              onChange={(event) => setKeyword(event.target.value)}
+            />
+            <select
+              className="env-editor-type-filter"
+              aria-label="按类型筛选"
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as '' | EnvEditorEntryType)}
+            >
+              <option value="">全部类型</option>
+              {(Object.keys(TYPE_LABELS) as EnvEditorEntryType[]).map((type) => (
+                <option key={type} value={type}>{TYPE_LABELS[type]}</option>
+              ))}
+            </select>
+            {(keyword || typeFilter) ? (
+              <button
+                type="button"
+                className="env-editor-filter-clear"
+                onClick={() => { setKeyword(''); setTypeFilter(''); }}
+              >
+                清除
+              </button>
+            ) : null}
+            <span className="env-editor-filter-count">{visibleEntries.length} / {entries.length}</span>
+          </div>
+          {visibleEntries.length === 0 ? (
+            <PageState kind="empty" title="没有匹配的条目" description="调整搜索关键词或类型筛选后重试。" />
+          ) : (
+            <div className="env-editor-list" role="list">
+              {visibleEntries.map((entry) => (
             <div
               key={entry.id}
               role="listitem"
@@ -278,7 +329,9 @@ const EnvEditorPage: React.FC = () => {
               </span>
             </div>
           ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       <BusinessDialog
