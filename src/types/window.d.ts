@@ -3,7 +3,7 @@
  * 所有页面和组件共享的 window.atm 类型
  */
 import type { ApplyPlan, Conflict, HotkeyBinding, HotkeyProfile } from './hotkey';
-import type { EnvironmentInfo, EnvSourceList, AtmSettings, EnvironmentRegistry, AllegroEnvironmentWorkspace, ProfileCompatibilityReport, CompatibilityEvidenceRecord, AllegroRuntimeVerificationResult } from './environment';
+import type { EnvironmentInfo, EnvSource, EnvSourceList, AtmSettings, EnvironmentRegistry, AllegroEnvironmentWorkspace, ProfileCompatibilityReport, CompatibilityEvidenceRecord, AllegroRuntimeVerificationResult } from './environment';
 import type { EnvImportPreview, ImportResult, ImportExecuteParams } from './importEnv';
 import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, SkillConfigFile, UsageTreeNode } from './skill';
 import type { RuntimeInfo } from './runtime';
@@ -35,6 +35,7 @@ import type {
   DrcStatusUpdateInput,
 } from './drc';
 import type {
+  EnvCompareResult,
   EnvEditorApplyInput,
   EnvEditorEntry,
   EnvEditorLoadResult,
@@ -344,6 +345,7 @@ declare global {
       envEditorLoad: () => Promise<{ success: boolean; data?: EnvEditorLoadResult; error?: string }>;
       envEditorPreview: (entries: EnvEditorEntry[]) => Promise<{ success: boolean; data?: EnvEditorPreviewResult; error?: string }>;
       envEditorApply: (input: EnvEditorApplyInput) => Promise<{ success: boolean; data?: any; error?: string }>;
+      envCompareSources: (referencePath?: string) => Promise<{ success: boolean; data?: { result: EnvCompareResult | null; sources: EnvSource[] }; info?: string; error?: string }>;
 
       // Allegro 会话控制台（V0.4）
       sessionProbe: () => Promise<{ success: boolean; data?: SessionSnapshot; error?: string }>;

@@ -246,3 +246,121 @@
   text-align: center;
   color: var(--text-muted, #8d877f);
 }
+
+/* Env 对比 */
+.env-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.env-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.env-compare-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+}
+
+.env-compare-picker select {
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: var(--bg-input, #ffffff);
+  color: var(--text-primary, #171717);
+}
+
+.env-compare-summary {
+  display: inline-flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+}
+
+.env-compare-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.env-compare-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 10px;
+  background: var(--bg-surface, #ffffff);
+}
+
+.env-compare-key {
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #171717);
+}
+
+.env-compare-values {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-compare-a {
+  color: var(--danger-color, #b42318);
+}
+
+.env-compare-b {
+  color: var(--success-color, #2f6f4f);
+}
+
+.env-compare-arrow {
+  color: var(--text-muted, #8d877f);
+}
+
+.env-compare-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.env-compare-tag--only_a {
+  color: var(--danger-color, #b42318);
+  background: rgba(180, 35, 24, 0.1);
+}
+
+.env-compare-tag--only_b {
+  color: var(--success-color, #2f6f4f);
+  background: rgba(47, 111, 79, 0.1);
+}
+
+.env-compare-tag--different {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.env-compare-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #8d877f);
+}

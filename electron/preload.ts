@@ -693,6 +693,9 @@ contextBridge.exposeInMainWorld('atm', {
   /** 应用编辑（走 Apply Plan） */
   envEditorApply: (input: any) =>
     ipcRenderer.invoke('env:editor-apply', input),
+  /** 对比活动用户 env 与参考 env */
+  envCompareSources: (referencePath?: string) =>
+    ipcRenderer.invoke('env:compare-sources', referencePath),
 
   // ===== Allegro 会话控制台（V0.4） =====
   /** 探测当前会话快照 */

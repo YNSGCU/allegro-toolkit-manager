@@ -8,6 +8,9 @@ import path from 'path';
 import { locateEnvironment, calculateHealthScore, ensureAtmDirectoryStructure } from '../../core/environment/locateEnvironment';
 import { checkFileAccess } from '../../core/environment/fileAccess';
 import { scanEnvSources } from '../../core/environment/scanEnvSources';
+import { readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
+import { parseEnvDocument } from '../../core/env/envDocument';
+import { compareEnvDocuments } from '../../core/env/envCompare';
 import {
   loadSettings, saveSettings, setActiveEnvPath,
   addReferenceEnvPath, removeReferenceEnvPath,
@@ -250,6 +253,48 @@ ipcMain.handle('env:list-compatibility-records', (_event, filters?: any) => {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { success: false, error: `扫描 env 来源失败: ${message}` };
+    }
+  });
+
+  /** 对比活动用户 env 与参考 env（安装默认 / 站点 / 手动参考） */
+  ipcMain.handle('env:compare-sources', (_event, referencePath?: string) => {
+    try {
+      const envInfo = locateEnvironment();
+      let settings = null;
+      if (envInfo.pcbenvPath) settings = loadSettings(envInfo.pcbenvPath);
+      const sourceList = scanEnvSources(settings);
+
+      const userSource = sourceList.sources.find((s) => s.selectedAsActive)
+        ?? sourceList.sources.find((s) => s.role === 'user_env' && !s.isReference && s.exists);
+
+      if (!userSource || !userSource.exists) {
+        return { success: false, error: '未找到可读的用户 env。' };
+      }
+
+      const references = sourceList.sources.filter((s) => s.exists && s.role !== 'user_env');
+      const reference = references.find((s) => s.path === referencePath) ?? references[0] ?? null;
+
+      if (!reference) {
+        return { success: true, data: { result: null, sources: sourceList.sources }, info: '未找到可对比的参考 env。' };
+      }
+
+      const userText = readAllegroTextFile(userSource.path).text;
+      const refText = readAllegroTextFile(reference.path).text;
+
+      const result = compareEnvDocuments(
+        parseEnvDocument(userText).entries,
+        parseEnvDocument(refText).entries,
+        {
+          aLabel: userSource.displayName,
+          aPath: userSource.path,
+          bLabel: reference.displayName,
+          bPath: reference.path,
+        },
+      );
+
+      return { success: true, data: { result, sources: sourceList.sources } };
+    } catch (err) {
+      return { success: false, error: `对比 env 失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 

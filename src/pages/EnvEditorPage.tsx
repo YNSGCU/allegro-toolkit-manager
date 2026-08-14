@@ -5,14 +5,16 @@
  * 新增、修改、注释删除，经 Apply Plan 安全写入。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FilePenLine, Plus, Trash2, Undo2 } from 'lucide-react';
+import { FilePenLine, Plus, Scale, Trash2, Undo2 } from 'lucide-react';
 import type {
+  EnvCompareResult,
   EnvEditorEntry,
   EnvEditorEntryType,
   EnvEditorLoadResult,
   EnvEditorPreviewResult,
   EnvEditStep,
 } from '../types/envEditor';
+import type { EnvSource } from '../types/environment';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
@@ -53,6 +55,10 @@ const EnvEditorPage: React.FC = () => {
   const [confirmApply, setConfirmApply] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [typeFilter, setTypeFilter] = useState<'' | EnvEditorEntryType>('');
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareResult, setCompareResult] = useState<EnvCompareResult | null>(null);
+  const [compareSources, setCompareSources] = useState<EnvSource[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -206,6 +212,30 @@ const EnvEditorPage: React.FC = () => {
     }
   };
 
+  const runCompare = useCallback(async (referencePath?: string) => {
+    setCompareLoading(true);
+    try {
+      const res = await window.atm.envCompareSources(referencePath);
+      if (res.success && res.data) {
+        setCompareResult(res.data.result);
+        setCompareSources(res.data.sources ?? []);
+      } else {
+        addToast('error', formatUserError(res.error, '对比 env 失败'));
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '对比 env 失败'));
+    } finally {
+      setCompareLoading(false);
+    }
+  }, [addToast]);
+
+  const openCompare = useCallback(async () => {
+    setCompareOpen(true);
+    setCompareResult(null);
+    setCompareSources([]);
+    await runCompare();
+  }, [runCompare]);
+
   const statusItems = [
     { label: '环境', value: loadResult ? loadResult.document.filePath : '-', status: 'muted' as const },
     { label: '编码', value: loadResult ? loadResult.encoding.toUpperCase() : '-', status: 'muted' as const },
@@ -244,6 +274,15 @@ const EnvEditorPage: React.FC = () => {
                 <option key={type} value={type}>{TYPE_LABELS[type]}</option>
               ))}
             </select>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void openCompare()}
+              title="对比当前用户 env 与参考 env"
+            >
+              <Scale aria-hidden="true" />
+              对比参考
+            </button>
             <button type="button" className="btn btn-primary" onClick={() => void handlePreview()} disabled={dirtyEntries.length === 0}>
               审阅并应用
             </button>
@@ -408,6 +447,48 @@ const EnvEditorPage: React.FC = () => {
         onCancel={() => setConfirmApply(false)}
       />
 
+      <BusinessDialog
+        open={compareOpen}
+        title="对比参考 env"
+        description="比较当前用户 env 与参考 env（安装默认 / 站点 / 手动参考）的可编辑条目。"
+        onClose={() => setCompareOpen(false)}
+        size="lg"
+        footer={
+          <button type="button" className="btn" onClick={() => setCompareOpen(false)}>关闭</button>
+        }
+      >
+        {compareResult ? (
+          <div className="env-compare">
+            <div className="env-compare-head">
+              <label className="env-compare-picker">
+                <span>参考来源</span>
+                <select
+                  value={compareResult.bPath}
+                  onChange={(event) => void runCompare(event.target.value)}
+                  disabled={compareLoading}
+                >
+                  {compareSources
+                    .filter((source) => source.role !== 'user_env' && source.exists)
+                    .map((source) => (
+                      <option key={source.id} value={source.path}>{source.displayName}</option>
+                    ))}
+                </select>
+              </label>
+              <div className="env-compare-summary">
+                <span>仅在用户 {compareResult.summary.onlyA}</span>
+                <span>仅在参考 {compareResult.summary.onlyB}</span>
+                <span>值不同 {compareResult.summary.different}</span>
+              </div>
+            </div>
+            <EnvCompareList result={compareResult} />
+          </div>
+        ) : (
+          <div className="env-compare-empty">
+            {compareLoading ? '正在对比…' : '未找到可对比的参考 env（请确认已检测到安装默认 / 站点 env）。'}
+          </div>
+        )}
+      </BusinessDialog>
+
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </WorkspacePage>
   );
@@ -429,6 +510,36 @@ function EnvDiffList({ steps }: { steps: EnvEditStep[] }) {
           </div>
           {step.before ? <div className="env-editor-diff-line before">- {step.before}</div> : null}
           <div className="env-editor-diff-line after">+ {step.after}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EnvCompareList({ result }: { result: EnvCompareResult }) {
+  if (result.diffs.length === 0) {
+    return <div className="env-compare-empty">两份 env 的可编辑条目完全一致。</div>;
+  }
+  return (
+    <div className="env-compare-list">
+      {result.diffs.map((diff, index) => (
+        <div key={index} className={`env-compare-row env-compare-row--${diff.status}`}>
+          <span className={`env-editor-type env-editor-type--${diff.type}`}>{TYPE_LABELS[diff.type]}</span>
+          <span className="env-compare-key">{diff.key}</span>
+          {diff.status === 'different' ? (
+            <span className="env-compare-values">
+              <span className="env-compare-a">{diff.aValue}</span>
+              <span className="env-compare-arrow">→</span>
+              <span className="env-compare-b">{diff.bValue}</span>
+            </span>
+          ) : (
+            <span className="env-compare-values">
+              {diff.status === 'only_a' ? diff.aValue : diff.bValue}
+            </span>
+          )}
+          <span className={`env-compare-tag env-compare-tag--${diff.status}`}>
+            {diff.status === 'only_a' ? '仅在用户' : diff.status === 'only_b' ? '仅在参考' : '值不同'}
+          </span>
         </div>
       ))}
     </div>

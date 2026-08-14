@@ -32,6 +32,11 @@ function mockAtm() {
         data: { steps: [], newContent: SAMPLE },
       }),
       envEditorApply: vi.fn().mockResolvedValue({ success: true, data: { success: true } }),
+      envCompareSources: vi.fn().mockResolvedValue({
+        success: true,
+        data: { result: null, sources: [] },
+        info: '未找到可对比的参考 env。',
+      }),
     },
   });
 }
@@ -106,5 +111,44 @@ describe('EnvEditorPage - 搜索与筛选', () => {
     fireEvent.change(search, { target: { value: 'zzz-nomatch' } });
     expect(container.querySelectorAll('.env-editor-row')).toHaveLength(0);
     expect(screen.getByText('没有匹配的条目')).toBeInTheDocument();
+  });
+});
+
+describe('EnvEditorPage - 对比参考', () => {
+  it('点击「对比参考」应打开弹窗并展示差异', async () => {
+    mockAtm();
+    window.atm.envCompareSources = vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        result: {
+          aLabel: '用户配置 env',
+          aPath: 'C:/pcbenv/env',
+          bLabel: '安装默认 env',
+          bPath: 'C:/Cadence/SPB_17.4/share/pcb/text/env',
+          diffs: [
+            { type: 'funckey', key: 'F1', aValue: 'zoom fit', bValue: 'zoom out', status: 'different' },
+            { type: 'alias', key: 'zc', aValue: 'zoom center', status: 'only_a' },
+          ],
+          summary: { onlyA: 1, onlyB: 0, different: 1, total: 2 },
+        },
+        sources: [
+          { id: 's1', path: 'C:/pcbenv/env', role: 'user_env', exists: true, displayName: '用户配置 env' },
+          { id: 's2', path: 'C:/Cadence/SPB_17.4/share/pcb/text/env', role: 'install_default_env', exists: true, displayName: '安装默认 env' },
+        ],
+      },
+    });
+    const { container } = render(<EnvEditorPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.env-editor-row')).toHaveLength(3);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '对比参考' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '对比参考 env' })).toBeInTheDocument();
+    });
+    expect(container.querySelectorAll('.env-compare-row')).toHaveLength(2);
+    expect(screen.getByText('仅在用户 1')).toBeInTheDocument();
+    expect(screen.getByText('值不同 1')).toBeInTheDocument();
   });
 });

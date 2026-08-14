@@ -74,3 +74,37 @@ export interface EnvEditorApplyInput {
   encoding: 'utf8' | 'gbk';
   expectedHash: string;
 }
+
+// ═══════════════════════════════════════════════
+// Env 来源对比
+// ═══════════════════════════════════════════════
+
+/** 可比较的条目类型 */
+export type EnvCompareType = 'funckey' | 'alias' | 'variable';
+
+/** 差异状态：only_a = 仅在用户 env，only_b = 仅在参考 env */
+export type EnvCompareStatus = 'only_a' | 'only_b' | 'different';
+
+export interface EnvCompareDiff {
+  type: EnvCompareType;
+  key: string;
+  aValue?: string;
+  bValue?: string;
+  status: EnvCompareStatus;
+}
+
+export interface EnvCompareSummary {
+  onlyA: number;
+  onlyB: number;
+  different: number;
+  total: number;
+}
+
+export interface EnvCompareResult {
+  aLabel: string;
+  aPath: string;
+  bLabel: string;
+  bPath: string;
+  diffs: EnvCompareDiff[];
+  summary: EnvCompareSummary;
+}
