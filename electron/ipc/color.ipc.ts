@@ -7,7 +7,6 @@
 import { ipcMain, dialog } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import {
   captureColorScheme,
   applyColorSchemeSmart,
@@ -22,9 +21,11 @@ import {
   saveColorUndoSnapshot,
 } from '../../core/color/colorUndo';
 import {
-  checkBridgeSetup,
-  buildBridgeEnablePlan,
+  checkBridgeSetupForEnvironments,
+  buildAllEnvironmentsBridgeEnablePlan,
   findBridgeServerFile,
+  summarizeBridgeSetup,
+  type BridgeInstallTarget,
 } from '../../core/color/vibeBridgeInstaller';
 import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
 import {
@@ -39,6 +40,30 @@ import {
 } from '../../core/color/colorSchemeManager';
 import type { ColorSchemeSnapshot } from '../../src/types/color';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
+
+/** 收集所有已发现的 Allegro 环境目标；注册表为空时回退到当前定位环境 */
+function bridgeInstallTargets(): BridgeInstallTarget[] {
+  const registry = loadEnvironmentRegistry();
+  const targets = registry.environments
+    .filter((environment) => environment.exists && environment.ilinitFilePath)
+    .map((environment): BridgeInstallTarget => ({
+      environmentId: environment.id,
+      allegroVersion: environment.allegroVersion,
+      ilinitPath: environment.ilinitFilePath,
+    }));
+  if (targets.length > 0) return targets;
+
+  const envInfo = locateEnvironment();
+  const ilinitPath = envInfo.ilinitFilePath
+    || (envInfo.pcbenvPath ? path.join(envInfo.pcbenvPath, 'allegro.ilinit') : null);
+  if (!ilinitPath) return [];
+  return [{
+    environmentId: envInfo.environmentId ?? null,
+    allegroVersion: envInfo.allegroVersion ?? null,
+    ilinitPath,
+  }];
+}
 
 export function registerColorIpc(): void {
   // 检查 Vibe Bridge 可用性
@@ -290,14 +315,11 @@ ipcMain.handle('color:import-col', async () => {
   // 检查桥接安装状态（自动加载是否已配置到 ilinit）
   ipcMain.handle('color:bridge-setup-status', () => {
     try {
-      const envInfo = locateEnvironment();
-      const ilinitPath = envInfo.ilinitFilePath || (envInfo.pcbenvPath ? path.join(envInfo.pcbenvPath, 'allegro.ilinit') : null);
-      if (!ilinitPath) {
-        return { success: true, data: { serverFile: findBridgeServerFile(), ilinitPath: null, ilinitExists: false, configured: false, canEnable: false } };
-      }
+      const targets = bridgeInstallTargets();
+      const environments = checkBridgeSetupForEnvironments(targets);
       return {
         success: true,
-        data: checkBridgeSetup(ilinitPath, getAllegroTextEncoding(envInfo.allegroVersion)),
+        data: summarizeBridgeSetup(environments),
       };
     } catch (err) {
       return { success: false, error: `检查桥接安装状态失败: ${err instanceof Error ? err.message : String(err)}` };
@@ -307,27 +329,24 @@ ipcMain.handle('color:import-col', async () => {
   // 生成「启用桥接自动加载」的 Apply Plan
   ipcMain.handle('color:bridge-enable-plan', () => {
     try {
-      const envInfo = locateEnvironment();
-      const ilinitPath = envInfo.ilinitFilePath || (envInfo.pcbenvPath ? path.join(envInfo.pcbenvPath, 'allegro.ilinit') : null);
-    if (!ilinitPath) return { success: false, error: '未找到 allegro.ilinit 路径' };
+      const targets = bridgeInstallTargets();
+      if (targets.length === 0) return { success: false, error: '未找到 allegro.ilinit 路径' };
       const serverFile = findBridgeServerFile();
-    if (!serverFile) return { success: false, error: '未找到 vibe_server.il，无法启用 Vibe Bridge' };
+      if (!serverFile) return { success: false, error: '未找到 vibe_server.il，无法启用 Vibe Bridge' };
 
-      const textEncoding = getAllegroTextEncoding(envInfo.allegroVersion);
-      const ilinitRead = fs.existsSync(ilinitPath)
-        ? readAllegroTextFile(ilinitPath, textEncoding)
-        : { text: '', detectedEncoding: textEncoding };
-      const currentContent = ilinitRead.text;
-      const backupBase = path.join(envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated'), 'backup', new Date().toISOString().replace(/[:.]/g, '-'));
-      const plan = buildBridgeEnablePlan(
-        ilinitPath,
-        currentContent,
+      const firstPcbenv = path.dirname(targets[0].ilinitPath);
+      const backupBase = path.join(
+        firstPcbenv,
+        'atm_generated',
+        'backup',
+        new Date().toISOString().replace(/[:.]/g, '-'),
+      );
+      const plan = buildAllEnvironmentsBridgeEnablePlan(
+        targets,
         serverFile,
         backupBase,
-        textEncoding,
-        ilinitRead.detectedEncoding !== textEncoding,
       );
-    if (!plan) return { success: true, data: null, info: '桥接已配置，无需重复启用' };
+      if (!plan) return { success: true, data: null, info: '所有环境均已配置桥接，无需重复启用' };
       return { success: true, data: registerTrustedApplyPlan(plan, 'color-bridge') };
     } catch (err) {
       return { success: false, error: `生成启用桥接计划失败: ${err instanceof Error ? err.message : String(err)}` };
@@ -339,9 +358,11 @@ ipcMain.handle('color:import-col', async () => {
     try {
       const { executeApplyPlan } = await import('../../core/apply/applyPlanEngine');
       const plan = consumeTrustedApplyPlan(planJson, 'color-bridge', 'environment');
-      const envInfo = locateEnvironment();
-      const atmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
-      const result = await executeApplyPlan(plan, { backupDir: path.join(atmDir, 'backup', new Date().toISOString().replace(/[:.]/g, '-')) });
+      const firstTarget = plan.targetFiles[0];
+      const backupDir = firstTarget
+        ? path.join(path.dirname(firstTarget), 'atm_generated', 'backup', new Date().toISOString().replace(/[:.]/g, '-'))
+        : path.join(process.cwd(), 'atm_generated', 'backup', new Date().toISOString().replace(/[:.]/g, '-'));
+      const result = await executeApplyPlan(plan, { backupDir });
       return { success: result.appliedSteps === result.totalSteps && result.totalSteps > 0, data: result };
     } catch (err) {
       return { success: false, error: `执行启用桥接计划失败: ${err instanceof Error ? err.message : String(err)}` };

@@ -11,9 +11,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import type { ApplyPlan } from '../../src/types/applyPlan';
+import type { ApplyPlan, ApplyPlanBackup, ApplyPlanRisk, ApplyPlanStep } from '../../src/types/applyPlan';
 import { createApplyPlan } from '../apply/applyPlanEngine';
-import { readAllegroTextFile, type AllegroTextEncoding } from '../environment/allegroTextEncoding';
+import { getAllegroTextEncoding, readAllegroTextFile, type AllegroTextEncoding } from '../environment/allegroTextEncoding';
 
 /** Vibe Bridge 服务端文件名 */
 export const VIBE_SERVER_FILE = 'vibe_server.il';
@@ -159,4 +159,153 @@ export function checkBridgeSetup(
     configured,
     canEnable: serverFile !== null && !configured,
   };
+}
+
+/** 需要检查/写入桥接加载配置的 Allegro 环境目标 */
+export interface BridgeInstallTarget {
+  environmentId: string | null;
+  allegroVersion?: string | null;
+  ilinitPath: string;
+}
+
+/** 单个环境的桥接安装状态 */
+export interface BridgeEnvironmentStatus extends BridgeSetupStatus {
+  environmentId: string | null;
+  allegroVersion?: string | null;
+}
+
+/** 多环境桥接安装状态汇总（供配色页展示） */
+export interface BridgeSetupSummary {
+  serverFile: string | null;
+  ilinitPath: string | null;
+  /** 所有目标环境是否均已配置 */
+  configured: boolean;
+  /** 是否存在至少一个可配置的环境 */
+  canEnable: boolean;
+  environments: BridgeEnvironmentStatus[];
+  /** 缺失 allegro.ilinit 的环境数量 */
+  missingIlinit: number;
+  total: number;
+}
+
+/** 按各环境的版本编码检查桥接安装状态 */
+export function checkBridgeSetupForEnvironments(
+  targets: BridgeInstallTarget[],
+): BridgeEnvironmentStatus[] {
+  const serverFile = findBridgeServerFile();
+  return targets.map((target) => {
+    const textEncoding = getAllegroTextEncoding(target.allegroVersion);
+    const ilinitExists = fs.existsSync(target.ilinitPath);
+    const currentContent = ilinitExists
+      ? readAllegroTextFile(target.ilinitPath, textEncoding).text
+      : '';
+    const configured = serverFile !== null && hasBridgeLoadInIlinit(currentContent, serverFile);
+    return {
+      environmentId: target.environmentId,
+      allegroVersion: target.allegroVersion ?? null,
+      serverFile,
+      ilinitPath: target.ilinitPath,
+      ilinitExists,
+      configured,
+      canEnable: serverFile !== null && !configured,
+    };
+  });
+}
+
+/** 汇总多环境安装状态，供 IPC 直接返回给渲染层 */
+export function summarizeBridgeSetup(
+  environments: BridgeEnvironmentStatus[],
+): BridgeSetupSummary {
+  const serverFile = findBridgeServerFile();
+  const configured = environments.length > 0 && environments.every((item) => item.configured);
+  const canEnable = environments.some((item) => item.canEnable);
+  return {
+    serverFile,
+    ilinitPath: environments[0]?.ilinitPath ?? null,
+    configured,
+    canEnable,
+    environments,
+    missingIlinit: environments.filter((item) => !item.ilinitExists).length,
+    total: environments.length,
+  };
+}
+
+/**
+ * 生成一个覆盖所有目标环境的桥接自动加载 Apply Plan。
+ *
+ * 同一个计划包含每个环境的备份与 ilinit 修改步骤；任一环境失败时，
+ * 统一 Apply Plan 引擎会按备份回滚所有已写入文件，避免只配置一半。
+ */
+export function buildAllEnvironmentsBridgeEnablePlan(
+  targets: BridgeInstallTarget[],
+  serverPath: string,
+  backupBaseDir: string,
+): ApplyPlan | null {
+  const steps: Array<Omit<ApplyPlanStep, 'id' | 'status'>> = [];
+  const backups: ApplyPlanBackup[] = [];
+  const targetFiles: string[] = [];
+
+  targets.forEach((target, index) => {
+    const textEncoding = getAllegroTextEncoding(target.allegroVersion);
+    const currentContent = fs.existsSync(target.ilinitPath)
+      ? readAllegroTextFile(target.ilinitPath, textEncoding).text
+      : '';
+    const loadLine = buildBridgeLoadLine(serverPath);
+    const nextContent = insertBridgeLoadToIlinit(currentContent, loadLine, serverPath);
+    if (nextContent === null) return;
+
+    const safeSuffix = (target.environmentId || `env_${index}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const backupDir = path.join(backupBaseDir, safeSuffix);
+    const backupFile = path.join(backupDir, 'allegro.ilinit');
+    const label = target.allegroVersion
+      ? `Allegro ${target.allegroVersion}`
+      : path.basename(path.dirname(target.ilinitPath));
+
+    steps.push({
+      type: 'backup_file',
+      title: `备份 ${label} 的 allegro.ilinit`,
+      description: `备份到 ${backupFile}`,
+      targetFile: target.ilinitPath,
+      backupTo: backupFile,
+    });
+    steps.push({
+      type: 'modify_ilinit',
+      title: `写入 ${label} 的桥接加载命令`,
+      description: `追加 ${loadLine}`,
+      targetFile: target.ilinitPath,
+      before: currentContent,
+      after: nextContent,
+      textEncoding,
+    });
+    backups.push({
+      sourceFile: target.ilinitPath,
+      backupFile,
+      required: true,
+    });
+    targetFiles.push(target.ilinitPath);
+  });
+
+  if (steps.length === 0) return null;
+
+  const risks: ApplyPlanRisk[] = [
+    {
+      id: 'bridge-restart-all',
+      severity: 'info',
+      title: '需重启 Allegro 生效',
+      description: '写入后请关闭旧 Allegro，并用左下角“按此环境启动”重启；桥接会在 Allegro 启动时自动加载。',
+    },
+  ];
+
+  return createApplyPlan({
+    module: 'environment',
+    title: '为所有 Allegro 环境启用 Vibe Bridge 自动加载',
+    description: `将 vibe_server.il 加载命令写入 ${targetFiles.length} 个环境的 allegro.ilinit。`,
+    steps,
+    risks,
+    backups,
+    requiresRestart: true,
+    targetFiles,
+    environmentPcbenvPath: null,
+    environmentId: null,
+  });
 }

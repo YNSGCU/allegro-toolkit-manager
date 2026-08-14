@@ -485,6 +485,11 @@
   background: rgba(0, 0, 0, 0.07);
 }
 
+.color-bridge-env-summary {
+  color: rgba(124, 90, 12, 0.82);
+  font-size: 12px;
+}
+
 @media (max-width: 720px) {
   .color-bridge-banner {
     flex-direction: column;

@@ -9,7 +9,7 @@ import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, Skil
 import type { RuntimeInfo } from './runtime';
 import type { MenuProfileImportPreview } from './menu';
 import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
-import type { BridgeSetupStatus } from '../../core/color/vibeBridgeInstaller';
+import type { BridgeSetupSummary } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
 import type {
@@ -294,7 +294,7 @@ declare global {
       restoreSettingsBackup: (filePath: string, optionsJson?: string) => Promise<{ success: boolean; data?: BackupRestoreResult; error?: string }>;
       // ===== 配色方案 =====
       colorCheckBridge: () => Promise<{ success: boolean; data?: ColorBridgeStatus; error?: string }>;
-      colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupStatus; error?: string }>;
+      colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupSummary; error?: string }>;
       colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
       colorExecuteBridgeEnablePlan: (planJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       colorCapture: () => Promise<{ success: boolean; data?: { snapshot: ColorSchemeSnapshot; bridgeStatus: ColorBridgeStatus }; error?: string }>;

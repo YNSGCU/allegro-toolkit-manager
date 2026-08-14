@@ -19,6 +19,7 @@ import type {
   ColorSchemeStore,
 } from '../types/color';
 import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
+import type { BridgeSetupSummary } from '../../core/color/vibeBridgeInstaller';
 import {
   createCustomLayerColorPlan,
   createDefaultPalette,
@@ -41,7 +42,7 @@ const ColorPage: React.FC = () => {
 
   const [store, setStore] = useState<ColorSchemeStore | null>(null);
   const [bridgeStatus, setBridgeStatus] = useState<ColorBridgeStatus | null>(null);
-  const [bridgeSetup, setBridgeSetup] = useState<{ serverFile: string | null; configured: boolean; canEnable: boolean; ilinitPath: string | null } | null>(null);
+  const [bridgeSetup, setBridgeSetup] = useState<BridgeSetupSummary | null>(null);
   const [bridgeEnablePlan, setBridgeEnablePlan] = useState<ApplyPlanViewModel | null>(null);
   const [bridgeEnabling, setBridgeEnabling] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -600,7 +601,16 @@ const ColorPage: React.FC = () => {
             <>
               <div className="color-bridge-banner-text">
                 <strong>Vibe Bridge 已安装，但尚未配置自动加载</strong>
-                <span>点击按钮将加载命令写入 allegro.ilinit，重启 Allegro 后每次启动自动生效，无需手动执行。</span>
+                <span>点击按钮将加载命令写入所有已发现环境的 allegro.ilinit，重启 Allegro 后每次启动自动生效，无需手动执行。</span>
+                {bridgeSetup.environments.length > 0 && (
+                  <span className="color-bridge-env-summary">
+                    {bridgeSetup.environments
+                      .map((environment) => (
+                        `${environment.allegroVersion ? `Allegro ${environment.allegroVersion}` : '未知环境'}${environment.configured ? '：已配置' : '：待配置'}`
+                      ))
+                      .join('；')}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -728,7 +738,7 @@ const ColorPage: React.FC = () => {
         plan={bridgeEnablePlan}
         applying={bridgeEnabling}
         title="启用 Vibe Bridge 自动加载"
-        intro="将桥接服务加载命令写入 allegro.ilinit。写入后 Allegro 每次启动都会自动加载桥接，无需在命令窗手动执行。"
+        intro="将桥接服务加载命令写入所有已发现环境的 allegro.ilinit。写入后无论从哪个环境启动 Allegro，桥接都会自动加载，无需在命令窗手动执行。"
         confirmLabel="确认写入"
         restartNote="写入完成后请重启 Allegro 使配置生效。"
         onConfirm={() => void handleBridgeEnableConfirm()}
