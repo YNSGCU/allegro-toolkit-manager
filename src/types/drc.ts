@@ -191,3 +191,27 @@ export interface DrcParseOptions {
   /** 文件名（用于默认报告名，可选） */
   fileName?: string;
 }
+
+// ═══════════════════════════════════════════════
+// DRC 多报告对比
+// ═══════════════════════════════════════════════
+
+export interface DrcCompareResult {
+  reportAId: string;
+  reportAName: string;
+  reportBId: string;
+  reportBName: string;
+  /** 在 A 中、不在 B 中（修复后已解决） */
+  resolved: DrcViolation[];
+  /** 在 B 中、不在 A 中（新引入） */
+  added: DrcViolation[];
+  /** 两份报告都存在 */
+  persistent: DrcViolation[];
+  summary: {
+    resolved: number;
+    added: number;
+    persistent: number;
+    totalA: number;
+    totalB: number;
+  };
+}

@@ -353,3 +353,38 @@ describe('DrcPage - Bridge 在线抓取', () => {
     });
   });
 });
+
+describe('DrcPage - 多报告对比', () => {
+  it('对比报告弹窗应展示新增 / 已解决 / 持续', async () => {
+    const second: DrcReport = {
+      ...buildReport('drc_second', 'Second', readFixture('drc.basic.rpt')),
+    };
+    second.violations = second.violations.slice(1);
+    second.violations.push({ ...basicReport.violations[0], id: 'drc_new_violation', rule: 'NEWRULE-1' });
+    second.summary = buildSummary(second.violations);
+
+    mockAtm({
+      reports: [basicSummary, toSummary(second)],
+      getReport: vi.fn().mockImplementation(async (id: string) => {
+        if (id === 'drc_second') return { success: true, data: second };
+        return { success: true, data: basicReport };
+      }),
+    });
+
+    const { container } = render(<DrcPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.drc-list-item')).toHaveLength(2);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '对比报告' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '对比 DRC 报告' })).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(container.querySelector('.drc-compare-row')).not.toBeNull();
+    });
+    expect(screen.getByText('已解决 1')).toBeInTheDocument();
+    expect(screen.getByText('新增 1')).toBeInTheDocument();
+  });
+});

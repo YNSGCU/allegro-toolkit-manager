@@ -8,7 +8,7 @@
  *   4. 违规明细表：关键词 / 维度筛选，单条与批量状态标记（只存 ATM）
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Cable, Download, FileUp, Trash2 } from 'lucide-react';
+import { Cable, Download, FileUp, Scale, Trash2 } from 'lucide-react';
 import type {
   DrcBridgeFetchResult,
   DrcExportFormat,
@@ -28,6 +28,7 @@ import DrcViolationTable from '../components/drc/DrcViolationTable';
 import DrcImportDialog from '../components/drc/DrcImportDialog';
 import DrcRawViewDialog from '../components/drc/DrcRawViewDialog';
 import DrcExportDialog from '../components/drc/DrcExportDialog';
+import DrcCompareDialog from '../components/drc/DrcCompareDialog';
 import { formatUserError, PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 import './drc-page.css';
 
@@ -92,6 +93,7 @@ const DrcPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<DrcReportSummary | null>(null);
   const [rawView, setRawView] = useState<{ text: string; highlightLine?: number } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const loadReports = useCallback(async (preferId?: string) => {
     if (typeof window.atm === 'undefined') {
@@ -406,6 +408,15 @@ const DrcPage: React.FC = () => {
             <button
               type="button"
               className="btn"
+              onClick={() => setCompareOpen(true)}
+              disabled={!report || reports.length < 2}
+              title="对比两份 DRC 报告（如修复前后）"
+            >
+              <Scale aria-hidden="true" /> 对比报告
+            </button>
+            <button
+              type="button"
+              className="btn"
               onClick={() => { if (report) setDeleteTarget(reports.find((r) => r.id === report.id) ?? null); }}
               disabled={!report}
               title="删除当前报告"
@@ -583,6 +594,13 @@ const DrcPage: React.FC = () => {
         busy={busy}
         onExport={(format) => void handleExport(format)}
         onClose={() => setExportOpen(false)}
+      />
+
+      <DrcCompareDialog
+        open={compareOpen}
+        baseline={report}
+        reports={reports}
+        onClose={() => setCompareOpen(false)}
       />
 
       <ConfirmDialog
