@@ -375,6 +375,24 @@
   padding: 6px 8px;
 }
 
+.drc-actionable-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f5a52);
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 8px;
+  background: var(--bg-input, #ffffff);
+}
+
+.drc-actionable-toggle input {
+  cursor: pointer;
+}
+
 /* 明细表 */
 .drc-table-header {
   display: flex;

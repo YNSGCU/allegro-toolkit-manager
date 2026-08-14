@@ -233,6 +233,30 @@ describe('DrcPage - 筛选与分组', () => {
     fireEvent.change(waivedSelect, { target: { value: 'no' } });
     expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(1);
   });
+
+  it('「仅看需处理」应隐藏 waived/fixed 违规', async () => {
+    const flagged: DrcReport = {
+      ...basicReport,
+      violations: basicReport.violations.map((v, i) => ({
+        ...v,
+        waived: i === 0,
+        fixed: i === 1,
+      })),
+    };
+    flagged.summary = buildSummary(flagged.violations);
+    mockAtm({
+      reports: [toSummary(flagged)],
+      getReport: vi.fn().mockResolvedValue({ success: true, data: flagged }),
+    });
+    const { container } = render(<DrcPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(4);
+    });
+
+    const toggle = container.querySelector('.drc-actionable-toggle input') as HTMLInputElement;
+    fireEvent.click(toggle);
+    expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(2);
+  });
 });
 
 describe('DrcPage - 状态跟踪', () => {

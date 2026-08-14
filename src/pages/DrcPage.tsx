@@ -41,6 +41,7 @@ interface DrcFilter {
   status: '' | DrcStatus;
   waived: '' | 'yes' | 'no';
   fixed: '' | 'yes' | 'no';
+  actionableOnly: boolean;
 }
 
 const EMPTY_FILTER: DrcFilter = {
@@ -53,6 +54,7 @@ const EMPTY_FILTER: DrcFilter = {
   status: '',
   waived: '',
   fixed: '',
+  actionableOnly: false,
 };
 
 function matchKeyword(violation: DrcViolation, keyword: string): boolean {
@@ -281,6 +283,7 @@ const DrcPage: React.FC = () => {
       if (filter.waived === 'no' && v.waived) return false;
       if (filter.fixed === 'yes' && !v.fixed) return false;
       if (filter.fixed === 'no' && v.fixed) return false;
+      if (filter.actionableOnly && (v.waived || v.fixed)) return false;
       return true;
     });
   }, [filter, report]);
@@ -368,7 +371,8 @@ const DrcPage: React.FC = () => {
     || filter.severity !== ''
     || filter.status !== ''
     || filter.waived !== ''
-    || filter.fixed !== '';
+    || filter.fixed !== ''
+    || filter.actionableOnly;
 
   const statusItems = [
     { label: '报告', value: String(reports.length), status: 'muted' as const },
@@ -516,6 +520,14 @@ const DrcPage: React.FC = () => {
                       <option value="yes">已修复</option>
                       <option value="no">未修复</option>
                     </select>
+                    <label className="drc-actionable-toggle">
+                      <input
+                        type="checkbox"
+                        checked={filter.actionableOnly}
+                        onChange={(event) => setFilter((prev) => ({ ...prev, actionableOnly: event.target.checked }))}
+                      />
+                      <span>仅看需处理</span>
+                    </label>
                     {hasFilter ? (
                       <button
                         type="button"
