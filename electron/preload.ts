@@ -703,6 +703,13 @@ contextBridge.exposeInMainWorld('atm', {
   /** 执行 SKILL 命令 */
   sessionCommand: (code: string) =>
     ipcRenderer.invoke('session:command', code),
+  /** 加载命令历史（含收藏） */
+  sessionHistoryLoad: () => ipcRenderer.invoke('session:history-load'),
+  /** 切换命令收藏状态 */
+  sessionFavoriteToggle: (code: string) =>
+    ipcRenderer.invoke('session:favorite-toggle', code),
+  /** 清空命令历史 */
+  sessionHistoryClear: () => ipcRenderer.invoke('session:history-clear'),
 
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),

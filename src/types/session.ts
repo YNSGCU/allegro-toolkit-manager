@@ -22,3 +22,18 @@ export interface SessionCommandResult {
 
 /** 命令风险分类 */
 export type SessionCommandRisk = 'readonly' | 'write';
+
+/** 控制台命令历史记录（跨会话持久化） */
+export interface SessionCommandRecord {
+  code: string;
+  risk: SessionCommandRisk;
+  executedAt: string;
+  success: boolean;
+  favorite: boolean;
+}
+
+/** 控制台命令历史存储 */
+export interface SessionCommandStore {
+  version: number;
+  items: SessionCommandRecord[];
+}

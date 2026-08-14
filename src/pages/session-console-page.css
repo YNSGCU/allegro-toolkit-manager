@@ -168,3 +168,96 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 命令历史与收藏 */
+.session-favorites {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-favorites-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f5a52);
+}
+
+.session-favorites-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-favorite-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border: 1px solid var(--warning-color, #b7791f);
+  border-radius: 999px;
+  background: rgba(183, 121, 31, 0.08);
+  color: var(--warning-color, #b7791f);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.session-favorite-chip:hover:not(:disabled) {
+  background: rgba(183, 121, 31, 0.16);
+}
+
+.session-favorite-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.session-command-history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.session-command-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-color, #f0ece5);
+  border-radius: 8px;
+}
+
+.session-command-history-code {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-primary, #171717);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-command-history-code:hover {
+  color: var(--accent-color, #2f6f4f);
+  text-decoration: underline;
+}
+
+.session-fav-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  color: var(--text-muted, #8d877f);
+}
+
+.session-fav-btn.active {
+  color: var(--warning-color, #b7791f);
+}

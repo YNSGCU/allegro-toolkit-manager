@@ -41,7 +41,7 @@ import type {
   EnvEditorLoadResult,
   EnvEditorPreviewResult,
 } from './envEditor';
-import type { SessionCommandResult, SessionSnapshot } from './session';
+import type { SessionCommandResult, SessionCommandStore, SessionSnapshot } from './session';
 
 declare global {
   interface Window {
@@ -350,6 +350,9 @@ declare global {
       // Allegro 会话控制台（V0.4）
       sessionProbe: () => Promise<{ success: boolean; data?: SessionSnapshot; error?: string }>;
       sessionCommand: (code: string) => Promise<{ success: boolean; data?: SessionCommandResult & { risk: 'readonly' | 'write' }; error?: string }>;
+      sessionHistoryLoad: () => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
+      sessionFavoriteToggle: (code: string) => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
+      sessionHistoryClear: () => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
 
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;

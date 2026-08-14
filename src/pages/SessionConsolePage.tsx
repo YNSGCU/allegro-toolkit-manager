@@ -6,7 +6,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Play, RefreshCw, Terminal } from 'lucide-react';
-import type { SessionCommandResult, SessionCommandRisk, SessionSnapshot } from '../types/session';
+import type { SessionCommandResult, SessionCommandRisk, SessionCommandStore, SessionSnapshot } from '../types/session';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
@@ -47,6 +47,7 @@ const SessionConsolePage: React.FC = () => {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [commandStore, setCommandStore] = useState<SessionCommandStore | null>(null);
   const [pendingWrite, setPendingWrite] = useState<string | null>(null);
 
   const probe = useCallback(async () => {
@@ -72,6 +73,47 @@ const SessionConsolePage: React.FC = () => {
     void probe();
   }, [probe]);
 
+  const loadHistory = useCallback(async () => {
+    try {
+      if (typeof window.atm === 'undefined') return;
+      const res = await window.atm.sessionHistoryLoad();
+      if (res.success && res.data) setCommandStore(res.data);
+    } catch {
+      // 忽略历史加载失败
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
+
+  const toggleFavorite = useCallback(async (command: string) => {
+    try {
+      const res = await window.atm.sessionFavoriteToggle(command);
+      if (res.success && res.data) {
+        setCommandStore(res.data);
+      } else {
+        addToast('error', formatUserError(res.error, '切换收藏失败'));
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '切换收藏失败'));
+    }
+  }, [addToast]);
+
+  const clearHistory = useCallback(async () => {
+    try {
+      const res = await window.atm.sessionHistoryClear();
+      if (res.success && res.data) {
+        setCommandStore(res.data);
+        addToast('success', '已清空命令历史。');
+      } else {
+        addToast('error', formatUserError(res.error, '清空历史失败'));
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '清空历史失败'));
+    }
+  }, [addToast]);
+
   const runCommand = useCallback(async (command: string) => {
     setBusy(true);
     try {
@@ -84,12 +126,13 @@ const SessionConsolePage: React.FC = () => {
         { id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, code: command, result: result.data! },
         ...prev,
       ].slice(0, 50));
+      void loadHistory();
     } catch (err) {
       addToast('error', formatUserError(err, '执行命令失败'));
     } finally {
       setBusy(false);
     }
-  }, [addToast]);
+  }, [addToast, loadHistory]);
 
   const handleRun = () => {
     const command = code.trim();
@@ -161,6 +204,25 @@ const SessionConsolePage: React.FC = () => {
                 </button>
               ))}
             </div>
+            {commandStore && commandStore.items.some((item) => item.favorite) && (
+              <div className="session-favorites">
+                <span className="session-favorites-title">收藏命令</span>
+                <div className="session-favorites-chips">
+                  {commandStore.items.filter((item) => item.favorite).map((item) => (
+                    <button
+                      key={item.code}
+                      type="button"
+                      className="session-favorite-chip"
+                      onClick={() => { setCode(item.code); void runCommand(item.code); }}
+                      disabled={busy}
+                      title={item.code}
+                    >
+                      ★ {item.code}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="session-command-actions">
               <span className="session-command-hint">
                 {detectWriteRisk(code) === 'write' ? '检测到可能修改设计的命令，执行前会二次确认。' : '只读命令，直接执行。'}
@@ -172,6 +234,43 @@ const SessionConsolePage: React.FC = () => {
           </section>
 
           <section className="session-panel">
+            <h2 className="session-panel-title">命令历史</h2>
+            {commandStore && commandStore.items.length > 0 ? (
+              <>
+                <div className="session-command-history">
+                  {commandStore.items.slice(0, 20).map((item) => (
+                    <div key={item.code} className="session-command-history-row">
+                      <button
+                        type="button"
+                        className="session-command-history-code"
+                        onClick={() => setCode(item.code)}
+                        title="填入输入框"
+                      >
+                        {item.code}
+                      </button>
+                      <span className={`session-risk session-risk--${item.risk}`}>
+                        {item.risk === 'write' ? '写' : '读'}
+                      </span>
+                      <button
+                        type="button"
+                        className={`session-fav-btn${item.favorite ? ' active' : ''}`}
+                        onClick={() => void toggleFavorite(item.code)}
+                        aria-label={item.favorite ? '取消收藏' : '收藏'}
+                        title={item.favorite ? '取消收藏' : '收藏'}
+                      >
+                        {item.favorite ? '★' : '☆'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" className="btn btn-sm" onClick={() => void clearHistory()}>
+                  清空历史
+                </button>
+              </>
+            ) : (
+              <div className="session-history-empty">还没有命令历史</div>
+            )}
+
             <h2 className="session-panel-title">输出历史</h2>
             {history.length === 0 ? (
               <div className="session-history-empty">还没有执行过命令</div>
