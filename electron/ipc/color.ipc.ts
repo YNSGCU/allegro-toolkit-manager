@@ -10,6 +10,7 @@ import path from 'path';
 import {
   captureColorScheme,
   applyColorSchemeSmart,
+  applyLivePalette,
   buildColorApplyPreview,
   queryTargetLayerInfo,
   checkColorBridge,
@@ -189,6 +190,48 @@ export function registerColorIpc(): void {
       };
     } catch (err) {
       return { success: false, error: `撤销配色失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 实时预览：仅将当前方案的调色板/背景色推送到当前板子（不改图层分配）
+  ipcMain.handle('color:live-palette', async (_event, schemeId: string) => {
+    try {
+      const scheme = getColorScheme(schemeId);
+      if (!scheme) {
+        return { success: false, error: '配色方案不存在' };
+      }
+      const bridgeStatus = await checkColorBridge();
+      if (!bridgeStatus.connected) {
+        return { success: false, error: bridgeStatus.message };
+      }
+
+      // 预览前保存当前板子快照，供「撤销本次配色」恢复
+      const beforeSnapshot = await captureColorScheme({
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+      });
+      const undo = saveColorUndoSnapshot(beforeSnapshot, `${scheme.name}（实时预览前）`);
+
+      // 使用目标板调色板数量规范化，避免跨版本截断/越界
+      const target = await queryTargetLayerInfo({
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+      });
+
+      const result = await applyLivePalette(scheme.palette, {
+        workspace: bridgeStatus.bridgeWorkspace ?? undefined,
+        colorCount: target.colorCount,
+        background: scheme.background,
+      });
+
+      return {
+        success: true,
+        data: {
+          result,
+          schemeName: scheme.name,
+          undoSnapshotId: undo.id,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `实时预览配色失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 

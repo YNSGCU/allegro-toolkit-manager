@@ -303,6 +303,8 @@ declare global {
       colorApplyPreview: (schemeId: string, applyVisibility?: boolean) => Promise<{ success: boolean; data?: { preview: ColorApplyPreview; schemeName: string; sourceAllegroVersion: string | null; targetAllegroVersion: string | null }; error?: string }>;
       /** 撤销本次配色（恢复应用前保存的快照） */
       colorUndoApply: (undoSnapshotId: string) => Promise<{ success: boolean; data?: { result: ColorApplyResult; schemeName: string; restoredSnapshotId: string }; error?: string }>;
+      /** 实时预览：仅推送调色板/背景色到当前板子（不改图层分配） */
+      colorLivePalette: (schemeId: string) => Promise<{ success: boolean; data?: { result: { paletteApplied: boolean; backgroundApplied: boolean }; schemeName: string; undoSnapshotId: string }; error?: string }>;
       colorLoadSchemes: () => Promise<{ success: boolean; data?: ColorSchemeStore; error?: string }>;
       colorCreateScheme: (snapshot: ColorSchemeSnapshot, name: string, description?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;
       colorCopyScheme: (schemeId: string, newName?: string) => Promise<{ success: boolean; data?: ColorScheme; error?: string }>;

@@ -582,6 +582,10 @@ contextBridge.exposeInMainWorld('atm', {
   colorUndoApply: (undoSnapshotId: string) =>
     ipcRenderer.invoke('color:undo-apply', undoSnapshotId),
 
+  /** 实时预览：仅推送调色板/背景色到当前板子（不改图层分配） */
+  colorLivePalette: (schemeId: string) =>
+    ipcRenderer.invoke('color:live-palette', schemeId),
+
   /** 加载全部配色方案 */
   colorLoadSchemes: () => ipcRenderer.invoke('color:schemes'),
 

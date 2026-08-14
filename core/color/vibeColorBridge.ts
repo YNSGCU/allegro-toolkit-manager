@@ -383,6 +383,56 @@ export async function applyColorScheme(
   };
 }
 
+/**
+ * 生成「实时预览」的 SKILL 代码：仅设置调色板与背景色，
+ * 不修改任何图层的颜色索引/可见性，用于编辑配色时即时查看效果。
+ */
+export function buildLivePaletteSkill(
+  palette: ColorPaletteEntry[],
+  colorCount?: number,
+  background?: ColorRgb,
+): string {
+  const normalized = normalizePalette(palette, colorCount);
+  const paletteLiteral = normalized
+    .map((entry) => `(${entry.rgb.r} ${entry.rgb.g} ${entry.rgb.b})`)
+    .join(' ');
+  const lines = [
+    'let((applied)',
+    `applied = axlColorSet('all '(${paletteLiteral}))`,
+  ];
+  if (background) {
+    const bg = normalizeRgb(background);
+    lines.push(`axlColorSet('background '(${bg.r} ${bg.g} ${bg.b}))`);
+  }
+  lines.push('axlVisibleUpdate(t)', 'applied', ')');
+  return lines.join('\n');
+}
+
+/**
+ * 实时预览：仅将调色板与背景色推送到当前打开的板子（不修改图层分配）。
+ */
+export async function applyLivePalette(
+  palette: ColorPaletteEntry[],
+  options: { workspace?: string; timeoutMs?: number; colorCount?: number; background?: ColorRgb } = {},
+): Promise<{ paletteApplied: boolean; backgroundApplied: boolean }> {
+  const workspace = options.workspace || findBridgeWorkspace();
+  if (!workspace) {
+    throw new Error('未找到 Vibe Bridge workspace，请先安装并配置 ATM_VIBE_WORKSPACE');
+  }
+  const result = await executeSkillViaBridge(
+    workspace,
+    buildLivePaletteSkill(palette, options.colorCount, options.background),
+    options.timeoutMs ?? 10000,
+  );
+  if (!result.success) {
+    throw new Error(result.error || '实时预览配色失败');
+  }
+  return {
+    paletteApplied: true,
+    backgroundApplied: options.background != null,
+  };
+}
+
 // ============================================================================
 // 目标板叠层查询与按角色智能配色
 // ============================================================================

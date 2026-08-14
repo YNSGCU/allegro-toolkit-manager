@@ -8,7 +8,7 @@
  *   4. 与 Allegro .col 文件互导
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Camera, RefreshCw } from 'lucide-react';
+import { Camera, Eye, RefreshCw } from 'lucide-react';
 import type {
   ColorBridgeStatus,
   ColorLayerEntry,
@@ -66,8 +66,10 @@ const ColorPage: React.FC = () => {
     skippedLayerCount: number;
     skippedLayers?: string[];
     undoSnapshotId?: string;
+    mode?: 'apply' | 'live-preview';
   } | null>(null);
   const [undoing, setUndoing] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
 
   const activeScheme = useMemo<ColorScheme | null>(() => {
     if (!store) return null;
@@ -219,6 +221,7 @@ const ColorPage: React.FC = () => {
           skippedLayerCount: result.skippedLayerCount,
           skippedLayers: result.skippedLayers,
           undoSnapshotId,
+          mode: 'apply',
         });
         const versionNote =
           sourceAllegroVersion && targetAllegroVersion && sourceAllegroVersion !== targetAllegroVersion
@@ -256,6 +259,35 @@ const ColorPage: React.FC = () => {
       addToast('error', formatUserError(err, '撤销配色失败'));
     } finally {
       setUndoing(false);
+    }
+  };
+
+  const handleLivePreview = async () => {
+    if (!activeScheme) return;
+    if (!bridgeStatus?.connected) {
+      addToast('error', '未连接到 Allegro，无法实时预览');
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const res = await window.atm.colorLivePalette(activeScheme.id);
+      if (res.success && res.data) {
+        const { schemeName, undoSnapshotId } = res.data;
+        setLastApplyResult({
+          schemeName,
+          appliedLayerCount: 0,
+          skippedLayerCount: 0,
+          undoSnapshotId,
+          mode: 'live-preview',
+        });
+        addToast('success', `已实时预览「${schemeName}」：调色板与背景色已推送到当前板子，图层分配未改动`);
+      } else {
+        addToast('error', res.error || '实时预览失败');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '实时预览失败'));
+    } finally {
+      setPreviewing(false);
     }
   };
 
@@ -528,6 +560,16 @@ const ColorPage: React.FC = () => {
               <Camera aria-hidden="true" />
               {capturing ? '捕获中…' : '从 Allegro 捕获'}
             </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void handleLivePreview()}
+              disabled={previewing || !bridgeStatus?.connected || !activeScheme}
+              title="将当前方案的调色板与背景色实时推送到 Allegro 当前板子"
+            >
+              <Eye aria-hidden="true" />
+              {previewing ? '预览中…' : '实时预览'}
+            </button>
             <MoreActionsMenu actions={moreActions} />
           </div>
         }
@@ -569,7 +611,11 @@ const ColorPage: React.FC = () => {
       {lastApplyResult && (
         <div className="color-apply-detail">
           <div className="color-apply-detail-head">
-            <h4>已应用「{lastApplyResult.schemeName}」：{lastApplyResult.appliedLayerCount} 个层已设置，{lastApplyResult.skippedLayerCount} 个层跳过（目标板不存在）</h4>
+            {lastApplyResult.mode === 'live-preview' ? (
+              <h4>已实时预览「{lastApplyResult.schemeName}」：调色板与背景色已推送，图层分配未改动</h4>
+            ) : (
+              <h4>已应用「{lastApplyResult.schemeName}」：{lastApplyResult.appliedLayerCount} 个层已设置，{lastApplyResult.skippedLayerCount} 个层跳过（目标板不存在）</h4>
+            )}
             {lastApplyResult.undoSnapshotId && (
               <button
                 type="button"
@@ -577,7 +623,7 @@ const ColorPage: React.FC = () => {
                 onClick={() => void handleUndoApply()}
                 disabled={undoing}
               >
-                {undoing ? '撤销中…' : '撤销本次配色'}
+                {undoing ? '撤销中…' : lastApplyResult.mode === 'live-preview' ? '撤销实时预览' : '撤销本次配色'}
               </button>
             )}
           </div>
