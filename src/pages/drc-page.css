@@ -434,6 +434,32 @@
   font-variant-numeric: tabular-nums;
 }
 
+.drc-allegro-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.drc-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.drc-badge--waived {
+  color: var(--text-secondary, #5f5a52);
+  background: rgba(95, 90, 82, 0.12);
+}
+
+.drc-badge--fixed {
+  color: var(--success-color, #2f6f4f);
+  background: rgba(47, 111, 79, 0.12);
+}
+
 .drc-cell-desc {
   max-width: 260px;
   overflow: hidden;

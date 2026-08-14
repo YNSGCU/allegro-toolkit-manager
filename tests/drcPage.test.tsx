@@ -197,6 +197,42 @@ describe('DrcPage - 筛选与分组', () => {
     expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(1);
     expect(container.querySelector('.drc-cell-rule')?.textContent).toBe('SPMHCS-1');
   });
+
+  it('渲染 waived/fixed 徽标，并能按 waived 与 fixed 筛选', async () => {
+    const flagged: DrcReport = {
+      ...basicReport,
+      violations: basicReport.violations.map((v, i) => ({
+        ...v,
+        waived: i === 0,
+        fixed: i === 1,
+      })),
+    };
+    flagged.summary = buildSummary(flagged.violations);
+    mockAtm({
+      reports: [toSummary(flagged)],
+      getReport: vi.fn().mockResolvedValue({ success: true, data: flagged }),
+    });
+    const { container } = render(<DrcPage />);
+    await waitFor(() => {
+      expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(4);
+    });
+
+    expect(container.querySelectorAll('.drc-badge--waived')).toHaveLength(1);
+    expect(container.querySelectorAll('.drc-badge--fixed')).toHaveLength(1);
+
+    const selects = container.querySelectorAll('.drc-filter-select');
+    const waivedSelect = selects[2] as HTMLSelectElement;
+    const fixedSelect = selects[3] as HTMLSelectElement;
+
+    fireEvent.change(waivedSelect, { target: { value: 'yes' } });
+    expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(1);
+
+    fireEvent.change(fixedSelect, { target: { value: 'yes' } });
+    expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(0);
+
+    fireEvent.change(waivedSelect, { target: { value: 'no' } });
+    expect(container.querySelectorAll('.drc-table tbody tr')).toHaveLength(1);
+  });
 });
 
 describe('DrcPage - 状态跟踪', () => {

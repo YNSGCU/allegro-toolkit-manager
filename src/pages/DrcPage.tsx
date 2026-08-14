@@ -39,6 +39,8 @@ interface DrcFilter {
   type: string;
   severity: '' | 'error' | 'warning';
   status: '' | DrcStatus;
+  waived: '' | 'yes' | 'no';
+  fixed: '' | 'yes' | 'no';
 }
 
 const EMPTY_FILTER: DrcFilter = {
@@ -49,6 +51,8 @@ const EMPTY_FILTER: DrcFilter = {
   type: '',
   severity: '',
   status: '',
+  waived: '',
+  fixed: '',
 };
 
 function matchKeyword(violation: DrcViolation, keyword: string): boolean {
@@ -273,6 +277,10 @@ const DrcPage: React.FC = () => {
       if (filter.type && typeKeyOf(v) !== filter.type) return false;
       if (filter.severity && v.severity !== filter.severity) return false;
       if (filter.status && v.status !== filter.status) return false;
+      if (filter.waived === 'yes' && !v.waived) return false;
+      if (filter.waived === 'no' && v.waived) return false;
+      if (filter.fixed === 'yes' && !v.fixed) return false;
+      if (filter.fixed === 'no' && v.fixed) return false;
       return true;
     });
   }, [filter, report]);
@@ -358,7 +366,9 @@ const DrcPage: React.FC = () => {
     || filter.rule !== ''
     || filter.type !== ''
     || filter.severity !== ''
-    || filter.status !== '';
+    || filter.status !== ''
+    || filter.waived !== ''
+    || filter.fixed !== '';
 
   const statusItems = [
     { label: '报告', value: String(reports.length), status: 'muted' as const },
@@ -485,6 +495,26 @@ const DrcPage: React.FC = () => {
                       <option value="unresolved">未处理</option>
                       <option value="resolved">已解决</option>
                       <option value="ignored">已忽略</option>
+                    </select>
+                    <select
+                      className="drc-filter-select"
+                      aria-label="按 waived 筛选"
+                      value={filter.waived}
+                      onChange={(event) => setFilter((prev) => ({ ...prev, waived: event.target.value as DrcFilter['waived'] }))}
+                    >
+                      <option value="">全部（waived）</option>
+                      <option value="yes">已 waived</option>
+                      <option value="no">未 waived</option>
+                    </select>
+                    <select
+                      className="drc-filter-select"
+                      aria-label="按 fixed 筛选"
+                      value={filter.fixed}
+                      onChange={(event) => setFilter((prev) => ({ ...prev, fixed: event.target.value as DrcFilter['fixed'] }))}
+                    >
+                      <option value="">全部（fixed）</option>
+                      <option value="yes">已修复</option>
+                      <option value="no">未修复</option>
                     </select>
                     {hasFilter ? (
                       <button

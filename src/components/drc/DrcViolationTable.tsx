@@ -63,7 +63,15 @@ export default function DrcViolationTable({
                   ))}
                 </select>
               </td>
-              <td className="drc-cell-rule">{violation.rule}</td>
+              <td className="drc-cell-rule">
+                {violation.rule}
+                {(violation.waived || violation.fixed) && (
+                  <span className="drc-allegro-badges">
+                    {violation.waived && <span className="drc-badge drc-badge--waived">waived</span>}
+                    {violation.fixed && <span className="drc-badge drc-badge--fixed">fixed</span>}
+                  </span>
+                )}
+              </td>
               <td>
                 <span className={`drc-severity drc-severity--${violation.severity}`}>
                   {violation.severity === 'error' ? '错误' : '警告'}
