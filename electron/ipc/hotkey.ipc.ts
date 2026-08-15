@@ -64,7 +64,9 @@ function getLoadContext(envInfo: ReturnType<typeof locateEnvironment>) {
     if (envInfo.ilinitFilePath && fs.existsSync(envInfo.ilinitFilePath)) {
       ilinitContent = readAllegroTextFile(envInfo.ilinitFilePath, textEncoding).text;
     }
-  } catch {}
+  } catch {
+    // 读取 loader / ilinit 内容失败时回退为空，供展示层降级处理
+  }
   return { loaderContent, ilinitContent };
 }
 
@@ -99,7 +101,9 @@ export function registerHotkeyIpc(): void {
         );
         skillRefChecks = refResult.refChecks;
         registry = refResult.registry;
-      } catch {}
+      } catch {
+        // Skill 引用校验失败时跳过，命令分类仍继续
+      }
 
       // 命令分类
       const dictionary = createDictionary();

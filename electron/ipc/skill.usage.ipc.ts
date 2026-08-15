@@ -61,7 +61,9 @@ function loadBindingsFromEnv(envInfo: any): HotkeyBinding[] {
         }
       }
     }
-  } catch {}
+  } catch {
+    // 收集绑定的子步骤失败时回退到已收集部分，不中断整体计算
+  }
   return allBindings;
 }
 

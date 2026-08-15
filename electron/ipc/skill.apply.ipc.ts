@@ -176,7 +176,9 @@ export function registerSkillApplyIpc(): void {
               }
             }
           }
-        } catch {}
+        } catch {
+          // 解析 env 绑定的子步骤失败时回退到已收集部分
+        }
         const impact = analyzeSkillDeleteImpact(target, scanResult.all, allBindings);
         return { success: true, data: { needImpactAnalysis: true, impact } };
       }
@@ -329,7 +331,9 @@ function createSkillTogglePlan(
     if (fs.existsSync(bootstrapIlPath)) {
       steps.push({ type: 'backup', target: bootstrapIlPath, description: `备份 bootstrap.il（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'bootstrap.il') });
     }
-  } catch {}
+  } catch {
+    // 备份步骤添加失败时忽略（后续读取会再报错）
+  }
   const currentBootstrap = fs.existsSync(bootstrapIlPath)
     ? readAllegroTextFile(bootstrapIlPath, allegroTextEncoding).text
     : '';
@@ -344,7 +348,9 @@ function createSkillTogglePlan(
     if (fs.existsSync(ilinitPath)) {
       steps.push({ type: 'backup', target: ilinitPath, description: `备份 allegro.ilinit（${action} ${skill.name} 前）`, backupTo: path.join(backupBase, 'allegro.ilinit') });
     }
-  } catch {}
+  } catch {
+    // 备份步骤添加失败时忽略（后续读取会再报错）
+  }
   const currentIlinit = fs.existsSync(ilinitPath)
     ? readAllegroTextFile(ilinitPath, allegroTextEncoding).text
     : '';

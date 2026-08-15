@@ -107,7 +107,9 @@ export function registerSkillRefsIpc(): void {
         for (const stale of staleRefs) {
           issues.push({ id: `stale-ref-${stale.bindingId}`, severity: 'warning', type: 'stale_hotkey_ref', title: `失效引用: ${stale.commandName}`, description: `快捷键 "${stale.hotkeyKey}" 引用 "${stale.commandName}"，但对应的 Skill 文件 "${stale.expectedSkillName}" 已不存在。`, commandName: stale.commandName, hotkeyKey: stale.hotkeyKey, suggestedActions: ['删除快捷键绑定', '更新命令名', '重新安装对应的 Skill 文件'] });
         }
-      } catch {}
+      } catch {
+        // 失效引用子检查失败时跳过，其余检查继续
+      }
 
       // V5.1 检查 6: 禁用 Skill 同名命令冲突
       const disabledCmdMap = new Map<string, string[]>();

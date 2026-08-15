@@ -368,7 +368,9 @@ export function loadReservedKeys(): Record<string, {
       };
     }
     return record;
-  } catch {}
+  } catch {
+    // 单条记录解析失败时跳过，不影响批量分类结果
+  }
   return {};
 }
 
