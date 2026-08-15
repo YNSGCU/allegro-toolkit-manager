@@ -2,6 +2,8 @@
  * ATM - 变更历史 IPC 处理器（V4.0）
  */
 import { ipcMain } from 'electron';
+import path from 'path';
+import { locateEnvironment } from '../../core/environment/locateEnvironment';
 import {
   loadChangeHistory,
   saveChangeHistory,
@@ -11,6 +13,10 @@ import {
   undoLastChange,
   clearChangeHistory,
 } from '../../core/changeHistory/changeHistory';
+import {
+  loadApplyPlanHistory,
+  undoLastChange as undoApplyPlanLastChange,
+} from '../../core/apply/applyPlanEngine';
 
 export function registerHistoryIpc(): void {
   /** 加载变更历史 */
@@ -60,6 +66,33 @@ export function registerHistoryIpc(): void {
       return { success: true };
     } catch (err) {
       return { success: false, error: `清空变更历史失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  /** 统一 Apply Plan 历史目录（Skill/Menu 等模块共用） */
+  function getAtmHistoryDirs(): { historyDir: string; backupDir: string } {
+    const envInfo = locateEnvironment();
+    const atmDir = envInfo.atmGeneratedPath || path.join(envInfo.pcbenvPath || '', 'atm_generated');
+    return { historyDir: path.join(atmDir, 'history'), backupDir: path.join(atmDir, 'backups') };
+  }
+
+  /** 加载统一 Apply Plan 变更历史 */
+  ipcMain.handle('history:apply-plan-list', () => {
+    try {
+      const { historyDir } = getAtmHistoryDirs();
+      return { success: true, data: loadApplyPlanHistory(historyDir) };
+    } catch (err) {
+      return { success: false, error: '加载应用历史失败: ' + (err instanceof Error ? err.message : String(err)) };
+    }
+  });
+
+  /** 撤销最近一次统一 Apply Plan 变更 */
+  ipcMain.handle('history:apply-plan-undo', async () => {
+    try {
+      const { historyDir, backupDir } = getAtmHistoryDirs();
+      return await undoApplyPlanLastChange(historyDir, backupDir);
+    } catch (err) {
+      return { success: false, error: '撤销应用失败: ' + (err instanceof Error ? err.message : String(err)) };
     }
   });
 }

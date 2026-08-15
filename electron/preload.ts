@@ -235,6 +235,11 @@ contextBridge.exposeInMainWorld('atm', {
   clearChangeHistory: (pcbenvPath: string) =>
     ipcRenderer.invoke('history:clear', pcbenvPath),
 
+  /** 加载统一 Apply Plan 变更历史 */
+  historyApplyPlanList: () => ipcRenderer.invoke('history:apply-plan-list'),
+  /** 撤销最近一次统一 Apply Plan 变更 */
+  historyApplyPlanUndo: () => ipcRenderer.invoke('history:apply-plan-undo'),
+
   // ===== 原始行查看（V4.0） =====
   /** 读取 env 原始行（带上下文） */
   readRawLine: (filePath: string, lineNumber: number, isReference?: boolean) =>

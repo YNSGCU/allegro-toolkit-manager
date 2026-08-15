@@ -33,6 +33,7 @@ import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
 import SymphonyDialog from '../components/SymphonyDialog';
 import SkillProfileMigrationDialog from '../components/SkillProfileMigrationDialog';
+import ApplyPlanUndoBar from '../components/ApplyPlanUndoBar';
 import { ApplyPlanDialog, formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'list' | 'registry' | 'refs';
@@ -1329,6 +1330,12 @@ const SkillPage: React.FC = () => {
           {applyResult}
         </div>
       )}
+
+      <ApplyPlanUndoBar
+        refreshToken={applyResult ?? undefined}
+        onError={(message) => setApplyResult(message)}
+        onUndone={() => setApplyResult('已撤销上次应用。')}
+      />
     </>
   );
 

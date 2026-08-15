@@ -447,6 +447,22 @@ export async function recordHistory(
   }
   fs.writeFileSync(historyFile, JSON.stringify(history, null, 2), { encoding: 'utf-8' });
 }
+/** 读取统一 Apply Plan 变更历史 */
+export function loadApplyPlanHistory(historyDir: string): ChangeHistoryItem[] {
+  const historyFile = path.join(historyDir, APPLY_PLAN_HISTORY_FILE);
+  try {
+    if (!fs.existsSync(historyFile)) return [];
+    const parsed = JSON.parse(fs.readFileSync(historyFile, { encoding: 'utf-8' }));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 获取最近一条可撤销的统一 Apply Plan 变更；无可撤销项返回 null */
+export function getLastApplyPlanChange(historyDir: string): ChangeHistoryItem | null {
+  return loadApplyPlanHistory(historyDir).find((item) => item.canUndo) ?? null;
+}
 
 /**
  * 撤销最近一次变更

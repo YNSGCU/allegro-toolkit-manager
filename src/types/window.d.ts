@@ -122,6 +122,8 @@ declare global {
       undoLastChange: (pcbenvPath: string) => Promise<{ success: boolean; error?: string }>;
       addChangeRecord: (pcbenvPath: string, record: any) => Promise<{ success: boolean; data?: any; error?: string }>;
       clearChangeHistory: (pcbenvPath: string) => Promise<{ success: boolean; error?: string }>;
+      historyApplyPlanList: () => Promise<{ success: boolean; data?: any[]; error?: string }>;
+      historyApplyPlanUndo: () => Promise<{ success: boolean; error?: string }>;
 
       // V4.0 原始行查看
       readRawLine: (filePath: string, lineNumber: number, isReference?: boolean) => Promise<{ success: boolean; data?: any; error?: string }>;
