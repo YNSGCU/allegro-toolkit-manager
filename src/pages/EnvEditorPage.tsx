@@ -16,6 +16,7 @@ import type {
 } from '../types/envEditor';
 import type { EnvSource } from '../types/environment';
 import GlobalStatusBar from '../components/GlobalStatusBar';
+import ApplyPlanUndoBar from '../components/ApplyPlanUndoBar';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
 import { BusinessDialog, formatUserError, PageState, WorkspaceHeader, WorkspacePage } from '../shared/ui';
@@ -59,6 +60,7 @@ const EnvEditorPage: React.FC = () => {
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareResult, setCompareResult] = useState<EnvCompareResult | null>(null);
   const [compareSources, setCompareSources] = useState<EnvSource[]>([]);
+  const [appliedToken, setAppliedToken] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -204,6 +206,7 @@ const EnvEditorPage: React.FC = () => {
       addToast('success', 'env 文件已应用，重启 Allegro 后生效。');
       setPreview(null);
       setConfirmApply(false);
+      setAppliedToken((t) => t + 1);
       await load();
     } catch (err) {
       addToast('error', formatUserError(err, '应用失败'));
@@ -316,6 +319,12 @@ const EnvEditorPage: React.FC = () => {
         }
       />
       <GlobalStatusBar items={statusItems} />
+
+      <ApplyPlanUndoBar
+        refreshToken={appliedToken}
+        onError={(message) => addToast('error', message)}
+        onUndone={() => addToast('success', '已撤销上次应用。')}
+      />
 
       {entries.length === 0 ? (
         <PageState kind="empty" title="env 文件为空" description="点击右上角「新增条目」添加内容。" />

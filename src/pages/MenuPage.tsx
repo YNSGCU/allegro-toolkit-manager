@@ -34,6 +34,7 @@ import { showToast } from '../components/common/Toast';
 import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
+import ApplyPlanUndoBar from '../components/ApplyPlanUndoBar';
 import MenuTree from '../components/MenuTree';
 import MenuTreeAddBar from '../components/MenuTreeAddBar';
 import MenuItemEditor from '../components/MenuItemEditor';
@@ -1430,6 +1431,12 @@ const MenuPage: React.FC = () => {
           {applyResult}
         </div>
       )}
+
+      <ApplyPlanUndoBar
+        refreshToken={applyResult ?? undefined}
+        onError={(message) => showToast('error', message)}
+        onUndone={() => showToast('success', '已撤销上次应用。')}
+      />
       {applyError && (
         <div className="menu-operation-toast menu-operation-toast--error" role="alert">
           <AlertCircle aria-hidden="true" />
