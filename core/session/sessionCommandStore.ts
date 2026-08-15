@@ -17,8 +17,11 @@ const STORE_FILE = 'session_commands.json';
 const MAX_ITEMS = 50;
 
 export function getSessionStorePath(): string {
-  const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-  return path.join(appData, 'AllegroToolkitManager', STORE_FILE);
+  const override = process.env.ATM_CONFIG_HOME;
+  const root = override
+    ? path.normalize(override)
+    : path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'AllegroToolkitManager');
+  return path.join(root, STORE_FILE);
 }
 
 export function createEmptyStore(): SessionCommandStore {
