@@ -442,6 +442,16 @@
   vertical-align: top;
 }
 
+.drc-table--virtualized tbody tr {
+  height: 48px;
+}
+
+.drc-table--virtualized td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .drc-table tbody tr:hover {
   background: var(--bg-subtle, #faf8f5);
 }
