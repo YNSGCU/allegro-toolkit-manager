@@ -520,6 +520,12 @@ contextBridge.exposeInMainWorld('atm', {
   /** 执行 Skill 方案 Apply Plan */
   skillProfileExecuteApplyPlan: (planJson: string) =>
     ipcRenderer.invoke('skill-profile:execute-apply-plan', planJson),
+  /** 检查 Skill 方案跨版本兼容性 */
+  skillProfileCheckCompatibility: (profileId: string, targetEnvironmentId: string) =>
+    ipcRenderer.invoke('skill-profile:check-compatibility', profileId, targetEnvironmentId),
+  /** 迁移 Skill 方案到目标 Allegro 环境 */
+  skillProfileMigrate: (profileId: string, targetEnvironmentId: string) =>
+    ipcRenderer.invoke('skill-profile:migrate', profileId, targetEnvironmentId),
 
   // ===== Symphony 协同模式适配 =====
   /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */

@@ -1,4 +1,5 @@
 import type { HotkeyProfile } from '../../src/types/hotkey';
+import type { SkillProfile } from '../../src/types/skillProfile';
 import type { AllegroEnvironmentWorkspace, CompatibilityFinding, ProfileCompatibilityReport } from '../../src/types/environment';
 
 function isComplexCommand(command: string): boolean {
@@ -43,6 +44,54 @@ export function checkHotkeyProfileCompatibility(
       code: 'absolute-path',
       title: '方案包含绝对路径',
       description: `发现 ${pathBindings.length} 条绑定包含绝对路径，迁移到其他安装或用户目录前必须改写路径。`,
+    });
+  }
+
+  if (target.sharedWithIds.length > 0) {
+    findings.push({
+      severity: 'warning',
+      code: 'shared-pcbenv',
+      title: '目标配置被多个 Allegro 版本共享',
+      description: '应用后其他共享同一 pcbenv 的 Allegro 版本也会看到这些修改。',
+    });
+  }
+
+  if (profile.sourceEnvironmentId && profile.sourceEnvironmentId === target.id) {
+    findings.push({ severity: 'info', code: 'same-environment', title: '目标就是来源环境', description: '无需执行跨版本迁移。' });
+  }
+
+  const verdict = findings.some((finding) => finding.severity === 'error')
+    ? 'blocked'
+    : findings.some((finding) => finding.severity === 'warning')
+      ? 'warning'
+      : 'portable';
+  return { sourceVersion, targetVersion, verdict, findings };
+}
+/** 检查 Skill 方案跨版本 / 跨环境兼容性（静态） */
+export function checkSkillProfileCompatibility(
+  profile: Pick<SkillProfile, 'skillStates' | 'sourceAllegroVersion' | 'sourceEnvironmentId'>,
+  target: Pick<AllegroEnvironmentWorkspace, 'id' | 'allegroVersion' | 'pcbenvPath' | 'sharedWithIds'>,
+): ProfileCompatibilityReport {
+  const findings: CompatibilityFinding[] = [];
+  const sourceVersion = profile.sourceAllegroVersion ?? null;
+  const targetVersion = target.allegroVersion ?? null;
+
+  if (sourceVersion && targetVersion && sourceVersion !== targetVersion) {
+    findings.push({
+      severity: 'warning',
+      code: 'version-diff',
+      title: '来源与目标 Allegro 版本不同',
+      description: `方案来源于 Allegro ${sourceVersion}，目标为 Allegro ${targetVersion}，Skill 加载与函数需在目标版本验证。`,
+    });
+  }
+
+  const absoluteFiles = profile.skillStates.filter((item) => hasAbsolutePath(item.sourceFile)).length;
+  if (absoluteFiles > 0) {
+    findings.push({
+      severity: 'error',
+      code: 'absolute-path',
+      title: '方案包含绝对路径的 Skill 文件',
+      description: `发现 ${absoluteFiles} 个 Skill 指向绝对路径，迁移到其他安装或用户目录前必须改写路径。`,
     });
   }
 

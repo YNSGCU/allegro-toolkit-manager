@@ -5,11 +5,14 @@ import { ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
+import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
+import { checkSkillProfileCompatibility } from '../../core/environment/compatibility';
 import { getAllegroTextEncoding, readAllegroTextFile } from '../../core/environment/allegroTextEncoding';
 import { createApplyPlan, createBackupStep, executeApplyPlan } from '../../core/apply/applyPlanEngine';
 import { generateBootstrapIlContent, generateBootstrapLines, insertBootstrapToIlinit } from '../../core/generator/generateBootstrap';
 import type { ApplyPlan } from '../../src/types/applyPlan';
 import type { SkillProfile } from '../../src/types/skillProfile';
+import { generateSkillProfileId } from '../../src/types/skillProfile';
 import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
 import {
   loadSkillProfileStore,
@@ -288,6 +291,62 @@ export function registerSkillProfileIpc(): void {
       });
     } catch (err) {
       return { success: false, appliedSteps: 0, totalSteps: 0, error: `执行 Skill 方案 Apply Plan 失败: ${(err as Error).message}` };
+    }
+  });
+  ipcMain.handle('skill-profile:check-compatibility', (_event, profileId: string, targetEnvironmentId: string) => {
+    try {
+      const store = loadSkillProfileStore(getAtmDir());
+      const profile = store.profiles.find((p) => p.id === profileId);
+      const registry = loadEnvironmentRegistry();
+      const target = registry.environments.find((item) => item.id === targetEnvironmentId);
+      if (!profile || !target) return { success: false, error: '来源方案或目标环境不存在' };
+      return { success: true, data: checkSkillProfileCompatibility(profile, target) };
+    } catch (err) {
+      return { success: false, error: `Skill 兼容性检查失败: ${(err as Error).message}` };
+    }
+  });
+
+  ipcMain.handle('skill-profile:migrate', (_event, profileId: string, targetEnvironmentId: string) => {
+    try {
+      const envInfo = locateEnvironment();
+      const store = loadSkillProfileStore(getAtmDir());
+      const profile = store.profiles.find((p) => p.id === profileId);
+      const registry = loadEnvironmentRegistry();
+      const target = registry.environments.find((item) => item.id === targetEnvironmentId);
+      if (!profile || !target) return { success: false, error: '来源方案或目标环境不存在' };
+      const report = checkSkillProfileCompatibility(profile, target);
+      if (report.verdict === 'blocked') return { success: false, error: '兼容性预检发现阻断项，请先处理绝对路径等问题', data: report };
+      const sourcePcbenv = (envInfo.pcbenvPath || '').toLowerCase();
+      const targetPcbenv = (target.pcbenvPath || '').toLowerCase();
+      if (targetPcbenv && targetPcbenv === sourcePcbenv) {
+        return { success: true, data: { profile, report, sharedPcbenv: true } };
+      }
+      const targetAtmDir = path.join(target.pcbenvPath || '', 'atm_generated');
+      const targetStore = loadSkillProfileStore(targetAtmDir);
+      const now = new Date().toISOString();
+      const migrated: SkillProfile = {
+        ...JSON.parse(JSON.stringify(profile)),
+        id: generateSkillProfileId(),
+        name: `${profile.name}（迁移）`,
+        description: `从 Allegro ${profile.sourceAllegroVersion || envInfo.allegroVersion || '未知版本'} 迁移`,
+        createdAt: now,
+        updatedAt: now,
+        sourceEnvironmentId: profile.sourceEnvironmentId || envInfo.environmentId || null,
+        sourceAllegroVersion: profile.sourceAllegroVersion || envInfo.allegroVersion || null,
+        targetCompatibility: {
+          intendedEnvironmentId: target.id,
+          intendedAllegroVersion: target.allegroVersion,
+          lastCheckedAt: now,
+          lastVerdict: report.verdict,
+        },
+      };
+      targetStore.profiles.push(migrated);
+      const saved = saveSkillProfileStore(targetAtmDir, targetStore);
+      return saved
+        ? { success: true, data: { profile: migrated, report, sharedPcbenv: false } }
+        : { success: false, error: '无法在目标环境创建方案' };
+    } catch (err) {
+      return { success: false, error: `迁移 Skill 方案失败: ${(err as Error).message}` };
     }
   });
 }

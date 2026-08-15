@@ -32,6 +32,7 @@ import ProfileBar from '../components/ProfileBar';
 import GlobalStatusBar from '../components/GlobalStatusBar';
 import MoreActionsMenu from '../components/MoreActionsMenu';
 import SymphonyDialog from '../components/SymphonyDialog';
+import SkillProfileMigrationDialog from '../components/SkillProfileMigrationDialog';
 import { ApplyPlanDialog, formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
 
 type TabType = 'list' | 'registry' | 'refs';
@@ -105,6 +106,7 @@ const SkillPage: React.FC = () => {
   const [applyResult, setApplyResult] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [showSymphonyDialog, setShowSymphonyDialog] = useState(false);
+  const [showSkillMigration, setShowSkillMigration] = useState(false);
 
   // ===== Loader 预览 =====
   const [loaderPreview, setLoaderPreview] = useState<string | null>(null);
@@ -1189,6 +1191,7 @@ const SkillPage: React.FC = () => {
               { label: '预览 Loader', onClick: handlePreviewLoader, disabled: loaderLoading },
               { label: '检查加载顺序', onClick: handlePreviewLoaderOrder, disabled: loaderOrderLoading },
               { label: 'Symphony 协同检查', onClick: () => setShowSymphonyDialog(true) },
+              { label: '迁移当前方案到其他 Allegro 版本', disabled: !activeSkillProfile, onClick: () => setShowSkillMigration(true) },
               { label: '全部重新分析', onClick: handleReAnalyzeAll, disabled: analyzingAll },
             ]}
           />
@@ -1312,6 +1315,14 @@ const SkillPage: React.FC = () => {
           setShowSymphonyDialog(false);
         }}
       />
+
+      {showSkillMigration && activeSkillProfile && (
+        <SkillProfileMigrationDialog
+          profile={activeSkillProfile}
+          onClose={() => setShowSkillMigration(false)}
+          onMigrated={(message) => setApplyResult(message)}
+        />
+      )}
 
       {applyResult && (
         <div className={`message ${/失败|出错/.test(applyResult) ? 'message-error' : 'message-info'} skill-operation-message`}>

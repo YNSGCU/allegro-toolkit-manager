@@ -42,6 +42,7 @@ import type {
   EnvEditorPreviewResult,
 } from './envEditor';
 import type { SessionCommandResult, SessionCommandStore, SessionSnapshot } from './session';
+import type { SkillProfile } from './skillProfile';
 
 declare global {
   interface Window {
@@ -270,6 +271,8 @@ declare global {
       skillProfileComputeDiff: (currentJson: string, targetJson: string, hotkeyRefsJson?: string, menuRefsJson?: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       skillProfileCreateApplyPlan: (profileJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       skillProfileExecuteApplyPlan: (planJson: string) => Promise<{ success: boolean; appliedSteps?: number; totalSteps?: number; error?: string }>;
+      skillProfileCheckCompatibility: (profileId: string, targetEnvironmentId: string) => Promise<{ success: boolean; data?: ProfileCompatibilityReport; error?: string }>;
+      skillProfileMigrate: (profileId: string, targetEnvironmentId: string) => Promise<{ success: boolean; data?: { profile: SkillProfile; report: ProfileCompatibilityReport; sharedPcbenv: boolean }; error?: string }>;
 
       // ===== Symphony 协同模式适配 =====
       /** Symphony 兼容体检（U 类函数 / 未登记命令 / 菜单触发器） */
