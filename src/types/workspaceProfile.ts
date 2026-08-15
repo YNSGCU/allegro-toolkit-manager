@@ -1,5 +1,5 @@
 /**
- * ATM - Workspace Profile 类型定义（V5.5 预留）
+ * ATM - Workspace Profile 类型定义（V5.5）
  */
 export interface WorkspaceProfile {
   id: string;
