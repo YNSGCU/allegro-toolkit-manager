@@ -87,41 +87,72 @@ interface ExecuteResult {
   error?: string;
 }
 
-/** 向 Allegro 发送 SKILL 代码并等待结果（Vibe Bridge 协议） */
-export async function executeSkillViaBridge(
+// ============================================================================
+// 串行化（Vibe Bridge 共享 vibe_in.il / vibe_out.log，并发会互相覆盖输入/输出）
+// ============================================================================
+let bridgeLock: Promise<unknown> = Promise.resolve();
+
+function withBridgeLock<T>(task: () => Promise<T>): Promise<T> {
+  const run = bridgeLock.then(task, task);
+  bridgeLock = run.then(() => undefined, () => undefined);
+  return run;
+}
+
+/** 向 Allegro 发送 SKILL 代码并等待结果（Vibe Bridge 协议，串行执行） */
+export function executeSkillViaBridge(
   workspace: string,
   code: string,
   timeoutMs = 10000,
 ): Promise<ExecuteResult> {
+  return withBridgeLock(() => executeSkillViaBridgeLocked(workspace, code, timeoutMs));
+}
+
+async function executeSkillViaBridgeLocked(
+  workspace: string,
+  code: string,
+  timeoutMs: number,
+): Promise<ExecuteResult> {
   const inputPath = path.join(workspace, 'vibe_in.il');
   const outputPath = path.join(workspace, 'vibe_out.log');
+
+  const clearOutput = (): void => {
+    try {
+      if (fs.existsSync(outputPath)) fs.rmSync(outputPath, { force: true });
+    } catch {
+      // 清理失败不阻塞主流程
+    }
+  };
 
   try {
     if (!fs.existsSync(workspace)) {
       return { success: false, error: 'Vibe Bridge workspace 不存在' };
     }
-    if (fs.existsSync(outputPath)) {
-      fs.rmSync(outputPath, { force: true });
-    }
+
+    // 先清空旧输出，避免读到上一次请求的残留结果
+    clearOutput();
     fs.writeFileSync(inputPath, code, 'utf-8');
 
     const startedAt = Date.now();
     while (Date.now() - startedAt < timeoutMs) {
       if (fs.existsSync(outputPath)) {
-        await sleep(100);
+        await sleep(100); // 等文件写完，避免读到半截
         const raw = fs.readFileSync(outputPath, 'utf-8').trim();
         if (raw.startsWith('SUCCESS')) {
+          clearOutput();
           return { success: true, output: raw.replace(/^SUCCESS\s*/, '').trim() };
         }
         if (raw.startsWith('ERROR')) {
+          clearOutput();
           return { success: false, error: raw.replace(/^ERROR\s*/, '').trim() || 'Allegro 执行出错' };
         }
-        // 文件刚创建可能尚未写完，继续轮询
+        // 输出内容不完整或格式未知，继续轮询
       }
       await sleep(150);
     }
+    clearOutput();
     return { success: false, error: 'Vibe Bridge 超时无响应，请在 Allegro 中加载 vibe_server.il' };
   } catch (err) {
+    clearOutput();
     return { success: false, error: `Vibe Bridge 通信失败: ${err instanceof Error ? err.message : String(err)}` };
   }
 }

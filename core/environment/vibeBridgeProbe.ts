@@ -2,6 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { AllegroEnvironmentWorkspace, AllegroRuntimeVerificationResult } from '../../src/types/environment';
+import { executeSkillViaBridge } from '../color/vibeColorBridge';
 
 const QUERY = "list(axlVersion('tVersion) axlVersion('fullVersion) axlVersion('programName))";
 
@@ -43,32 +44,26 @@ export async function verifyAllegroRuntimeViaVibeBridge(
   };
   if (!workspace) return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: '未找到 Vibe Bridge workspace，请先安装或设置 ATM_VIBE_WORKSPACE。' };
 
-  const inputPath = path.join(workspace, 'vibe_in.il');
-  const outputPath = path.join(workspace, 'vibe_out.log');
   try {
-    if (fs.existsSync(outputPath)) fs.rmSync(outputPath, { force: true });
-    fs.writeFileSync(inputPath, QUERY, 'utf-8');
-    const startedAt = Date.now();
-    while (Date.now() - startedAt < timeoutMs) {
-      if (fs.existsSync(outputPath)) {
-        await sleep(100);
-        const parsed = parseVibeVersionResponse(fs.readFileSync(outputPath, 'utf-8'));
-        if (!parsed) return { ...base, connected: true, matchedEnvironment: false, status: 'warning', message: 'Vibe Bridge 返回了错误，未记录运行验证通过。' };
-        const matchedEnvironment = !environment.allegroVersion || parsed.version?.startsWith(environment.allegroVersion) === true;
-        return {
-          ...base,
-          connected: true,
-          matchedEnvironment,
-          actualVersion: parsed.version,
-          fullVersion: parsed.fullVersion,
-          programName: parsed.programName,
-          status: matchedEnvironment ? 'runtime_pass' : 'warning',
-          message: matchedEnvironment ? `已连接 ${parsed.fullVersion || parsed.version || 'Allegro'}，版本与当前环境一致。` : `当前会话版本 ${parsed.version || '未知'} 与所选环境 ${environment.allegroVersion || '未知'} 不一致。`,
-        };
-      }
-      await sleep(150);
+    const result = await executeSkillViaBridge(workspace, QUERY, timeoutMs);
+    if (!result.success) {
+      return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: result.error || 'Vibe Bridge 未响应，请在 Allegro 中加载并启动 Bridge 服务。' };
     }
-    return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: 'Vibe Bridge 未响应，请在 Allegro 中加载并启动 Bridge 服务。' };
+    const parsed = parseVibeVersionResponse('SUCCESS ' + result.output);
+    if (!parsed) {
+      return { ...base, connected: true, matchedEnvironment: false, status: 'warning', message: 'Vibe Bridge 返回了错误，未记录运行验证通过。' };
+    }
+    const matchedEnvironment = !environment.allegroVersion || parsed.version?.startsWith(environment.allegroVersion) === true;
+    return {
+      ...base,
+      connected: true,
+      matchedEnvironment,
+      actualVersion: parsed.version,
+      fullVersion: parsed.fullVersion,
+      programName: parsed.programName,
+      status: matchedEnvironment ? 'runtime_pass' : 'warning',
+      message: matchedEnvironment ? `已连接 ${parsed.fullVersion || parsed.version || 'Allegro'}，版本与当前环境一致。` : `当前会话版本 ${parsed.version || '未知'} 与所选环境 ${environment.allegroVersion || '未知'} 不一致。`,
+    };
   } catch (err) {
     return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: `Vibe Bridge 验证失败: ${err instanceof Error ? err.message : String(err)}` };
   }
