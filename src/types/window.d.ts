@@ -43,6 +43,7 @@ import type {
 } from './envEditor';
 import type { SessionCommandResult, SessionCommandStore, SessionSnapshot } from './session';
 import type { SkillProfile } from './skillProfile';
+import type { BoardDiagnosticSnapshot } from './diagnostic';
 
 declare global {
   interface Window {
@@ -358,6 +359,7 @@ declare global {
       sessionHistoryLoad: () => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
       sessionFavoriteToggle: (code: string) => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
       sessionHistoryClear: () => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
+      runDiagnostic: () => Promise<{ success: boolean; data?: BoardDiagnosticSnapshot; error?: string }>;
 
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;

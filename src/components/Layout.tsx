@@ -30,6 +30,7 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   colors: Palette,
   drc: ListChecks,
   session: Terminal,
+  diagnostic: CircuitBoard,
   'env-editor': FilePenLine,
   overview: Gauge,
   backup: Archive,

@@ -24,6 +24,7 @@ import { registerWorkspaceIpc } from './workspace.ipc';
 import { registerDrcIpc } from './drc.ipc';
 import { registerEnvEditorIpc } from './envEditor.ipc';
 import { registerSessionIpc } from './session.ipc';
+import { registerDiagnosticIpc } from './diagnostic.ipc';
 import type { UpdateService } from '../services/updateService';
 
 export function registerIpcHandlers(updateService?: UpdateService): void {
@@ -51,5 +52,6 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerDrcIpc();
   registerEnvEditorIpc();
   registerSessionIpc();
+  registerDiagnosticIpc();
   if (updateService) registerUpdateIpc(updateService);
 }

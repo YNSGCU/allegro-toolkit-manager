@@ -1,0 +1,102 @@
+/* ATM - 设计体检页面样式 */
+
+.diagnostic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.diagnostic-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.diagnostic-metric {
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 14px;
+  background: var(--bg-surface, #ffffff);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diagnostic-metric--danger {
+  border-color: var(--danger-color, #b42318);
+}
+
+.diagnostic-metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary, #171717);
+}
+
+.diagnostic-metric--danger .diagnostic-metric-value {
+  color: var(--danger-color, #b42318);
+}
+
+.diagnostic-metric-label {
+  font-size: 12px;
+  color: var(--text-muted, #8d877f);
+}
+
+.diagnostic-panel {
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 14px;
+  background: var(--bg-surface, #ffffff);
+  padding: 14px 16px;
+}
+
+.diagnostic-panel-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #171717);
+}
+
+.diagnostic-layer-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.diagnostic-layer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-color, #d8d0c5);
+  border-radius: 999px;
+  font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-primary, #171717);
+}
+
+.diagnostic-layer-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--bg-subtle, #faf8f5);
+  color: var(--text-secondary, #5f5a52);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.diagnostic-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+}
+
+@media (max-width: 1080px) {
+  .diagnostic-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

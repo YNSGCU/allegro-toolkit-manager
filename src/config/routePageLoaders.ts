@@ -15,6 +15,7 @@ export const routePageLoaders = {
   drc: () => import('../pages/DrcPage'),
   envEditor: () => import('../pages/EnvEditorPage'),
   session: () => import('../pages/SessionConsolePage'),
+  diagnostic: () => import('../pages/DiagnosticPage'),
 } satisfies Record<string, RoutePageLoader>;
 
 const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
@@ -29,6 +30,7 @@ const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
   ['/drc', routePageLoaders.drc],
   ['/env-editor', routePageLoaders.envEditor],
   ['/session', routePageLoaders.session],
+  ['/diagnostic', routePageLoaders.diagnostic],
 ];
 
 const preloadRequests = new Map<RoutePageLoader, Promise<void>>();

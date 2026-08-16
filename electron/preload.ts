@@ -721,6 +721,8 @@ contextBridge.exposeInMainWorld('atm', {
     ipcRenderer.invoke('session:favorite-toggle', code),
   /** 清空命令历史 */
   sessionHistoryClear: () => ipcRenderer.invoke('session:history-clear'),
+  /** 运行设计体检（只读批量查询） */
+  runDiagnostic: () => ipcRenderer.invoke('diagnostic:run'),
 
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
