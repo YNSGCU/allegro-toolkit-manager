@@ -4,7 +4,7 @@ import path from 'path';
 import type { AllegroEnvironmentWorkspace, AllegroRuntimeVerificationResult } from '../../src/types/environment';
 import { executeSkillViaBridge } from '../color/vibeColorBridge';
 
-export const VIBE_VERSION_QUERY = "list(axlVersion('version) axlVersion('fullVersion) axlVersion('programName))";
+export const VIBE_VERSION_QUERY = "list(axlVersion('fullVersion) axlVersion('programName))";
 
 function candidateWorkspaces(): string[] {
   const candidates = [
@@ -19,7 +19,13 @@ export function parseVibeVersionResponse(raw: string): { version: string | null;
   if (!raw.trim().startsWith('SUCCESS')) return null;
   const payload = raw.replace(/^SUCCESS\s*/i, '').trim();
   const quoted = [...payload.matchAll(/"([^"]*)"/g)].map((match) => match[1]);
-  if (quoted.length >= 3) return { version: quoted[0] || null, fullVersion: quoted[1] || null, programName: quoted[2] || null };
+  // fullVersion 恒为倒数第二个引号串，programName 恒为最后一个；短版本从 fullVersion 派生（"17.2-2016 S083" → "17.2"）
+  if (quoted.length >= 2) {
+    const fullVersion = quoted[quoted.length - 2] || null;
+    const programName = quoted[quoted.length - 1] || null;
+    const version = fullVersion ? (fullVersion.split(/[-\s]/)[0] || null) : null;
+    return { version, fullVersion, programName };
+  }
   const tokens = payload.replace(/[()]/g, ' ').trim().split(/\s+/).filter(Boolean);
   return { version: tokens[0] || null, fullVersion: tokens[1] || null, programName: tokens[2] || null };
 }

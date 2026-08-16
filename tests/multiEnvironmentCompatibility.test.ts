@@ -168,8 +168,9 @@ describe('hotkey profile compatibility', () => {
 });
 
 describe('Vibe Bridge version verification', () => {
-  it('版本查询使用正确的 axlVersion 参数（回归：tVersion 拼写错误）', () => {
-    expect(VIBE_VERSION_QUERY).toContain("axlVersion('version)");
+  it('版本查询使用已验证可用的 axlVersion 参数（回归：tVersion 拼写错误）', () => {
+    expect(VIBE_VERSION_QUERY).toContain("axlVersion('fullVersion)");
+    expect(VIBE_VERSION_QUERY).toContain("axlVersion('programName)");
     expect(VIBE_VERSION_QUERY).not.toContain('tVersion');
   });
 
@@ -177,6 +178,14 @@ describe('Vibe Bridge version verification', () => {
     expect(parseVibeVersionResponse('SUCCESS\n("17.4" "17.4-2024 S015" "allegro")')).toEqual({
       version: '17.4',
       fullVersion: '17.4-2024 S015',
+      programName: 'allegro',
+    });
+  });
+
+  it('从 fullVersion 派生短版本（当前查询格式：fullVersion + programName）', () => {
+    expect(parseVibeVersionResponse('SUCCESS\n("17.2-2016 S083" "allegro")')).toEqual({
+      version: '17.2',
+      fullVersion: '17.2-2016 S083',
       programName: 'allegro',
     });
   });
