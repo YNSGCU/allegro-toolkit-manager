@@ -15,3 +15,9 @@
 | drc-report-visualization | complete（M1-M7） | `docs/user/features/drc-report-visualization.md` | `docs/dev/features/drc-report-visualization.md` | 2026-08-12 |
 | env-visual-editor | complete（M1-M4） | `docs/user/features/env-visual-editor.md` | `docs/dev/features/env-visual-editor.md` | 2026-08-13 |
 | session-console | complete（M1-M4） | `docs/user/features/session-console.md` | `docs/dev/features/session-console.md` | 2026-08-13 |
+| color-live-preview | complete | `docs/user/features/workspace-ui.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-15 |
+| drc-report-compare | complete | `docs/user/features/drc-report-visualization.md` | `docs/dev/features/drc-report-visualization.md` | 2026-08-15 |
+| env-source-compare | complete | `docs/user/features/env-visual-editor.md` | `docs/dev/features/env-visual-editor.md` | 2026-08-15 |
+| session-command-history | complete | `docs/user/features/session-console.md` | `docs/dev/features/session-console.md` | 2026-08-15 |
+| skill-profile-migration | complete | `docs/user/features/skill-workspace.md` | `docs/dev/features/skill-workspace.md` | 2026-08-15 |
+| apply-plan-undo | complete | `docs/user/features/workspace-unified-profile.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-15 |
