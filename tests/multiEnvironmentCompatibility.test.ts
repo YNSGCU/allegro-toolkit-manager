@@ -12,7 +12,7 @@ import {
 import { locateEnvironment } from '../core/environment/locateEnvironment';
 import { checkHotkeyProfileCompatibility } from '../core/environment/compatibility';
 import { listCompatibilityRecords, saveCompatibilityRecord } from '../core/environment/compatibilityRecords';
-import { parseVibeVersionResponse, verifyAllegroRuntimeViaVibeBridge } from '../core/environment/vibeBridgeProbe';
+import { parseVibeVersionResponse, verifyAllegroRuntimeViaVibeBridge, VIBE_VERSION_QUERY } from '../core/environment/vibeBridgeProbe';
 
 const tempRoots: string[] = [];
 
@@ -168,6 +168,11 @@ describe('hotkey profile compatibility', () => {
 });
 
 describe('Vibe Bridge version verification', () => {
+  it('版本查询使用正确的 axlVersion 参数（回归：tVersion 拼写错误）', () => {
+    expect(VIBE_VERSION_QUERY).toContain("axlVersion('version)");
+    expect(VIBE_VERSION_QUERY).not.toContain('tVersion');
+  });
+
   it('parses the official axlVersion response shape', () => {
     expect(parseVibeVersionResponse('SUCCESS\n("17.4" "17.4-2024 S015" "allegro")')).toEqual({
       version: '17.4',

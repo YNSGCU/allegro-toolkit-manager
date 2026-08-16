@@ -4,7 +4,7 @@ import path from 'path';
 import type { AllegroEnvironmentWorkspace, AllegroRuntimeVerificationResult } from '../../src/types/environment';
 import { executeSkillViaBridge } from '../color/vibeColorBridge';
 
-const QUERY = "list(axlVersion('tVersion) axlVersion('fullVersion) axlVersion('programName))";
+export const VIBE_VERSION_QUERY = "list(axlVersion('version) axlVersion('fullVersion) axlVersion('programName))";
 
 function candidateWorkspaces(): string[] {
   const candidates = [
@@ -13,12 +13,6 @@ function candidateWorkspaces(): string[] {
     path.join(os.homedir(), 'allegro_vibe_bridge', 'workspace'),
   ].filter(Boolean) as string[];
   return [...new Set(candidates.map((item) => path.normalize(item)))];
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 export function parseVibeVersionResponse(raw: string): { version: string | null; fullVersion: string | null; programName: string | null } | null {
@@ -45,7 +39,7 @@ export async function verifyAllegroRuntimeViaVibeBridge(
   if (!workspace) return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: '未找到 Vibe Bridge workspace，请先安装或设置 ATM_VIBE_WORKSPACE。' };
 
   try {
-    const result = await executeSkillViaBridge(workspace, QUERY, timeoutMs);
+    const result = await executeSkillViaBridge(workspace, VIBE_VERSION_QUERY, timeoutMs);
     if (!result.success) {
       return { ...base, connected: false, matchedEnvironment: false, status: 'unverified', message: result.error || 'Vibe Bridge 未响应，请在 Allegro 中加载并启动 Bridge 服务。' };
     }
