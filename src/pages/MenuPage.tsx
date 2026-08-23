@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type {
+  MenuDisplayNameLanguage,
   MenuEnvironmentAlternative,
   MenuItemConfig,
   MenuIssue,
@@ -107,6 +108,7 @@ const MenuPage: React.FC = () => {
     hasMenuItems: boolean;
   } | null>(null);
   const [savedItemsJson, setSavedItemsJson] = useState('[]');
+  const [savedDisplayNameLanguage, setSavedDisplayNameLanguage] = useState<MenuDisplayNameLanguage>('auto');
   const [hasUnappliedDraft, setHasUnappliedDraft] = useState(false);
   const [needsAllegroRestart, setNeedsAllegroRestart] = useState(false);
   const [recovery, setRecovery] = useState<MenuProfileRecoveryCandidate | null>(null);
@@ -202,6 +204,7 @@ const MenuPage: React.FC = () => {
       const markedItems = markIllegalItems(data.activeProfile?.items || []);
       setItems(markedItems);
       setSavedItemsJson(JSON.stringify(markedItems));
+      setSavedDisplayNameLanguage(data.activeProfile?.displayNameLanguage ?? 'auto');
       setHasUnappliedDraft(Boolean(
         data.activeProfile && data.store.appliedProfileId !== data.activeProfile.id,
       ));
@@ -244,8 +247,9 @@ const MenuPage: React.FC = () => {
   }, [loadData]);
 
   const hasUnsavedChanges = useMemo(
-    () => JSON.stringify(items) !== savedItemsJson,
-    [items, savedItemsJson],
+    () => JSON.stringify(items) !== savedItemsJson
+      || (profile?.displayNameLanguage ?? 'auto') !== savedDisplayNameLanguage,
+    [items, savedItemsJson, profile, savedDisplayNameLanguage],
   );
 
   const syncMenuStoreState = useCallback((nextStore: MenuProfileStore) => {
@@ -257,6 +261,7 @@ const MenuPage: React.FC = () => {
     setProfile(nextProfile);
     setItems(nextItems);
     setSavedItemsJson(JSON.stringify(nextItems));
+    setSavedDisplayNameLanguage(nextProfile?.displayNameLanguage ?? 'auto');
     setHasUnappliedDraft(Boolean(nextProfile && nextStore.appliedProfileId !== nextProfile.id));
     setSelectedId(null);
   }, []);
@@ -709,6 +714,7 @@ const MenuPage: React.FC = () => {
       setStore(updatedStore);
       setProfile(updatedProfile);
       setSavedItemsJson(JSON.stringify(items));
+      setSavedDisplayNameLanguage(updatedProfile.displayNameLanguage ?? 'auto');
       setHasUnappliedDraft(true);
       showToast('success', '草稿已保存到 menu_profile.json');
       return true;
@@ -717,6 +723,12 @@ const MenuPage: React.FC = () => {
       return false;
     }
   }, [store, profile, items, validateBeforeAction]);
+
+  /** 切换菜单显示名语言偏好（自动 / 中文 / 英文） */
+  const handleChangeLanguage = useCallback((lang: MenuDisplayNameLanguage) => {
+    if (!profile) return;
+    setProfile({ ...profile, displayNameLanguage: lang });
+  }, [profile]);
 
   useEffect(() => registerEnvironmentSwitchGuard('menu-draft', async () => {
     if (!hasUnsavedChanges) return true;
@@ -1115,6 +1127,26 @@ const MenuPage: React.FC = () => {
         ]}
         needsRestart={needsAllegroRestart ? true : undefined}
       />
+
+      {/* 显示名语言偏好 */}
+      <div className="menu-language-bar" role="group" aria-label="菜单显示名语言">
+        <span className="menu-language-bar-label">菜单显示名</span>
+        {([
+          { key: 'auto', label: '自动' },
+          { key: 'chinese', label: '中文' },
+          { key: 'english', label: '英文' },
+        ] as const).map(opt => (
+          <button
+            key={opt.key}
+            type="button"
+            className={`btn btn-sm ${(profile?.displayNameLanguage ?? 'auto') === opt.key ? 'btn-primary' : ''}`}
+            onClick={() => handleChangeLanguage(opt.key)}
+            title={opt.key === 'auto' ? '按 Allegro 版本自动（17.2 英文 / 17.4 中文）' : opt.key === 'chinese' ? '强制显示中文名' : '强制显示英文兼容名'}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       {items.length === 0 && alternatives.length > 0 && (
         <div className="menu-recovery-banner menu-recovery-banner--environment" role="status">

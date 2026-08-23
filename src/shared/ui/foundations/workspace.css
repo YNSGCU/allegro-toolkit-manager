@@ -635,6 +635,22 @@
   border-radius: var(--ui-radius-sm);
 }
 
+.menu-language-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: 8px 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-subtle);
+}
+
+.menu-language-bar-label {
+  font-size: 12px;
+  color: var(--ui-text-secondary);
+  white-space: nowrap;
+}
+
 .menu-tree-toolbar,
 .menu-utility-view-bar {
   display: flex;

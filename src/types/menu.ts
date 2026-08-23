@@ -100,12 +100,17 @@ export interface MenuIssue {
 // 菜单方案（Profile）
 // ═══════════════════════════════════════════════════
 
+/** 菜单显示名语言偏好：auto 按 Allegro 版本自动选择，chinese 强制中文名，english 强制英文兼容名。 */
+export type MenuDisplayNameLanguage = 'auto' | 'chinese' | 'english';
+
 export interface MenuProfile {
   id: string;
   name: string;
   description?: string;
   enabled: boolean;
   items: MenuItemConfig[];
+  /** 生成菜单时显示名的语言偏好，默认 auto。 */
+  displayNameLanguage?: MenuDisplayNameLanguage;
   createdAt: string;
   updatedAt: string;
   sourceEnvironmentId?: string | null;

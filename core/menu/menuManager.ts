@@ -20,6 +20,7 @@ import type {
   MenuIssue,
   MenuItemType,
   MenuProfileRecoveryCandidate,
+  MenuDisplayNameLanguage,
 } from '../../src/types/menu';
 import { validateMenuTree } from '../../src/types/menu';
 import {
@@ -707,6 +708,8 @@ export function deleteProfile(store: MenuProfileStore, profileId: string): MenuP
  */
 export interface MenuIlGenerationOptions {
   allegroVersion?: string | null;
+  /** 显示名语言偏好，覆盖 profile.displayNameLanguage。 */
+  displayNameLanguage?: MenuDisplayNameLanguage;
 }
 
 export function generateMenuIlContent(
@@ -722,8 +725,12 @@ export function generateMenuIlContent(
     item => !item.parentId && item.type === 'menu' && item.enabled && item.visible,
   );
 
+  // 显示名语言：显式选项 > profile 偏好 > 默认 auto
+  const language = options.displayNameLanguage ?? profile.displayNameLanguage ?? 'auto';
+  const resolvedOptions: MenuIlGenerationOptions = { ...options, displayNameLanguage: language };
+
   // Allegro 的菜单栈最多支持 8 层。先生成插入语句也能在返回预览前完成深度校验。
-  const rootInsertBlocks = rootItems.map(item => generateRootMenuInsertLines(item, options));
+  const rootInsertBlocks = rootItems.map(item => generateRootMenuInsertLines(item, resolvedOptions));
   const lines: string[] = [
     ';; ========================================================',
     ';; ATM Generated Menu Loader',
@@ -887,6 +894,21 @@ export function resolveMenuDisplayLabel(
   item: Pick<MenuItemConfig, 'label' | 'compatibilityLabel'>,
   options: MenuIlGenerationOptions = {},
 ): string {
+  const language = options.displayNameLanguage ?? 'auto';
+
+  if (language === 'chinese') {
+    return item.label;
+  }
+
+  if (language === 'english') {
+    if (isPrintableAsciiMenuLabel(item.compatibilityLabel)) return item.compatibilityLabel!.trim();
+    if (isPrintableAsciiMenuLabel(item.label)) return item.label;
+    throw new Error(
+      `菜单“${item.label}”选择了英文显示，但未填写仅含英文/ASCII 的兼容显示名`,
+    );
+  }
+
+  // auto：按目标 Allegro 版本选择
   if (!requiresAsciiMenuLabelCompatibility(options.allegroVersion)) return item.label;
   if (isPrintableAsciiMenuLabel(item.label)) return item.label;
   if (isPrintableAsciiMenuLabel(item.compatibilityLabel)) return item.compatibilityLabel!.trim();

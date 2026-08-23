@@ -187,6 +187,47 @@ describe('generateMenuIlContent', () => {
     expect(modernIl).toContain('"器件对齐" "align components"');
   });
 
+  it('displayNameLanguage 覆盖版本判断：english 强制英文、chinese 强制中文', () => {
+    const items = [menuItem({
+      id: 'root',
+      label: '我的工具',
+      compatibilityLabel: 'My Tools',
+      type: 'menu',
+      children: [menuItem({
+        id: 'align',
+        label: '器件对齐',
+        compatibilityLabel: 'Component Align',
+        type: 'command',
+        parentId: 'root',
+        command: 'align components',
+      })],
+    })];
+
+    // 17.4 环境强制英文
+    const forcedEn = generateMenuIlContent(profile(items), { allegroVersion: '17.4', displayNameLanguage: 'english' });
+    expect(forcedEn).toContain("'popup \"My Tools\"");
+    expect(forcedEn).toContain('"Component Align" "align components"');
+    expect(forcedEn).not.toContain("'popup \"我的工具\"");
+
+    // 17.2 环境强制中文
+    const forcedZh = generateMenuIlContent(profile(items), { allegroVersion: '17.2', displayNameLanguage: 'chinese' });
+    expect(forcedZh).toContain("'popup \"我的工具\"");
+    expect(forcedZh).toContain('"器件对齐" "align components"');
+
+    // profile 偏好（不传 options.displayNameLanguage）
+    const viaProfile = generateMenuIlContent(
+      { ...profile(items), displayNameLanguage: 'english' },
+      { allegroVersion: '17.4' },
+    );
+    expect(viaProfile).toContain("'popup \"My Tools\"");
+  });
+
+  it('english 模式缺少英文兼容名时拒绝生成', () => {
+    const missing = profile([menuItem({ id: 'root', label: '中文工具', type: 'menu', children: [] })]);
+    expect(() => generateMenuIlContent(missing, { allegroVersion: '17.4', displayNameLanguage: 'english' }))
+      .toThrow('选择了英文显示');
+  });
+
   it('17.2 拒绝缺失或包含非 ASCII 字符的兼容显示名', () => {
     const missing = profile([menuItem({ id: 'root', label: '中文工具', type: 'menu', children: [] })]);
     const invalid = profile([menuItem({
