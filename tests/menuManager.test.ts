@@ -181,6 +181,8 @@ describe('generateMenuIlContent', () => {
     expect(legacyIl).toContain("'popup \"My Tools\"");
     expect(legacyIl).toContain('"Component Align" "align components"');
     expect(legacyIl).not.toContain("'popup \"我的工具\"");
+    // 17.2 生成的 IL 必须为纯 ASCII（含注释），从源头杜绝旧版 Allegro 的编码乱码
+    expect([...legacyIl].filter((ch) => ch.charCodeAt(0) > 127)).toEqual([]);
     expect(modernIl).toContain("'popup \"我的工具\"");
     expect(modernIl).toContain('"器件对齐" "align components"');
   });
@@ -265,7 +267,7 @@ describe('generateBootstrapMenuLoadLine', () => {
     );
 
     expect(line).toBe(
-      'load("D:/application/Cadence/SPB_Data/pcbenv/atm_generated/generated_menu.il")  ;; ATM: 加载菜单',
+      'load("D:/application/Cadence/SPB_Data/pcbenv/atm_generated/generated_menu.il")  ;; ATM: load menus',
     );
     expect(line).not.toContain('getSkillPath');
     expect(line).not.toContain('strcat');
@@ -273,7 +275,7 @@ describe('generateBootstrapMenuLoadLine', () => {
 
   it('替换已经写入 bootstrap 的旧 getSkillPath 错误行', () => {
     const updated = ensureBootstrapMenuLoad(
-      'load(strcat(getSkillPath() "/atm_generated/generated_menu.il"))  ;; ATM: 加载菜单\n',
+      'load(strcat(getSkillPath() "/atm_generated/generated_menu.il"))  ;; ATM: load menus\n',
       'D:/Cadence/SPB_Data/pcbenv/atm_generated',
     );
 
