@@ -1,0 +1,64 @@
+/* ATM - 原理图 / 电源树页面样式 */
+
+.schematic-page .schematic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.schematic-canvas {
+  border: 1px solid var(--atm-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--atm-surface, #ffffff);
+  overflow: auto;
+  min-height: 320px;
+  padding: 8px;
+}
+
+.power-tree-view svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.schematic-panel {
+  border: 1px solid var(--atm-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--atm-surface, #ffffff);
+  padding: 16px;
+}
+
+.schematic-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: #0f172a;
+}
+
+.schematic-warnings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schematic-warning {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.schematic-warning--warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.schematic-warning--error {
+  background: #fef2f2;
+  color: #b91c1c;
+}

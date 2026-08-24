@@ -22,6 +22,7 @@ const DrcPage = lazy(routePageLoaders.drc);
 const EnvEditorPage = lazy(routePageLoaders.envEditor);
 const SessionConsolePage = lazy(routePageLoaders.session);
 const DiagnosticPage = lazy(routePageLoaders.diagnostic);
+const SchematicPage = lazy(routePageLoaders.schematic);
 
 function RouteLoadingFallback() {
   return (
@@ -64,6 +65,7 @@ function RoutedWorkspace() {
           <Route path="/env-editor" element={<EnvEditorPage />} />
           <Route path="/session" element={<SessionConsolePage />} />
           <Route path="/diagnostic" element={<DiagnosticPage />} />
+          <Route path="/schematic" element={<SchematicPage />} />
           <Route
             path="*"
             element={<Navigate to={getDefaultWorkspaceRoute()} replace />}

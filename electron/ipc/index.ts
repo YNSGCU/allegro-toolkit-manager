@@ -25,6 +25,7 @@ import { registerDrcIpc } from './drc.ipc';
 import { registerEnvEditorIpc } from './envEditor.ipc';
 import { registerSessionIpc } from './session.ipc';
 import { registerDiagnosticIpc } from './diagnostic.ipc';
+import { registerSchematicIpc } from './schematic.ipc';
 import type { UpdateService } from '../services/updateService';
 
 export function registerIpcHandlers(updateService?: UpdateService): void {
@@ -53,5 +54,6 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerEnvEditorIpc();
   registerSessionIpc();
   registerDiagnosticIpc();
+  registerSchematicIpc();
   if (updateService) registerUpdateIpc(updateService);
 }

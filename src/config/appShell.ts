@@ -1,7 +1,7 @@
 export type AppNavGroup = 'primary' | 'utility';
 
 export interface AppNavItem {
-  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'session' | 'overview' | 'backup' | 'env-editor' | 'workspace' | 'diagnostic';
+  key: 'hotkeys' | 'skills' | 'menu' | 'colors' | 'drc' | 'session' | 'schematic' | 'overview' | 'backup' | 'env-editor' | 'workspace' | 'diagnostic';
   label: string;
   path: string;
   group: AppNavGroup;
@@ -73,6 +73,14 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: 'primary',
     shortLabel: 'DIAG',
     summary: '对当前板子运行只读检查，查看叠层 / 网络 / 器件 / DRC 概况',
+  },
+  {
+    key: 'schematic',
+    label: '电源树',
+    path: '/schematic',
+    group: 'primary',
+    shortLabel: 'PW',
+    summary: '导入 OrCAD / PDF 原理图，自动生成电源树与硬件框图',
   },
   {
     key: 'backup',

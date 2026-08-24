@@ -16,6 +16,7 @@ export const routePageLoaders = {
   envEditor: () => import('../pages/EnvEditorPage'),
   session: () => import('../pages/SessionConsolePage'),
   diagnostic: () => import('../pages/DiagnosticPage'),
+  schematic: () => import('../pages/SchematicPage'),
 } satisfies Record<string, RoutePageLoader>;
 
 const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
@@ -31,6 +32,7 @@ const routeLoaderEntries: Array<[string, RoutePageLoader]> = [
   ['/env-editor', routePageLoaders.envEditor],
   ['/session', routePageLoaders.session],
   ['/diagnostic', routePageLoaders.diagnostic],
+  ['/schematic', routePageLoaders.schematic],
 ];
 
 const preloadRequests = new Map<RoutePageLoader, Promise<void>>();

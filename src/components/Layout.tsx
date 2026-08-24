@@ -12,6 +12,7 @@ import {
   Menu,
   Palette,
   ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { APP_NAV_ITEMS, type AppNavItem } from '../config/appShell';
@@ -31,6 +32,7 @@ const navIcons: Record<AppNavItem['key'], ComponentType<{ className?: string; 'a
   drc: ListChecks,
   session: Terminal,
   diagnostic: CircuitBoard,
+  schematic: Zap,
   'env-editor': FilePenLine,
   overview: Gauge,
   backup: Archive,

@@ -9,7 +9,7 @@ import type { ImpactAnalysis, StaleRefInfo, SkillApplyPlan, SkillUsageInfo, Skil
 import type { RuntimeInfo } from './runtime';
 import type { MenuProfileImportPreview } from './menu';
 import type { ColorApplyPreview } from '../../core/color/vibeColorBridge';
-import type { BridgeSetupSummary } from '../../core/color/vibeBridgeInstaller';
+import type { BridgeSetupSummary, VibeBridgeInstallResult } from '../../core/color/vibeBridgeInstaller';
 import type { UpdateSettings, UpdateSettingsView, UpdateState } from './updates';
 import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, BackupSummary } from './backup';
 import type {
@@ -44,6 +44,7 @@ import type {
 import type { SessionCommandResult, SessionCommandStore, SessionSnapshot } from './session';
 import type { SkillProfile } from './skillProfile';
 import type { BoardDiagnosticSnapshot } from './diagnostic';
+import type { SchematicExportInput, SchematicExportResult } from './schematic';
 
 declare global {
   interface Window {
@@ -302,6 +303,7 @@ declare global {
       // ===== 配色方案 =====
       colorCheckBridge: () => Promise<{ success: boolean; data?: ColorBridgeStatus; error?: string }>;
       colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupSummary; error?: string }>;
+      colorInstallBridge: () => Promise<{ success: boolean; data?: VibeBridgeInstallResult; error?: string }>;
       colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
       colorExecuteBridgeEnablePlan: (planJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       colorCapture: () => Promise<{ success: boolean; data?: { snapshot: ColorSchemeSnapshot; bridgeStatus: ColorBridgeStatus }; error?: string }>;
@@ -360,6 +362,9 @@ declare global {
       sessionFavoriteToggle: (code: string) => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
       sessionHistoryClear: () => Promise<{ success: boolean; data?: SessionCommandStore; error?: string }>;
       runDiagnostic: () => Promise<{ success: boolean; data?: BoardDiagnosticSnapshot; error?: string }>;
+
+      // 电源树 / 原理图（V0.4）
+      schematicExport: (input: SchematicExportInput) => Promise<{ success: boolean; data?: SchematicExportResult | null; error?: string }>;
 
       getUpdateState: () => Promise<UpdateState>;
       getUpdateSettings: () => Promise<UpdateSettingsView>;

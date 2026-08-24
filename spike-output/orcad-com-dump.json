@@ -1,0 +1,8 @@
+﻿{
+    "progid":  "Capture.Application",
+    "startedAt":  "2026-08-23T22:34:48.9219098+08:00",
+    "com":  "FAILED: Retrieving the COM class factory for component with CLSID {123C44B9-728B-404C-9275-A9AAFF4A2A70} failed due to the following error: 80080005 Server execution failed (Exception from HRESULT: 0x80080005 (CO_E_SERVER_EXEC_FAILURE)).",
+    "app":  null,
+    "projects":  null,
+    "design":  null
+}

@@ -570,6 +570,7 @@ contextBridge.exposeInMainWorld('atm', {
 
   /** 检查桥接安装状态（自动加载是否已配置） */
   colorCheckBridgeSetup: () => ipcRenderer.invoke('color:bridge-setup-status'),
+  colorInstallBridge: () => ipcRenderer.invoke('color:bridge-install'),
 
   /** 生成启用桥接自动加载的 Apply Plan */
   colorCreateBridgeEnablePlan: () => ipcRenderer.invoke('color:bridge-enable-plan'),
@@ -723,6 +724,12 @@ contextBridge.exposeInMainWorld('atm', {
   sessionHistoryClear: () => ipcRenderer.invoke('session:history-clear'),
   /** 运行设计体检（只读批量查询） */
   runDiagnostic: () => ipcRenderer.invoke('diagnostic:run'),
+
+  /** 导出电源树（SVG / PNG / PDF） */
+  schematicExport: (input: {
+    tree: unknown;
+    format: 'svg' | 'png' | 'pdf';
+  }) => ipcRenderer.invoke('schematic:export', input),
 
   getUpdateState: () => ipcRenderer.invoke('app:update-state'),
   getUpdateSettings: () => ipcRenderer.invoke('app:update-settings'),
