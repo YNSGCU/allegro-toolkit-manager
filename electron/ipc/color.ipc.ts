@@ -26,6 +26,7 @@ import {
   buildAllEnvironmentsBridgeEnablePlan,
   findBridgeServerFile,
   summarizeBridgeSetup,
+  ensureVibeBridgeInstalled,
   type BridgeInstallTarget,
 } from '../../core/color/vibeBridgeInstaller';
 import { consumeTrustedApplyPlan, registerTrustedApplyPlan } from './trustedApplyPlan';
@@ -366,6 +367,16 @@ ipcMain.handle('color:import-col', async () => {
       };
     } catch (err) {
       return { success: false, error: `检查桥接安装状态失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 一键初始化 Vibe Bridge（写入 vibe_server.il + 创建 workspace）
+  ipcMain.handle('color:bridge-install', () => {
+    try {
+      const result = ensureVibeBridgeInstalled();
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: `安装 Vibe Bridge 失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 

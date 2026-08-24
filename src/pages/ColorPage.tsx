@@ -111,7 +111,26 @@ const ColorPage: React.FC = () => {
   }, [reload]);
 
   // ===== 捕获 =====
-  // ===== 启用桥接 =====
+  // ===== 安装/启用桥接 =====
+  const handleBridgeInstall = async () => {
+    try {
+      const res = await window.atm.colorInstallBridge();
+      if (!res.success || !res.data) {
+        addToast('error', res.error || '安装 Vibe Bridge 失败');
+        return;
+      }
+      const created: string[] = [];
+      if (res.data.serverCreated) created.push('vibe_server.il');
+      if (res.data.workspaceCreated) created.push('workspace 目录');
+      addToast('success', created.length > 0
+        ? `已安装 Vibe Bridge（新增 ${created.join('、')}），请继续点击“自动启用桥接”完成配置`
+        : 'Vibe Bridge 已就位，请继续点击“自动启用桥接”完成配置');
+      await reload();
+    } catch (err) {
+      addToast('error', formatUserError(err, '安装 Vibe Bridge 失败'));
+    }
+  };
+
   const handleBridgeEnable = async () => {
     try {
       const res = await window.atm.colorCreateBridgeEnablePlan();
@@ -679,10 +698,19 @@ const ColorPage: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="color-bridge-banner-text">
-              <strong>未找到 Vibe Bridge 服务文件</strong>
-              <span>请先安装 allegro-vibe-bridge 技能，或检查 ATM_VIBE_WORKSPACE 配置。</span>
-            </div>
+            <>
+              <div className="color-bridge-banner-text">
+                <strong>未安装 Vibe Bridge 服务</strong>
+                <span>Vibe Bridge 是 ATM 与运行中的 Allegro 实时通信（配色抓取、DRC 抓取、设计体检等）的桥梁。点击右侧按钮即可在本机安装，随后再配置自动加载。</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => void handleBridgeInstall()}
+              >
+                一键安装 Vibe Bridge
+              </button>
+            </>
           )}
         </div>
       )}

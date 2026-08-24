@@ -309,3 +309,145 @@ export function buildAllEnvironmentsBridgeEnablePlan(
     environmentId: null,
   });
 }
+
+/** 内置的 Vibe Bridge 服务端模板（纯 ASCII，避免旧版 Allegro 的编码问题）。 */
+export const VIBE_SERVER_TEMPLATE = String.raw`/* vibe_server.il
+ * Allegro Vibe Bridge Server (managed by ATM)
+ * Polls <dir>/workspace/vibe_in.il on a timer and writes results to vibe_out.log.
+ */
+
+(defvar vibeTimerId nil)
+(defvar vibeWorkspaceDir nil)
+
+; Resolve this script's directory (when loaded), then use <dir>/workspace/.
+(let (scriptPath dirParts)
+    (if (and (boundp 'piport) piport)
+        (setq scriptPath (get_filename piport))
+        (setq scriptPath nil)
+    )
+
+    (if (and scriptPath (stringp scriptPath) (neq scriptPath "") (neq scriptPath "*ciwInPort*"))
+        (progn
+            dirParts = (parseString scriptPath "/\\")
+            dirParts = (reverse (cdr (reverse dirParts)))
+            vibeWorkspaceDir = (strcat (buildString dirParts "/") "/workspace/")
+        )
+        (progn
+            vibeWorkspaceDir = (strcat (getWorkingDir) "/workspace/")
+        )
+    )
+)
+
+(defun vibeProcessHandler (window timerId elapsedTime)
+    (let (workspaceDir inFile outFile inPort outPort code line result)
+
+        workspaceDir = vibeWorkspaceDir
+        inFile = strcat(workspaceDir "vibe_in.il")
+        outFile = strcat(workspaceDir "vibe_out.log")
+
+        (when (isFile inFile)
+            (setq inPort (infile inFile))
+            (setq code "")
+            (while (gets line inPort)
+                (setq code (strcat code line))
+            )
+            (close inPort)
+
+            (when (neq code "")
+                (printf "[Vibe] Received code, executing...\n")
+
+                (let (errLog oldErrPort errMsg)
+                    errLog = strcat(workspaceDir "vibe_err.log")
+                    oldErrPort = errport
+                    errport = (outfile errLog)
+
+                    result = errset(
+                        evalstring(strcat("let((vibeLastRes)\n" code "\n)"))
+                        t
+                    )
+
+                    (close errport)
+                    errport = oldErrPort
+
+                    errMsg = ""
+                    (when (isFile errLog)
+                        (let (errIn line)
+                            errIn = (infile errLog)
+                            (while (gets line errIn)
+                                errMsg = (strcat errMsg line)
+                            )
+                            (close errIn)
+                        )
+                        (deleteFile errLog)
+                    )
+
+                    (setq outPort (outfile outFile))
+                    (if result
+                        (fprintf outPort "SUCCESS\n%L\n" (car result))
+                        (if (neq errMsg "")
+                            (fprintf outPort "ERROR\n%s" errMsg)
+                            (fprintf outPort "ERROR\nExecution failed. See Allegro command window for details.\n")
+                        )
+                    )
+                    (close outPort)
+                )
+
+                (deleteFile inFile)
+            )
+        )
+    )
+)
+
+(defun vibeStartServer ()
+    (printf "Starting Vibe Polling Server using pure SKILL timer...\n")
+    (when vibeTimerId
+        (axlUIWTimerRemove vibeTimerId)
+    )
+
+    vibeTimerId = (axlUIWTimerAdd nil 500 nil 'vibeProcessHandler)
+
+    (if vibeTimerId
+        (printf "Vibe Polling Server started successfully. Timer ID: %L\n" vibeTimerId)
+        (printf "ERROR: Failed to start Vibe Polling Server.\n")
+    )
+)
+vibeStartServer()
+`;
+
+/** 桥接安装结果 */
+export interface VibeBridgeInstallResult {
+  bridgeHome: string;
+  serverFile: string;
+  workspaceDir: string;
+  serverCreated: boolean;
+  workspaceCreated: boolean;
+}
+
+/**
+ * 确保 Vibe Bridge 已就位：写入内置的 vibe_server.il（若缺失）并创建 workspace 目录。
+ * 默认安装到 ~/.codex/skills/allegro-vibe-bridge，与候选探测路径保持一致。
+ */
+export function ensureVibeBridgeInstalled(bridgeHome?: string): VibeBridgeInstallResult {
+  const home = path.normalize(
+    bridgeHome ||
+    candidateBridgeRoots()[0] ||
+    path.join(os.homedir(), '.codex', 'skills', 'allegro-vibe-bridge'),
+  );
+  const serverFile = path.join(home, VIBE_SERVER_FILE);
+  const workspaceDir = path.join(home, 'workspace');
+
+  let serverCreated = false;
+  if (!fs.existsSync(serverFile)) {
+    fs.mkdirSync(home, { recursive: true });
+    fs.writeFileSync(serverFile, VIBE_SERVER_TEMPLATE, { encoding: 'utf-8' });
+    serverCreated = true;
+  }
+
+  let workspaceCreated = false;
+  if (!fs.existsSync(workspaceDir)) {
+    fs.mkdirSync(workspaceDir, { recursive: true });
+    workspaceCreated = true;
+  }
+
+  return { bridgeHome: home, serverFile, workspaceDir, serverCreated, workspaceCreated };
+}

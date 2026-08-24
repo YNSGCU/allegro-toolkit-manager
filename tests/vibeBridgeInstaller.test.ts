@@ -9,6 +9,7 @@ import {
   buildAllEnvironmentsBridgeEnablePlan,
   buildBridgeLoadLine,
   checkBridgeSetupForEnvironments,
+  ensureVibeBridgeInstalled,
   hasBridgeLoadInIlinit,
   insertBridgeLoadToIlinit,
 } from '../core/color/vibeBridgeInstaller';
@@ -153,5 +154,43 @@ describe('checkBridgeSetupForEnvironments / buildAllEnvironmentsBridgeEnablePlan
       expect(plan).toBeNull();
       fs.rmSync(pcbenv, { recursive: true, force: true });
     });
+  });
+});
+
+describe('ensureVibeBridgeInstalled', () => {
+  it('在空目录写入内置 vibe_server.il 并创建 workspace', () => {
+    const bridgeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-bridge-install-'));
+    try {
+      const result = ensureVibeBridgeInstalled(bridgeHome);
+      expect(result.serverCreated).toBe(true);
+      expect(result.workspaceCreated).toBe(true);
+      expect(fs.existsSync(result.serverFile)).toBe(true);
+      expect(fs.existsSync(result.workspaceDir)).toBe(true);
+
+      const content = fs.readFileSync(result.serverFile, 'utf-8');
+      expect(content).toContain('axlUIWTimerAdd');
+      expect(content).toContain('vibe_in.il');
+      expect(content).toContain('vibe_out.log');
+      // 内置模板必须为纯 ASCII，避免旧版 Allegro 的编码乱码
+      expect([...content].filter((ch) => ch.charCodeAt(0) > 127)).toEqual([]);
+    } finally {
+      fs.rmSync(bridgeHome, { recursive: true, force: true });
+    }
+  });
+
+  it('重复调用不覆盖已有文件（幂等）', () => {
+    const bridgeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'atm-bridge-install-'));
+    try {
+      const first = ensureVibeBridgeInstalled(bridgeHome);
+      expect(first.serverCreated).toBe(true);
+
+      fs.writeFileSync(first.serverFile, '; custom server\n', 'utf-8');
+      const second = ensureVibeBridgeInstalled(bridgeHome);
+      expect(second.serverCreated).toBe(false);
+      expect(second.workspaceCreated).toBe(false);
+      expect(fs.readFileSync(first.serverFile, 'utf-8')).toBe('; custom server\n');
+    } finally {
+      fs.rmSync(bridgeHome, { recursive: true, force: true });
+    }
   });
 });
