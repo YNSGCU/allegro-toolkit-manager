@@ -20,6 +20,7 @@ describe('app shell config', () => {
       'drc',
       'session',
       'diagnostic',
+      'schematic',
     ]);
   });
 

@@ -10,10 +10,10 @@ describe('页面工作区契约', () => {
   it('保留快捷键为默认入口并维护完整导航项', () => {
     expect(getDefaultWorkspaceRoute()).toBe('/hotkeys');
     expect(APP_NAV_ITEMS.map((item) => item.key)).toEqual([
-      'workspace', 'hotkeys', 'skills', 'menu', 'colors', 'drc', 'session', 'diagnostic', 'backup', 'env-editor', 'overview',
+      'workspace', 'hotkeys', 'skills', 'menu', 'colors', 'drc', 'session', 'diagnostic', 'schematic', 'backup', 'env-editor', 'overview',
     ]);
     expect(APP_NAV_ITEMS.find((item) => item.key === 'overview')?.label).toBe('系统状态');
-    expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual(['workspace', 'hotkeys', 'skills', 'menu', 'colors', 'drc', 'session', 'diagnostic']);
+    expect(PRIMARY_WORKSPACES.map((item) => item.key)).toEqual(['workspace', 'hotkeys', 'skills', 'menu', 'colors', 'drc', 'session', 'diagnostic', 'schematic']);
   });
 
   it('所有路由页使用共享工作区骨架，不再引用旧 Hero', () => {
