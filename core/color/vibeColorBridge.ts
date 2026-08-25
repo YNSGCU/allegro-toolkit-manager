@@ -22,6 +22,7 @@ import type {
 } from '../../src/types/color';
 import { COLOR_PALETTE_SIZE, createDefaultPalette, normalizeRgb, rgbToHex } from './colorPalette';
 import { parseSkillLisp, type LispValue } from './parseSkillLisp';
+import { checkAllegroRunning } from '../environment/fileAccess';
 
 /** 探测候选 Vibe Bridge workspace */
 export function candidateBridgeWorkspaces(): string[] {
@@ -56,6 +57,22 @@ export async function checkColorBridge(
   try {
     const result = await executeSkillViaBridge(bridgeWorkspace, query, timeoutMs);
     if (!result.success) {
+      // 超时/未响应时，进一步区分「Allegro 未启动」和「vibe_server.il 未加载」
+      if (result.error?.includes('超时')) {
+        const proc = checkAllegroRunning();
+        if (!proc.running) {
+          return {
+            connected: false,
+            bridgeWorkspace,
+            message: 'Allegro 未运行：请先启动 Allegro（左下角「按此环境启动」或手动打开），再重试。',
+          };
+        }
+        return {
+          connected: false,
+          bridgeWorkspace,
+          message: 'Allegro 已运行，但 Vibe Bridge 未响应：vibe_server.il 可能未加载。请在 Allegro 命令窗执行 skill load，或重启 Allegro 使其自动加载。',
+        };
+      }
       return {
         connected: false,
         bridgeWorkspace,
