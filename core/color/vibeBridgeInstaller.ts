@@ -421,10 +421,18 @@ export function ensureVibeBridgeInstalled(bridgeHome?: string): VibeBridgeInstal
   const workspaceDir = path.join(home, 'workspace');
 
   let serverCreated = false;
+  const template = buildVibeServerTemplate(workspaceDir);
   if (!fs.existsSync(serverFile)) {
     fs.mkdirSync(home, { recursive: true });
-    fs.writeFileSync(serverFile, buildVibeServerTemplate(workspaceDir), { encoding: 'utf-8' });
+    fs.writeFileSync(serverFile, template, { encoding: 'utf-8' });
     serverCreated = true;
+  } else {
+    // 旧的 trigger 兜底版本在 17.2 上会加载报错，检测到就覆盖为兼容版本
+    const existing = fs.readFileSync(serverFile, 'utf-8');
+    if (existing.includes('vibeStartOnOpen') || existing.includes('axlTriggerSet')) {
+      fs.writeFileSync(serverFile, template, { encoding: 'utf-8' });
+      serverCreated = true;
+    }
   }
 
   let workspaceCreated = false;
