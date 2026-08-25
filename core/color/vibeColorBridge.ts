@@ -167,7 +167,7 @@ async function executeSkillViaBridgeLocked(
       await sleep(150);
     }
     clearOutput();
-    return { success: false, error: 'Vibe Bridge 超时无响应，请在 Allegro 中加载 vibe_server.il' };
+    return { success: false, error: 'Vibe Bridge 超时无响应：请确认 Allegro 已启动且 vibe_server.il 已加载（重启 Allegro 即可自动加载）' };
   } catch (err) {
     clearOutput();
     return { success: false, error: `Vibe Bridge 通信失败: ${err instanceof Error ? err.message : String(err)}` };
@@ -401,8 +401,11 @@ export async function captureColorScheme(
   if (!workspace) {
     throw new Error('未找到 Vibe Bridge workspace，请先安装并配置 ATM_VIBE_WORKSPACE');
   }
-  const result = await executeSkillViaBridge(workspace, buildCaptureSkill(), options.timeoutMs ?? 15000);
+  const result = await executeSkillViaBridge(workspace, buildCaptureSkill(), options.timeoutMs ?? 30000);
   if (!result.success) {
+    if (result.error?.includes('超时')) {
+      throw new Error('捕获配色超时：Allegro 已连接，但读取板子配色耗时过长。请确认板子已完全加载、Allegro 已空闲后重试；若仍超时，可关闭并重新打开 Allegro。');
+    }
     throw new Error(result.error || '捕获配色失败');
   }
   return parseCaptureOutput(result.output || '');
