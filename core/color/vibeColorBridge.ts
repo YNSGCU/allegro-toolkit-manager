@@ -203,7 +203,7 @@ export function buildCaptureSkill(): string {
     'when(lp',
     'lp = car(lp)',
     'when(lp',
-    'layerData = cons(list(nth(2 classEntry) subp lp->color axlIsVisibleLayer(strcat(nth(2 classEntry) "/" subp)) car(errset(axlDBGetLayerType(strcat(nth(2 classEntry) "/" subp)) t))) layerData)',
+    'layerData = cons(list(nth(2 classEntry) subp lp->color lp->visibility nil) layerData)',
     ')',
     ')',
     ')',
