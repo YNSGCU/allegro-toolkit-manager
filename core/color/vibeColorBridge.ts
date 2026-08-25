@@ -401,10 +401,16 @@ export async function captureColorScheme(
   if (!workspace) {
     throw new Error('未找到 Vibe Bridge workspace，请先安装并配置 ATM_VIBE_WORKSPACE');
   }
+  // 前置检查：单独查询调色板，快速区分「调色板查询卡住」与「图层遍历卡住」
+  const probe = await executeSkillViaBridge(workspace, "list(axlColorGet('all) axlColorGet('background))", options.timeoutMs ?? 8000);
+  if (!probe.success) {
+    throw new Error(`读取调色板失败：${probe.error || '超时'}`);
+  }
+
   const result = await executeSkillViaBridge(workspace, buildCaptureSkill(), options.timeoutMs ?? 30000);
   if (!result.success) {
     if (result.error?.includes('超时')) {
-      throw new Error('捕获配色超时：Allegro 已连接，但读取板子配色耗时过长。请确认板子已完全加载、Allegro 已空闲后重试；若仍超时，可关闭并重新打开 Allegro。');
+      throw new Error('捕获图层配色超时：调色板读取正常，但遍历图层耗时过长。请确认板子已完全加载、Allegro 已空闲后重试。');
     }
     throw new Error(result.error || '捕获配色失败');
   }
