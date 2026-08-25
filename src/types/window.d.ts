@@ -303,7 +303,7 @@ declare global {
       // ===== 配色方案 =====
       colorCheckBridge: () => Promise<{ success: boolean; data?: ColorBridgeStatus; error?: string }>;
       colorCheckBridgeSetup: () => Promise<{ success: boolean; data?: BridgeSetupSummary; error?: string }>;
-      colorInstallBridge: () => Promise<{ success: boolean; data?: VibeBridgeInstallResult; error?: string }>;
+      colorInstallBridge: () => Promise<{ success: boolean; data?: VibeBridgeInstallResult & { enablePlan?: ApplyPlan | null }; error?: string }>;
       colorCreateBridgeEnablePlan: () => Promise<{ success: boolean; data?: ApplyPlan | null; info?: string; error?: string }>;
       colorExecuteBridgeEnablePlan: (planJson: string) => Promise<{ success: boolean; data?: any; error?: string }>;
       colorCapture: () => Promise<{ success: boolean; data?: { snapshot: ColorSchemeSnapshot; bridgeStatus: ColorBridgeStatus }; error?: string }>;

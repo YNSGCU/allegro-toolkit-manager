@@ -122,10 +122,18 @@ const ColorPage: React.FC = () => {
       const created: string[] = [];
       if (res.data.serverCreated) created.push('vibe_server.il');
       if (res.data.workspaceCreated) created.push('workspace 目录');
-      addToast('success', created.length > 0
-        ? `已安装 Vibe Bridge（新增 ${created.join('、')}），请继续点击“自动启用桥接”完成配置`
-        : 'Vibe Bridge 已就位，请继续点击“自动启用桥接”完成配置');
-      await reload();
+      if (res.data.enablePlan) {
+        // 安装完成后自动进入「启用桥接」确认，换电脑时一步到位
+        addToast('success', created.length > 0
+          ? `已安装 Vibe Bridge（新增 ${created.join('、')}），请确认启用自动加载`
+          : 'Vibe Bridge 已就位，请确认启用自动加载');
+        setBridgeEnablePlan(res.data.enablePlan as ApplyPlanViewModel);
+      } else {
+        addToast('success', created.length > 0
+          ? `已安装 Vibe Bridge（新增 ${created.join('、')}）`
+          : 'Vibe Bridge 已就位');
+        await reload();
+      }
     } catch (err) {
       addToast('error', formatUserError(err, '安装 Vibe Bridge 失败'));
     }

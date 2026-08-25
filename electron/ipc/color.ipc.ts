@@ -370,11 +370,23 @@ ipcMain.handle('color:import-col', async () => {
     }
   });
 
-  // 一键初始化 Vibe Bridge（写入 vibe_server.il + 创建 workspace）
+  // 一键初始化 Vibe Bridge（写入 vibe_server.il + 创建 workspace，并自动生成启用计划）
   ipcMain.handle('color:bridge-install', () => {
     try {
-      const result = ensureVibeBridgeInstalled();
-      return { success: true, data: result };
+      const installResult = ensureVibeBridgeInstalled();
+      // 安装后，若检测到 Allegro 环境且尚未配置，自动生成「启用桥接自动加载」的 Apply Plan
+      let enablePlan: ReturnType<typeof registerTrustedApplyPlan> | null = null;
+      const targets = bridgeInstallTargets();
+      if (targets.length > 0) {
+        const serverFile = findBridgeServerFile();
+        if (serverFile) {
+          const firstPcbenv = path.dirname(targets[0].ilinitPath);
+          const backupBase = path.join(firstPcbenv, 'atm_generated', 'backup', new Date().toISOString().replace(/[:.]/g, '-'));
+          const plan = buildAllEnvironmentsBridgeEnablePlan(targets, serverFile, backupBase);
+          if (plan) enablePlan = registerTrustedApplyPlan(plan, 'color-bridge');
+        }
+      }
+      return { success: true, data: { ...installResult, enablePlan } };
     } catch (err) {
       return { success: false, error: `安装 Vibe Bridge 失败: ${err instanceof Error ? err.message : String(err)}` };
     }

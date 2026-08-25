@@ -310,33 +310,16 @@ export function buildAllEnvironmentsBridgeEnablePlan(
   });
 }
 
-/** 内置的 Vibe Bridge 服务端模板（纯 ASCII，避免旧版 Allegro 的编码问题）。 */
-export const VIBE_SERVER_TEMPLATE = String.raw`/* vibe_server.il
+/** 生成内置的 Vibe Bridge 服务端内容：workspace 路径硬编码，避免依赖 piport 推导导致目录不一致。 */
+export function buildVibeServerTemplate(workspaceDir: string): string {
+  const ws = workspaceDir.replace(/\\/g, '/').replace(/\/+$/, '') + '/';
+  return String.raw`/* vibe_server.il
  * Allegro Vibe Bridge Server (managed by ATM)
- * Polls <dir>/workspace/vibe_in.il on a timer and writes results to vibe_out.log.
+ * Polls a fixed workspace directory on a timer and writes results to vibe_out.log.
  */
 
 (defvar vibeTimerId nil)
-(defvar vibeWorkspaceDir nil)
-
-; Resolve this script's directory (when loaded), then use <dir>/workspace/.
-(let (scriptPath dirParts)
-    (if (and (boundp 'piport) piport)
-        (setq scriptPath (get_filename piport))
-        (setq scriptPath nil)
-    )
-
-    (if (and scriptPath (stringp scriptPath) (neq scriptPath "") (neq scriptPath "*ciwInPort*"))
-        (progn
-            dirParts = (parseString scriptPath "/\\")
-            dirParts = (reverse (cdr (reverse dirParts)))
-            vibeWorkspaceDir = (strcat (buildString dirParts "/") "/workspace/")
-        )
-        (progn
-            vibeWorkspaceDir = (strcat (getWorkingDir) "/workspace/")
-        )
-    )
-)
+(defvar vibeWorkspaceDir "${ws}")
 
 (defun vibeProcessHandler (window timerId elapsedTime)
     (let (workspaceDir inFile outFile inPort outPort code line result)
@@ -410,10 +393,25 @@ export const VIBE_SERVER_TEMPLATE = String.raw`/* vibe_server.il
         (printf "Vibe Polling Server started successfully. Timer ID: %L\n" vibeTimerId)
         (printf "ERROR: Failed to start Vibe Polling Server.\n")
     )
+    vibeTimerId
 )
-vibeStartServer()
+
+(defun vibeStartOnOpen (design)
+    (when(null(vibeTimerId))
+        vibeStartServer()
+    )
+    t
+)
+
+; Start now; if the main window is not ready yet, retry automatically when a design is opened.
+(when(null(vibeStartServer()))
+    (when(isCallable('axlTriggerSet)
+        axlTriggerSet('open 'vibeStartOnOpen)
+    )
+)
 `;
 
+}
 /** 桥接安装结果 */
 export interface VibeBridgeInstallResult {
   bridgeHome: string;
@@ -439,7 +437,7 @@ export function ensureVibeBridgeInstalled(bridgeHome?: string): VibeBridgeInstal
   let serverCreated = false;
   if (!fs.existsSync(serverFile)) {
     fs.mkdirSync(home, { recursive: true });
-    fs.writeFileSync(serverFile, VIBE_SERVER_TEMPLATE, { encoding: 'utf-8' });
+    fs.writeFileSync(serverFile, buildVibeServerTemplate(workspaceDir), { encoding: 'utf-8' });
     serverCreated = true;
   }
 
