@@ -167,7 +167,7 @@ async function executeSkillViaBridgeLocked(
       await sleep(150);
     }
     clearOutput();
-    return { success: false, error: 'Vibe Bridge 超时无响应：请确认 Allegro 已启动且 vibe_server.il 已加载（重启 Allegro 即可自动加载）' };
+    return { success: false, error: 'Vibe Bridge 处理超时：Allegro 未在限定时间内完成请求（板子可能较大，或 Allegro 仍在初始化/卡顿）。请等待 Allegro 完全加载并空闲后重试。' };
   } catch (err) {
     clearOutput();
     return { success: false, error: `Vibe Bridge 通信失败: ${err instanceof Error ? err.message : String(err)}` };
