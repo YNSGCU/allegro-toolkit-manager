@@ -393,22 +393,8 @@ export function buildVibeServerTemplate(workspaceDir: string): string {
         (printf "Vibe Polling Server started successfully. Timer ID: %L\n" vibeTimerId)
         (printf "ERROR: Failed to start Vibe Polling Server.\n")
     )
-    vibeTimerId
 )
-
-(defun vibeStartOnOpen (design)
-    (when(null(vibeTimerId))
-        vibeStartServer()
-    )
-    t
-)
-
-; Start now; if the main window is not ready yet, retry automatically when a design is opened.
-(when(null(vibeStartServer()))
-    (when(isCallable('axlTriggerSet)
-        axlTriggerSet('open 'vibeStartOnOpen)
-    )
-)
+vibeStartServer()
 `;
 
 }

@@ -175,11 +175,10 @@ describe('ensureVibeBridgeInstalled', () => {
       expect([...content].filter((ch) => ch.charCodeAt(0) > 127)).toEqual([]);
       // workspace 路径硬编码，避免依赖 piport 推导导致目录不一致
       expect(content).toContain(`vibeWorkspaceDir "${result.workspaceDir.replace(/\\/g, '/')}/"`);
-      // 打开设计时自动重试启动，解决 Allegro 启动早期主窗口未就绪的问题
-      expect(content).toContain('vibeStartOnOpen');
-      expect(content).toContain("axlTriggerSet('open 'vibeStartOnOpen)");
       // 不再依赖 piport 推导
       expect(content).not.toContain('get_filename piport');
+      // 启动方式使用已验证可用的直接调用（兼容 17.2）
+      expect(content).toContain('vibeStartServer()');
     } finally {
       fs.rmSync(bridgeHome, { recursive: true, force: true });
     }
