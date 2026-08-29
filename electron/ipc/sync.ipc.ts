@@ -14,6 +14,7 @@ import fs from 'fs';
 import { loadEnvironmentRegistry } from '../../core/environment/environmentRegistry';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
 import { scanAllSkills } from '../../core/skill/scanSkill';
+import { parseSkillFile } from '../../core/parser/parseSkillMeta';
 import { buildCommandAvailability } from '../../core/sync/commandAvailability';
 import { checkEnvironmentPair } from '../../core/sync/environmentPairCheck';
 import { planCrossVersionSync } from '../../core/sync/planCrossVersionSync';
@@ -55,11 +56,22 @@ function withCompanySkillPaths(envInfo: EnvironmentInfo): EnvironmentInfo & { co
 function collectSkillCommands(envInfo: EnvironmentInfo & { companySkillPaths?: string[] }) {
   return scanAllSkills(envInfo).all
     .filter((skill) => !/^(generated_|bootstrap)/i.test(skill.name))
-    .map((skill) => ({
-      skillId: skill.id,
-      name: skill.name,
-      commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
-    }));
+    .map((skill) => {
+      let registeredCommands: string[] = [];
+      try {
+        registeredCommands = (parseSkillFile(skill.filePath).axlRegistrations ?? [])
+          .map((registration) => registration.commandName)
+          .filter((name): name is string => Boolean(name));
+      } catch {
+        // 解析失败时仅使用函数名
+      }
+      return {
+        skillId: skill.id,
+        name: skill.name,
+        commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
+        registeredCommands,
+      };
+    });
 }
 
 function toEnvRef(environmentId: string): CrossVersionSyncEnvironmentRef | null {

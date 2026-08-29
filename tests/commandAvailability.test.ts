@@ -62,4 +62,22 @@ describe('buildCommandAvailability / queryCommandAvailability', () => {
     const index = buildCommandAvailability([], new Set(['angle']) as ReadonlySet<string>);
     expect(queryCommandAvailability(index, 'angle 90;pop viapattern next').available).toBe(true);
   });
+
+  it('axlCmdRegister 注册命令同样视为 Skill 提供', () => {
+    const index = buildCommandAvailability([
+      {
+        skillId: 'toolkit',
+        name: 'toolkit.il',
+        commands: ['help_toolkit'],
+        registeredCommands: ['asn', 'shape-yj', 'yspGatherUI'],
+      },
+    ], new Set() as ReadonlySet<string>);
+    expect(queryCommandAvailability(index, 'asn').available).toBe(true);
+    expect(queryCommandAvailability(index, 'shape-yj').available).toBe(true);
+    expect(queryCommandAvailability(index, 'yspGatherUI').available).toBe(true);
+    expect(queryCommandAvailability(index, 'asn').providers[0]).toMatchObject({
+      scope: 'skill',
+      skillId: 'toolkit',
+    });
+  });
 });

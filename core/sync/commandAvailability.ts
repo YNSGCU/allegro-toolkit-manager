@@ -15,6 +15,8 @@ export interface ScannedSkillCommands {
   skillId: string;
   name: string;
   commands: string[];
+  /** axlCmdRegister 注册命令（增强解析），同样作为该 Skill 提供的命令 */
+  registeredCommands?: string[];
 }
 
 /** 基础命令：分号（多命令串）视为分隔符，取第一个词 */
@@ -100,7 +102,11 @@ export function buildCommandAvailability(
   for (const skill of scannedSkills ?? []) {
     // Skill 文件名主干（snp.il → snp）也是常用命令入口约定
     const stem = (skill.name ?? '').replace(/\.il$/i, '');
-    const commandNames = [...(skill.commands ?? []), stem].filter((command) => Boolean(command?.trim()));
+    const commandNames = [
+      ...(skill.commands ?? []),
+      ...(skill.registeredCommands ?? []),
+      stem,
+    ].filter((command) => Boolean(command?.trim()));
     for (const raw of commandNames) {
       const base = baseCommandOf(raw);
       if (!base) continue;
