@@ -7,7 +7,7 @@
  *   - ATM 菜单触发器状态
  * 并允许选择 rw（读写）命令后生成登记 Apply Plan。
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -29,6 +29,29 @@ interface SymphonyDialogProps {
   open: boolean;
   onClose: () => void;
   onPlanReady: (plan: SkillApplyPlan) => void;
+}
+
+/** IPC 调用超时时间，避免主进程繁忙/无响应时弹窗永久卡住 */
+const IPC_TIMEOUT_MS = 15000;
+
+/** 给 Promise 加超时，超时后按错误处理 */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label}超时（${Math.round(ms / 1000)} 秒），请重试或检查主进程状态`)),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
 }
 
 const severityLabels: Record<string, string> = {
@@ -53,39 +76,67 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
   const [syncSite, setSyncSite] = useState(false);
   const [showUnregisteredOnly, setShowUnregisteredOnly] = useState(true);
   const [showUnsupportedOnly, setShowUnsupportedOnly] = useState(true);
+  /** 弹窗已关闭标识：关闭后忽略仍在途的 IPC 回调，避免误触 ApplyPlan 弹窗 */
+  const cancelledRef = useRef(false);
 
   const runCheck = useCallback(async () => {
+    cancelledRef.current = false;
     setLoading(true);
     setError(null);
     try {
-      const [checkRes, tableRes] = await Promise.all([
+      const checkRes = await withTimeout(
         window.atm.symphonyCheck(),
-        window.atm.symphonyTableInfo(),
-      ]);
+        IPC_TIMEOUT_MS,
+        'Symphony 兼容体检',
+      );
+      if (cancelledRef.current) return;
       if (!checkRes.success) {
         setError(checkRes.error || 'Symphony 兼容体检失败');
         return;
       }
       const checked = checkRes.data as SymphonyCompatibilityResult;
       setResult(checked);
-      if (tableRes.success && tableRes.data) {
-        setTableInfo(tableRes.data);
-      }
       // 默认 rw 勾选：当前已登记为 rw 的命令
       const defaultRw = (checked.commandStatuses || [])
         .filter((c) => c.registered && c.rw)
         .map((c) => c.commandName);
       setRwSelected(new Set(defaultRw));
+
+      // 支持表只是展示信息，单独加载：失败或超时不阻塞体检结果与登记按钮。
+      try {
+        const tableRes = await withTimeout(
+          window.atm.symphonyTableInfo(),
+          8000,
+          '读取支持表',
+        );
+        if (!cancelledRef.current && tableRes.success && tableRes.data) {
+          setTableInfo(tableRes.data);
+        }
+      } catch (err) {
+        if (!cancelledRef.current) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (open) runCheck();
+    if (open) {
+      cancelledRef.current = false;
+      runCheck();
+    }
   }, [open, runCheck]);
+
+  const handleClose = useCallback(() => {
+    cancelledRef.current = true;
+    onClose();
+  }, [onClose]);
 
   const toggleRw = (commandName: string) => {
     setRwSelected((prev) => {
@@ -98,24 +149,32 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
 
   const handleGenerate = async () => {
     if (!result) return;
+    cancelledRef.current = false;
     setGenerating(true);
     setError(null);
     try {
-      const res = await window.atm.symphonyGeneratePlan(
-        JSON.stringify({
-          rwCommandNames: [...rwSelected],
-          syncSite,
-        }),
+      const res = await withTimeout(
+        window.atm.symphonyGeneratePlan(
+          JSON.stringify({
+            rwCommandNames: [...rwSelected],
+            syncSite,
+          }),
+        ),
+        20000,
+        '生成登记计划',
       );
+      if (cancelledRef.current) return;
       if (res.success && res.data) {
         onPlanReady(res.data as SkillApplyPlan);
       } else {
         setError(res.error || '生成登记计划失败');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
-      setGenerating(false);
+      if (!cancelledRef.current) setGenerating(false);
     }
   };
 
@@ -135,11 +194,11 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
       title="Symphony 协同模式兼容检查"
       description="Symphony（Team Design）下 SKILL 命令默认全部禁用，需登记到 symphony_skill.txt 才能运行。检查命令登记、未支持函数与菜单恢复能力。"
       size="lg"
-      onClose={onClose}
-      dismissDisabled={loading || generating}
+      onClose={handleClose}
+      dismissDisabled={false}
       footer={(
         <>
-          <button type="button" className="btn" onClick={onClose} disabled={loading || generating}>
+          <button type="button" className="btn" onClick={handleClose}>
             关闭
           </button>
           <button
