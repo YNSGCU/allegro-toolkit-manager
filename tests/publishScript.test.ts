@@ -12,4 +12,14 @@ describe('GitHub 发布脚本', () => {
     expect(source).toContain("['release', 'upload'");
     expect(source).toContain("'--clobber', ...assetPaths");
   });
+
+  it('仓库名可自动从 git remote origin 推断，GH_TOKEN 缺省时使用 gh 登录凭据', () => {
+    const source = readFileSync(resolve('scripts/publish-github.mjs'), 'utf8');
+
+    expect(source).toMatch(/const resolvedRepo = repo \|\| inferRepoFromGit\(\)/);
+    expect(source).toMatch(/git.*remote.*get-url.*origin/);
+    expect(source).toContain('ghEnv = token ? { GH_TOKEN: token } : {}');
+    expect(source).toContain("'--draft=false'");
+    expect(source).toContain("'--latest'");
+  });
 });

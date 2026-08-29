@@ -28,23 +28,42 @@ const projectRoot = resolve(
 const repo = process.env.ATM_GH_REPO?.trim() || '';
 const token = process.env.GH_TOKEN?.trim() || '';
 
-if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
-  process.stderr.write('请设置 ATM_GH_REPO=owner/repo，例如 myorg/allegro-toolkit。\n');
+/** 从 git remote origin 推断 owner/repo（支持 https 与 ssh 两种格式） */
+function inferRepoFromGit() {
+  const result = spawnSync('git', ['remote', 'get-url', 'origin'], {
+    cwd: projectRoot,
+    encoding: 'utf-8',
+    windowsHide: true,
+  });
+  if (result.status !== 0 || !result.stdout) return '';
+  const url = result.stdout.trim();
+  const match = url.match(/github\.com[:/]([^/:]+\/[^/]+?)(?:\.git)?$/);
+  return match ? match[1].replace(/\/$/, '') : '';
+}
+
+const resolvedRepo = repo || inferRepoFromGit();
+
+if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(resolvedRepo)) {
+  process.stderr.write(
+    '请设置 ATM_GH_REPO=owner/repo（例如 YNSGCU/allegro-toolkit-manager），'
+    + '或确认 git remote origin 指向 GitHub 仓库。\n',
+  );
   process.exit(1);
 }
 if (!token) {
-  process.stderr.write('请设置 GH_TOKEN（GitHub Personal Access Token，需 repo 写权限）。\n');
-  process.exit(1);
+  process.stdout.write('未设置 GH_TOKEN，将使用 gh CLI 已登录凭据（需 repo 写权限）。\n');
 }
+const ghEnv = token ? { GH_TOKEN: token } : {};
 
-const feedUrl = `https://github.com/${repo}/releases/latest/download`;
+const feedUrl = `https://github.com/${resolvedRepo}/releases/latest/download`;
 
-const run = (command, args) => {
+const run = (command, args, extraEnv = {}) => {
   const result = spawnSync(command, args, {
     cwd: projectRoot,
     stdio: 'inherit',
     windowsHide: true,
     shell: process.platform === 'win32',
+    env: { ...process.env, ...extraEnv },
   });
   if (result.status !== 0) {
     process.stderr.write(
@@ -80,7 +99,7 @@ writeFileSync(
       directories: { output: join(projectRoot, 'release') },
       files: ['dist/**/*', 'dist-electron/**/*', 'data/**/*', 'package.json'],
       extraMetadata: { atmUpdateFeedUrl: feedUrl },
-      publish: [{ provider: 'github', owner: repo.split('/')[0], repo: repo.split('/')[1] }],
+      publish: [{ provider: 'github', owner: resolvedRepo.split('/')[0], repo: resolvedRepo.split('/')[1] }],
       win: {
         icon: 'build/icon.svg',
         executableName: 'ATM',
@@ -128,22 +147,22 @@ try {
     process.exit(1);
   }
 
-  const existingRelease = spawnSync('gh', ['release', 'view', tag, '--repo', repo, '--json', 'tagName'], {
+  const existingRelease = spawnSync('gh', ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'tagName'], {
     cwd: projectRoot,
     encoding: 'utf-8',
     windowsHide: true,
   });
   if (existingRelease.status !== 0) {
-    run('gh', ['release', 'create', tag, '--repo', repo, '--draft', '--title', version, '--verify-tag']);
+    run('gh', ['release', 'create', tag, '--repo', resolvedRepo, '--draft', '--title', version, '--verify-tag'], ghEnv);
   }
 
   // gh 对同一个 release 串行上传全部资产，避免 electron-builder 并发创建重复草稿。
-  run('gh', ['release', 'upload', tag, '--repo', repo, '--clobber', ...assetPaths]);
+  run('gh', ['release', 'upload', tag, '--repo', resolvedRepo, '--clobber', ...assetPaths], ghEnv);
 
   // 显式等待 GitHub API 返回完整资产，再公开为 latest。
   let ready = false;
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const view = spawnSync('gh', ['release', 'view', tag, '--repo', repo, '--json', 'assets,isDraft'], {
+    const view = spawnSync('gh', ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'assets,isDraft'], {
       cwd: projectRoot,
       encoding: 'utf-8',
       windowsHide: true,
@@ -177,7 +196,7 @@ try {
   }
 
   // 公开为 latest
-  run('gh', ['release', 'edit', tag, '--repo', repo, '--draft=false', '--latest']);
+  run('gh', ['release', 'edit', tag, '--repo', resolvedRepo, '--draft=false', '--latest'], ghEnv);
   process.stdout.write(`\n已发布到 GitHub Releases：${feedUrl}\n`);
   process.stdout.write('软件内更新源已内置为上述地址，安装新版后即可在「系统状态 → 应用内更新」检查更新。\n');
 } finally {
