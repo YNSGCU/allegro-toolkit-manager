@@ -45,8 +45,8 @@ const resolvedRepo = repo || inferRepoFromGit();
 
 if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(resolvedRepo)) {
   process.stderr.write(
-    '请设置 ATM_GH_REPO=owner/repo（例如 YNSGCU/allegro-toolkit-manager），'
-    + '或确认 git remote origin 指向 GitHub 仓库。\n',
+    '请设置 ATM_GH_REPO=owner/repo（例如 YNSGCU/allegro-toolkit-manager），' +
+      '或确认 git remote origin 指向 GitHub 仓库。\n',
   );
   process.exit(1);
 }
@@ -147,13 +147,21 @@ try {
     process.exit(1);
   }
 
-  const existingRelease = spawnSync('gh', ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'tagName'], {
-    cwd: projectRoot,
-    encoding: 'utf-8',
-    windowsHide: true,
-  });
+  const existingRelease = spawnSync(
+    'gh',
+    ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'tagName'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf-8',
+      windowsHide: true,
+    },
+  );
   if (existingRelease.status !== 0) {
-    run('gh', ['release', 'create', tag, '--repo', resolvedRepo, '--draft', '--title', version, '--verify-tag'], ghEnv);
+    run(
+      'gh',
+      ['release', 'create', tag, '--repo', resolvedRepo, '--draft', '--title', version, '--verify-tag'],
+      ghEnv,
+    );
   }
 
   // gh 对同一个 release 串行上传全部资产，避免 electron-builder 并发创建重复草稿。
@@ -162,11 +170,15 @@ try {
   // 显式等待 GitHub API 返回完整资产，再公开为 latest。
   let ready = false;
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const view = spawnSync('gh', ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'assets,isDraft'], {
-      cwd: projectRoot,
-      encoding: 'utf-8',
-      windowsHide: true,
-    });
+    const view = spawnSync(
+      'gh',
+      ['release', 'view', tag, '--repo', resolvedRepo, '--json', 'assets,isDraft'],
+      {
+        cwd: projectRoot,
+        encoding: 'utf-8',
+        windowsHide: true,
+      },
+    );
     if (view.status === 0 && view.stdout) {
       let parsed;
       try {

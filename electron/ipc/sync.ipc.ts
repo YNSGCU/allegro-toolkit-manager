@@ -46,6 +46,17 @@ function withCompanySkillPaths(envInfo: EnvironmentInfo): EnvironmentInfo & { co
   return { ...envInfo, companySkillPaths };
 }
 
+/** 收集环境 Skill 命令：排除 ATM 生成的 loader/bootstrap 文件，命令取函数名 */
+function collectSkillCommands(envInfo: EnvironmentInfo & { companySkillPaths?: string[] }) {
+  return scanAllSkills(envInfo).all
+    .filter((skill) => !/^(generated_|bootstrap)/i.test(skill.name))
+    .map((skill) => ({
+      skillId: skill.id,
+      name: skill.name,
+      commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
+    }));
+}
+
 function toEnvRef(environmentId: string): CrossVersionSyncEnvironmentRef | null {
   const registry = loadEnvironmentRegistry();
   const environment = registry.environments.find((item) => item.id === environmentId) ?? null;
@@ -178,22 +189,8 @@ export function registerSyncIpc(): void {
 
       const sourceEnvInfo = locateEnvironment(sourceRef.pcbenvPath);
       const targetEnvInfo = locateEnvironment(targetRef.pcbenvPath);
-      const targetSkills = scanAllSkills(withCompanySkillPaths(targetEnvInfo)).all;
-      const sourceSkills = scanAllSkills(withCompanySkillPaths(sourceEnvInfo)).all;
-      const targetCommands = buildCommandAvailability(
-        targetSkills.map((skill) => ({
-          skillId: skill.id,
-          name: skill.name,
-          commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
-        })),
-      );
-      const sourceCommands = buildCommandAvailability(
-        sourceSkills.map((skill) => ({
-          skillId: skill.id,
-          name: skill.name,
-          commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
-        })),
-      );
+      const targetCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(targetEnvInfo)));
+      const sourceCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(sourceEnvInfo)));
 
       const sourceProfiles = loadProfilesForEnv(options.sourceEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
@@ -263,20 +260,8 @@ export function registerSyncIpc(): void {
       // 重新生成计划（保证与主进程当前状态一致）并应用用户决策覆盖
       const sourceEnvInfo = locateEnvironment(sourceRef.pcbenvPath);
       const targetEnvInfo = locateEnvironment(targetRef.pcbenvPath);
-      const targetCommands = buildCommandAvailability(
-        scanAllSkills(withCompanySkillPaths(targetEnvInfo)).all.map((skill) => ({
-          skillId: skill.id,
-          name: skill.name,
-          commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
-        })),
-      );
-      const sourceCommands = buildCommandAvailability(
-        scanAllSkills(withCompanySkillPaths(sourceEnvInfo)).all.map((skill) => ({
-          skillId: skill.id,
-          name: skill.name,
-          commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
-        })),
-      );
+      const targetCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(targetEnvInfo)));
+      const sourceCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(sourceEnvInfo)));
       const sourceProfiles = loadProfilesForEnv(options.sourceEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
         skillProfileId: options.skillProfileId,

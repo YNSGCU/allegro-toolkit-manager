@@ -5,8 +5,7 @@
  * 生成分类清单（sync / skip_ver / skip_unknown / keep_target / user_force）。
  * 不访问文件系统、不写入；合并与 Apply Plan 由上层完成。
  */
-import { extractBaseCommand } from '../skill/commandIndex';
-import { queryCommandAvailability } from './commandAvailability';
+import { baseCommandOf, queryCommandAvailability } from './commandAvailability';
 import { findRule } from './syncRules';
 import { scoreNameSimilarity } from '../workspace/workspaceImportExport';
 import type {
@@ -62,7 +61,7 @@ export function classifyCommand(
   rules: SyncRuleStore,
   targetVersion: string,
 ): { decision: SyncItemDecision; reason?: string; askConfirm?: boolean } {
-  const base = extractBaseCommand(command);
+  const base = baseCommandOf(command);
   if (!base) return { decision: 'sync' };
 
   const { available, providers } = queryCommandAvailability(targetCommands, command);
