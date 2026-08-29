@@ -165,7 +165,27 @@ try {
   }
 
   // gh 对同一个 release 串行上传全部资产，避免 electron-builder 并发创建重复草稿。
-  run('gh', ['release', 'upload', tag, '--repo', resolvedRepo, '--clobber', ...assetPaths], ghEnv);
+  // 刚创建的 release 可能在 uploads 端点短暂不可见（HTTP 404），带重试自愈。
+  const uploadAssets = () =>
+    spawnSync('gh', ['release', 'upload', tag, '--repo', resolvedRepo, '--clobber', ...assetPaths], {
+      cwd: projectRoot,
+      stdio: 'inherit',
+      windowsHide: true,
+      shell: process.platform === 'win32',
+      env: { ...process.env, ...ghEnv },
+    });
+  let uploadResult = uploadAssets();
+  for (let attempt = 1; uploadResult.status !== 0 && attempt < 5; attempt += 1) {
+    process.stdout.write(`Release 资产上传失败（第 ${attempt} 次），3 秒后重试…\n`);
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 3000));
+    uploadResult = uploadAssets();
+  }
+  if (uploadResult.status !== 0) {
+    process.stderr.write(
+      `\n命令执行失败: gh release upload ${tag}，退出码 ${uploadResult.status ?? 'unknown'}\n`,
+    );
+    process.exit(uploadResult.status ?? 1);
+  }
 
   // 显式等待 GitHub API 返回完整资产，再公开为 latest。
   let ready = false;
