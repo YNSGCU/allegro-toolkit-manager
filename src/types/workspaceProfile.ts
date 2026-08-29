@@ -102,9 +102,14 @@ export interface WorkspaceExportPackage {
     description?: string;
     environmentId?: string;
     hotkeyProfileId: string;
+    /** 子方案显示名（可选，写入后可用于换机导入时按名称推荐重绑） */
+    hotkeyProfileName?: string;
     skillProfileId: string;
+    skillProfileName?: string;
     menuProfileId: string;
+    menuProfileName?: string;
     colorSchemeId?: string;
+    colorSchemeName?: string;
   };
 }
 
@@ -119,6 +124,31 @@ export interface WorkspaceImportPreview {
   hasSkillProfile: boolean;
   hasMenuProfile: boolean;
   hasColorScheme: boolean;
+  /** 各子方案在本机的存在性与推荐重绑候选（换机导入时使用） */
+  resolutions?: WorkspaceBindingResolution[];
+}
+
+/** 单个子方案在目标机器上的重绑解析结果 */
+export interface WorkspaceBindingResolution {
+  scope: 'hotkey' | 'skill' | 'menu' | 'color';
+  label: string;
+  /** 导入包中的原始方案 ID */
+  boundId: string;
+  /** 本机是否已存在同名 ID 方案 */
+  exists: boolean;
+  /** 本机候选方案（按名称相似度排序，最多 5 个） */
+  candidates: WorkspaceBindingOption[];
+  /** 推荐方案 ID（名称匹配度最高者） */
+  recommendedId?: string;
+  recommendedName?: string;
+}
+
+/** 导入时对缺失子方案的重新绑定映射；省略表示保持导入包中的原始 ID */
+export interface WorkspaceImportRemap {
+  hotkeyProfileId?: string;
+  skillProfileId?: string;
+  menuProfileId?: string;
+  colorSchemeId?: string;
 }
 
 /** 工作区导出文件扩展名 */

@@ -7,7 +7,10 @@
  */
 import {
   WORKSPACE_EXPORT_EXTENSION,
+  WorkspaceBindingOption,
+  WorkspaceBindingResolution,
   WorkspaceExportPackage,
+  WorkspaceImportRemap,
   WorkspaceImportPreview,
   WorkspaceProfile,
 } from '../../src/types/workspaceProfile';
@@ -16,6 +19,12 @@ import { createWorkspace, loadWorkspaceStore } from './workspaceManager';
 /** 从现有工作区构建导出包 */
 export function buildWorkspaceExportPackage(
   workspace: WorkspaceProfile,
+  names?: {
+    hotkeyProfileName?: string;
+    skillProfileName?: string;
+    menuProfileName?: string;
+    colorSchemeName?: string;
+  },
 ): WorkspaceExportPackage {
   return {
     app: 'atm',
@@ -27,9 +36,13 @@ export function buildWorkspaceExportPackage(
       description: workspace.description,
       environmentId: workspace.environmentId,
       hotkeyProfileId: workspace.hotkeyProfileId ?? '',
+      hotkeyProfileName: names?.hotkeyProfileName,
       skillProfileId: workspace.skillProfileId ?? '',
+      skillProfileName: names?.skillProfileName,
       menuProfileId: workspace.menuProfileId ?? '',
+      menuProfileName: names?.menuProfileName,
       colorSchemeId: workspace.colorSchemeId,
+      colorSchemeName: names?.colorSchemeName,
     },
   };
 }
@@ -78,9 +91,13 @@ export function parseWorkspaceExportPackage(text: string): WorkspaceExportPackag
       description: assertString(workspace.description) ? workspace.description.trim() || undefined : undefined,
       environmentId: toOptionalId(workspace.environmentId),
       hotkeyProfileId: toRequiredId(workspace.hotkeyProfileId),
+      hotkeyProfileName: toOptionalId(workspace.hotkeyProfileName),
       skillProfileId: toRequiredId(workspace.skillProfileId),
+      skillProfileName: toOptionalId(workspace.skillProfileName),
       menuProfileId: toRequiredId(workspace.menuProfileId),
+      menuProfileName: toOptionalId(workspace.menuProfileName),
       colorSchemeId: toOptionalId(workspace.colorSchemeId),
+      colorSchemeName: toOptionalId(workspace.colorSchemeName),
     },
   };
 }
@@ -110,6 +127,7 @@ export function previewWorkspaceImport(
 export function applyWorkspaceImport(
   pkg: WorkspaceExportPackage,
   nameOverride?: string,
+  remap?: WorkspaceImportRemap,
 ): WorkspaceProfile {
   const store = loadWorkspaceStore();
   const existingNames = new Set(store.workspaces.map((item) => item.name.trim().toLowerCase()));
@@ -121,11 +139,85 @@ export function applyWorkspaceImport(
   return createWorkspace(name, {
     description: pkg.workspace.description,
     environmentId: pkg.workspace.environmentId,
-    hotkeyProfileId: pkg.workspace.hotkeyProfileId,
-    skillProfileId: pkg.workspace.skillProfileId,
-    menuProfileId: pkg.workspace.menuProfileId,
-    colorSchemeId: pkg.workspace.colorSchemeId,
+    hotkeyProfileId: remap?.hotkeyProfileId !== undefined ? remap.hotkeyProfileId : pkg.workspace.hotkeyProfileId,
+    skillProfileId: remap?.skillProfileId !== undefined ? remap.skillProfileId : pkg.workspace.skillProfileId,
+    menuProfileId: remap?.menuProfileId !== undefined ? remap.menuProfileId : pkg.workspace.menuProfileId,
+    colorSchemeId: remap?.colorSchemeId !== undefined ? remap.colorSchemeId : pkg.workspace.colorSchemeId,
   });
+}
+
+/** 名称相似度评分：完全一致 100；互相包含 80；去符号后一致 90；去符号后包含 70；否则 0 */
+export function scoreNameSimilarity(left: string, right: string): number {
+  const a = left.trim().toLowerCase();
+  const b = right.trim().toLowerCase();
+  if (!a || !b) return 0;
+  if (a === b) return 100;
+  if (a.includes(b) || b.includes(a)) return 80;
+  const compactA = a.replace(/[\s\-_()（）[\]【】]+/g, '');
+  const compactB = b.replace(/[\s\-_()（）[\]【】]+/g, '');
+  if (compactA === compactB) return 90;
+  if (compactA.includes(compactB) || compactB.includes(compactA)) return 70;
+  return 0;
+}
+
+function resolveBinding(
+  scope: WorkspaceBindingResolution['scope'],
+  label: string,
+  boundId: string,
+  boundName: string | undefined,
+  options: WorkspaceBindingOption[],
+): WorkspaceBindingResolution {
+  // 未绑定（空 ID）的子方案无需重绑，不产生候选提示
+  if (!boundId) {
+    return { scope, label, boundId: '', exists: true, candidates: [] };
+  }
+  const exists = Boolean(boundId) && options.some((option) => option.id === boundId);
+  if (exists) {
+    return { scope, label, boundId, exists: true, candidates: [] };
+  }
+  const matchingSubject = boundName?.trim() || boundId;
+  const candidates = options
+    .map((option) => ({ option, score: scoreNameSimilarity(matchingSubject, option.name) }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 5)
+    .map((candidate) => candidate.option);
+  const recommended = candidates[0];
+  return {
+    scope,
+    label,
+    boundId,
+    exists: false,
+    candidates,
+    recommendedId: recommended?.id,
+    recommendedName: recommended?.name,
+  };
+}
+
+/**
+ * 解析导入方案在本机的子方案存在性，并为缺失的子方案推荐重绑候选。
+ * 纯函数、可测试；用于换机导入「一键重绑」。
+ */
+export function resolveWorkspaceImportBindings(
+  bindings: Pick<WorkspaceProfile, 'hotkeyProfileId' | 'skillProfileId' | 'menuProfileId' | 'colorSchemeId'> & {
+    hotkeyProfileName?: string;
+    skillProfileName?: string;
+    menuProfileName?: string;
+    colorSchemeName?: string;
+  },
+  local: {
+    hotkeyProfiles: WorkspaceBindingOption[];
+    skillProfiles: WorkspaceBindingOption[];
+    menuProfiles: WorkspaceBindingOption[];
+    colorSchemes: WorkspaceBindingOption[];
+  },
+): WorkspaceBindingResolution[] {
+  return [
+    resolveBinding('hotkey', '快捷键方案', bindings.hotkeyProfileId ?? '', bindings.hotkeyProfileName, local.hotkeyProfiles),
+    resolveBinding('skill', 'Skill 方案', bindings.skillProfileId ?? '', bindings.skillProfileName, local.skillProfiles),
+    resolveBinding('menu', '菜单方案', bindings.menuProfileId ?? '', bindings.menuProfileName, local.menuProfiles),
+    resolveBinding('color', '配色方案', bindings.colorSchemeId ?? '', bindings.colorSchemeName, local.colorSchemes),
+  ];
 }
 
 /** 生成安全的默认导出文件名 */

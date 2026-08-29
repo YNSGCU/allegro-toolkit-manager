@@ -15,12 +15,14 @@ import type { BackupRestoreOptions, BackupRestoreResult, BackupSourceInfo, Backu
 import type {
   WorkspaceApplyPlanView,
   WorkspaceBindingOptions,
+  WorkspaceImportRemap,
   WorkspaceImportPreview,
   WorkspaceProfile,
   WorkspaceProfileBindings,
   WorkspaceProfileStore,
 } from './workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
+import type { WorkspaceReferenceCheckResult } from '../../core/workspace/workspaceReferenceCheck';
 import type {
   DrcImportInput,
   DrcImportFileInput,
@@ -337,9 +339,10 @@ declare global {
       workspaceSetActive: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceProfile; error?: string }>;
       workspacePreview: (workspaceId: string) => Promise<{ success: boolean; data?: { preview: WorkspacePreview }; error?: string }>;
       workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) => Promise<{ success: boolean; data?: WorkspaceApplyPlanView; error?: string }>;
+      workspaceCheckRefs: (workspaceId: string) => Promise<{ success: boolean; data?: WorkspaceReferenceCheckResult; error?: string }>;
       workspaceExport: (workspaceId: string) => Promise<{ success: boolean; data?: { filePath: string; fileName: string; name: string } | null; error?: string }>;
       workspaceImportOpen: () => Promise<{ success: boolean; data?: WorkspaceImportPreview | null; error?: string }>;
-      workspaceImportCommit: (filePath: string, nameOverride?: string) => Promise<{ success: boolean; data?: { workspace: WorkspaceProfile; fileName: string }; error?: string }>;
+      workspaceImportCommit: (filePath: string, nameOverride?: string, remap?: WorkspaceImportRemap) => Promise<{ success: boolean; data?: { workspace: WorkspaceProfile; fileName: string }; error?: string }>;
 
       // DRC 设计问题报告（V0.4）
       drcOpenDialog: () => Promise<{ success: boolean; data?: string | null; error?: string }>;

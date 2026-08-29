@@ -87,11 +87,19 @@ HashRouter in `src/App.tsx`:
 | `/` | `Navigate` | 跳转到默认快捷键工作区 |
 | `/overview` | `DashboardPage` | 系统状态 / 健康评分 |
 | `/environment` | `EnvironmentPage` | 环境检测 / 多 env 来源管理 |
+| `/workspace` | `UnifiedWorkspacePage` | 统一工作区方案（绑定 环境+快捷键+Skill+菜单+配色，引用校验 / 导入重绑） |
 | `/hotkeys/*` | `HotkeyWorkspacePage` | 快捷键工作区（键位 / 列表 / 冲突，工具弹窗承载导入导出） |
 | `/skills` | `SkillPage` | Skill 管理（表格 + 三类详情 + 方案栏） |
 | `/menu` | `MenuPage` | 菜单树编辑 + 方案栏 |
+| `/colors` | `ColorPage` | 配色方案（捕获 / 实时预览 / Vibe Bridge 一键安装） |
+| `/drc` | `DrcPage` | DRC 报告看板（导入 / 在线抓取 / 横向对比） |
+| `/env-editor` | `EnvEditorPage` | Env 可视化编辑器（来源对比 / 编辑 / Apply Plan） |
+| `/session` | `SessionConsolePage` | Allegro 会话控制台（快照 / 命令执行 / 历史收藏） |
+| `/diagnostic` | `DiagnosticPage` | 设计体检（只读批量健康检查） |
+| `/schematic` | `SchematicPage` | 电源树（演示数据；OrCAD COM 抽取为待办） |
+| `/backup` | `BackupPage` | 设置备份恢复与窗口状态持久化 |
 
-Layout at `src/components/Layout.tsx` — sidebar with NavLink items. `Layout` stays eager; the five page components are loaded with `React.lazy()` under one `Suspense` boundary so Vite emits route-level chunks. Keep Vite `base: './'` aligned with Electron's embedded production asset server.
+Layout at `src/components/Layout.tsx` — sidebar with NavLink items. `Layout` stays eager; the thirteen page components are loaded with `React.lazy()` under one `Suspense` boundary so Vite emits route-level chunks. Keep Vite `base: './'` aligned with Electron's embedded production asset server.
 
 ### IPC Pattern (6-Layer)
 
@@ -123,6 +131,16 @@ Response format: `{ success: true, data: ... }` or `{ success: false, error: "..
 | Import | `import.ipc.ts` | `import:open-dialog/parse-file/compute-conflicts/execute` |
 | History | `history.ipc.ts` | `history:load/undo/add/clear` |
 | App | `app.ipc.ts` | `app:getRuntimeInfo` |
+| Workspace | `workspace.ipc.ts` | `workspace:load-all/create/copy/rename/delete/set-active/preview/apply-plan/check-refs/export/import-open/import-commit` |
+| Color | `color.ipc.ts` | `color:list/capture/apply/preview/import-col/export-col` |
+| DRC | `drc.ipc.ts` | `drc:open-dialog/parse-file/import-report/list/get/update-status/export/bridge-probe/bridge-fetch` |
+| Env Editor | `envEditor.ipc.ts` | `env-editor:load/save/compare/apply-plan` |
+| Session | `session.ipc.ts` | `session:snapshot/execute/history/favorites` |
+| Diagnostic | `diagnostic.ipc.ts` | `diagnostic:run` |
+| Schematic | `schematic.ipc.ts` | `schematic:export`（演示模式） |
+| Symphony | `skill.symphony.ipc.ts` | `symphony:create-plan/execute`（命令登记） |
+| Update | `update.ipc.ts` | `update:check/download/install/settings` |
+| Backup | `backup.ipc.ts` | `backup:create/restore/list/export` |
 
 ### Data Flow
 
@@ -140,6 +158,11 @@ core/ filesystem operations → IPC handler → preload.ts contextBridge
 App → Layout (sidebar NavLink)
   ├── DashboardPage
   ├── EnvironmentPage
+  ├── UnifiedWorkspacePage
+  │     ├── 卡片列表（预览 / 应用 / 引用校验 / 导入导出 / 复制配置）
+  │     ├── 预览弹窗 + 应用确认弹窗（Skill → 菜单 → 快捷键 → 配色）
+  │     ├── 引用一致性校验弹窗（菜单/快捷键命令 ↔ Skill 方案）
+  │     └── 导入确认弹窗（缺失子方案按名称推荐重绑）
   ├── HotkeyWorkspacePage
   │     ├── ProfileBar (V5.6: unified profile bar with applied state)
   │     ├── GlobalStatusBar (V5.6: status pills)
@@ -161,7 +184,7 @@ App → Layout (sidebar NavLink)
   │     ├── EnhancedRefCheck
   │     ├── SkillMetaDialog / SkillDeleteImpactDialog
   │     └── CompanySkillManager
-  └── MenuPage (V5.6)
+  ├── MenuPage (V5.6)
         ├── ProfileBar (V5.6: unified profile bar)
         ├── GlobalStatusBar (V5.6: status pills for draft/il/bootstrap)
         ├── MoreActionsMenu (V5.6: new/scan actions)
@@ -170,6 +193,13 @@ App → Layout (sidebar NavLink)
         ├── CommandSelector (命令选择弹窗)
         ├── MenuPreviewDialog (可视化/IL/JSON 三Tab)
         └── MenuApplyPlanDialog (+ impact summary)
+  ├── ColorPage（配色方案 + Vibe Bridge 桥接状态）
+  ├── DrcPage（DRC 看板 / 对比 / 在线抓取）
+  ├── EnvEditorPage（Env 来源对比与编辑）
+  ├── SessionConsolePage（会话快照 / 命令执行 / 历史）
+  ├── DiagnosticPage（设计体检）
+  ├── SchematicPage（电源树，演示数据）
+  └── BackupPage（设置备份恢复）
 ```
 
 ## Documentation
@@ -180,6 +210,8 @@ All in Chinese in `docs/`:
 | `开发手册.md` | Architecture, module details, contribution guide — updated for V5.6 |
 | `用户手册.md` | Installation, features, configuration — updated for V5.6 |
 | `避坑指南.md` | Gotchas, Windows pitfalls |
+| `真机验证清单.md` | 实时交互能力（配色/DRC/会话/多环境）真机验证项 |
+| `dev/FEATURE_INDEX.md` / `user/FEATURE_INDEX.md` | 功能开发/用户文档索引 |
 
 ## Key Design Rules
 
@@ -205,9 +237,11 @@ All in Chinese in `docs/`:
 
 ```
 Workspace Profile (预留)
+├── environmentId   → Allegro 环境（pcbenv / 版本，可选）
 ├── hotkeyProfileId → Hotkey Profile (快捷键方案, 已有)
 ├── skillProfileId  → Skill Profile (Skill 方案, V5.5 新增)
-└── menuProfileId   → Menu Profile (菜单方案, V5.5 增强)
+├── menuProfileId   → Menu Profile (菜单方案, V5.5 增强)
+└── colorSchemeId   → Color Scheme (配色方案, V6.1 全局资源，可选)
 ```
 
 - **统一 ProfileBar**: 三页共用同一 `ProfileBar` 组件（快捷键/Skill/菜单）；旧 `ProfileSelector` 已删除
@@ -216,6 +250,9 @@ Workspace Profile (预留)
 - **已应用状态**: ProfileBar 右侧显示 ✅ 已应用 / ⚠ 尚未应用 状态
 - **删除保护**: 默认方案不可删；使用的方案不可删；删除只删 ATM 配置不影响 env/menu
 - **已应用追踪**: `appliedProfileId` 持久化到 `settings/applied_profile.json`
+- **统一应用顺序**: Skill → 菜单 → 快捷键 → 配色（`core/workspace/planWorkspaceApply.ts`）
+- **引用一致性校验**: `workspace:check-refs` 校验菜单/快捷键命令是否由目标 Skill 方案中已启用的 Skill 提供（`core/workspace/workspaceReferenceCheck.ts`）
+- **工作区导入/导出**: 只导出组合关系 + 子方案名称；换机导入时 `workspace:import-open` 返回各子方案存在性与按名称推荐的候选，确认时可用 remap 重绑缺失方案
 
 ### V5.6 UI 统一规则
 
@@ -268,14 +305,23 @@ Errors block Apply Plan generation and IL generation.
 | `core/changeHistory/` | `changeHistory.ts` | Undo system |
 | `core/dictionary/` | `command_dictionary.json`, `availableKeyRecommender.ts`, `hotkeyExportService.ts`, `hotkeyFavorites.ts` | Command names, key recommendation, export |
 | `core/settings/` | `atmSettings.ts` | Settings persistence |
+| `core/workspace/` | `workspaceManager.ts`, `buildWorkspacePreview.ts`, `planWorkspaceApply.ts`, `workspaceImportExport.ts`, `workspaceReferenceCheck.ts` | 统一工作区方案：CRUD / 预览 / 应用序列 / 导入导出与重绑 / 跨模块引用校验 |
+| `core/color/` | `colorSchemeManager.ts`, `vibeColorBridge.ts`, `vibeBridgeInstaller.ts` | 配色方案存储、Vibe Bridge 捕获/应用/实时预览、一键安装 |
+| `core/drc/` | `drcParser.ts`, `drcStore.ts`, `drcBridge.ts`, `drcCompare.ts` | DRC 报告解析 / 存储 / 在线抓取 / 多报告对比 |
+| `core/env/` | `envEditor.ts`, `envCompare.ts` | Env 可视化编辑与来源对比 |
+| `core/session/` | `sessionBridge.ts`, `sessionHistory.ts` | Allegro 会话快照 / 命令执行 / 历史收藏 |
+| `core/diagnostic/` | `diagnostic.ts` | 设计体检（只读检查） |
+| `core/schematic/` | `powerTreeBuilder.ts`, `powerNetClassifier.ts`, `powerTreeExport.ts`, `powerTreeLayout.ts` | 电源树构建/导出（当前基于演示数据） |
+| `core/symphony/` | `symphonySkillFile.ts`, `symphonyApplyPlan.ts`, `symphonyCompatibility.ts`, `muFunctionTable.ts` | Symphony 命令登记（symphony_skill.txt 生成与 Apply Plan） |
+| `core/backup/` | `createBackup.ts`, `rollbackManifest.ts`, `backupManager.ts` | SHA256 备份与设置备份恢复 |
 
-### electron/ipc/ (18 handler files)
+### electron/ipc/ (23 handler files，目录共 26 个文件含 channelRegistry/ trustedApplyPlan/ index)
 
-`app.ipc.ts`, `env.ipc.ts`, `hotkey.ipc.ts`, `menu.ipc.ts`, `skill.scan.ipc.ts`, `skill.apply.ipc.ts`, `skill.refs.ipc.ts`, `skill.usage.ipc.ts`, `skillMeta.ipc.ts`, `skill.profile.ipc.ts`, `history.ipc.ts`, `import.ipc.ts`, `index.ts`
+`app.ipc.ts`, `backup.ipc.ts`, `color.ipc.ts`, `diagnostic.ipc.ts`, `drc.ipc.ts`, `env.ipc.ts`, `envEditor.ipc.ts`, `history.ipc.ts`, `hotkey.ipc.ts`, `import.ipc.ts`, `menu.ipc.ts`, `schematic.ipc.ts`, `session.ipc.ts`, `skill.apply.ipc.ts`, `skill.ipc.ts`, `skill.profile.ipc.ts`, `skill.refs.ipc.ts`, `skill.scan.ipc.ts`, `skill.symphony.ipc.ts`, `skill.usage.ipc.ts`, `skillMeta.ipc.ts`, `trustedApplyPlan.ts`, `update.ipc.ts`, `workspace.ipc.ts`, `index.ts`
 
 ### src/types/ (Shared)
 
-`menu.ts` (V5.5), `skill.ts`, `skillProfile.ts` (V5.5), `workspaceProfile.ts` (V5.5), `applyPlan.ts`, `hotkey.ts`, `environment.ts`, `importEnv.ts`, `runtime.ts`, `window.d.ts`
+`menu.ts` (V5.5), `skill.ts`, `skillProfile.ts` (V5.5), `workspaceProfile.ts` (V6.3，含导入重绑类型), `symphony.ts`, `color.ts`, `drc.ts`, `diagnostic.ts`, `session.ts`, `schematic.ts`, `updates.ts`, `backup.ts`, `applyPlan.ts`, `hotkey.ts`, `environment.ts`, `importEnv.ts`, `runtime.ts`, `window.d.ts`
 
 ### src/components/
 
@@ -283,7 +329,7 @@ Key components: `ProfileBar.tsx` (V5.6 unified profile bar — merged ProfileSel
 
 ## Testing
 
-- **238 tests** across 45 test files — Vitest 3.2
+- **691 tests** across 102 test files（2026-08-29 统计）— Vitest 3.2
 - Pure `core/` code and renderer contracts/components are testable with Vitest; Electron runtime behavior still needs type/build or desktop validation
 - Test fixtures in `test-fixtures/` directory
 - Single file: `npx.cmd vitest run tests/parseEnv.test.ts`

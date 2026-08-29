@@ -1,7 +1,7 @@
 # 统一工作区方案（Workspace Unified Profile）设计
 
-> 状态：已完成（M1–M4，含 2026-08-08 安全与一致性修复）
-> 更新：2026-08-08
+> 状态：已完成（M1–M4 + V6.2 导入导出 + V6.3 引用校验与换机重绑）
+> 更新：2026-08-29
 
 ## 目标
 
@@ -139,3 +139,46 @@ UnifiedWorkspacePage
 4. 每个 plan ID 只能消费一次。
 
 因此 Renderer 可以展示计划，但不能修改目标路径、步骤或跨通道复用计划。
+
+## V6.3 跨模块引用一致性校验
+
+新增 `core/workspace/workspaceReferenceCheck.ts`（纯函数），校验「菜单方案 / 快捷键方案」
+引用的命令是否由目标 Skill 方案中**已启用**的 Skill 提供：
+
+- Allegro 内置命令：跳过（视为满足）
+- 已启用 Skill 提供的命令：通过
+- 仅由**未启用** Skill 提供的命令：warning（应用目标 Skill 方案后命令将失效，提示提供者）
+- 找不到任何提供者且非内置命令：warning（可能是内置命令表未收录或 Skill 缺失）
+
+校验结果只做提示（`blocked=false`），是否阻断仍由各模块自身的校验决定。
+输入由 IPC 层组装：快捷键绑定、菜单项（含完整路径）、Skill 方案启用的 skillId 集合、
+环境中扫描到的全部 Skill 命令（`scanAllSkills` + 函数名，覆盖公司/用户/ATM 三层）。
+
+```text
+卡片「引用校验」→ workspace:check-refs
+  → 目标环境 locateEnvironment + skill 扫描
+  → checkWorkspaceReferences（纯函数）
+  → 弹窗：汇总计数 + 逐条来源/命令/详情
+```
+
+## V6.3 导入重绑（换机迁移）
+
+导出的工作区包只含组合关系；换机导入时子方案 ID 在本机通常不存在。
+
+- 导出时额外写入各子方案**显示名**（`hotkeyProfileName` 等，向后兼容，旧包无名字段）
+- `workspace:import-open` 调用 `resolveWorkspaceImportBindings`：对本机已有方案按
+  「名称相似度」评分（`scoreNameSimilarity`：完全一致 100 / 原始包含 80 / 去符号一致 90 /
+  去符号包含 70），按分数排序取前 5 作为候选，取最高分为推荐
+- 导入确认弹窗对缺失的子方案展示下拉（默认选推荐），确认时通过
+  `workspace:import-commit(filePath, name, remap)` 传入重绑映射；
+  `applyWorkspaceImport(pkg, name, remap)` 仅覆盖 remap 指定的字段，其余保持原 ID
+
+```text
+workspace:export
+  → buildWorkspaceExportPackage(workspace, names)（组合关系 + 子方案名）
+workspace:import-open
+  → parseWorkspaceExportPackage → previewWorkspaceImport
+  → resolveWorkspaceImportBindings（存在性 + 候选 + 推荐）→ 保存到 preview.resolutions
+workspace:import-commit(filePath, name, remap)
+  → applyWorkspaceImport(pkg, name, remap) → 新工作区（重名自动加「（导入）」）
+```

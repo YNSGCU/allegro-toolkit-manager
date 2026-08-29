@@ -11,6 +11,8 @@ import {
   buildWorkspaceExportPackage,
   parseWorkspaceExportPackage,
   previewWorkspaceImport,
+  resolveWorkspaceImportBindings,
+  scoreNameSimilarity,
   serializeWorkspaceExportPackage,
 } from '../core/workspace/workspaceImportExport';
 import { loadWorkspaceStore } from '../core/workspace/workspaceManager';
@@ -133,6 +135,151 @@ describe('applyWorkspaceImport', () => {
   it('支持调用方覆盖名称', () => {
     const created = applyWorkspaceImport(buildWorkspaceExportPackage(sampleWorkspace), '自定义名称');
     expect(created.name).toBe('自定义名称');
+  });
+
+  it('导入时可通过 remap 重新绑定缺失的子方案（换机迁移）', () => {
+    const created = applyWorkspaceImport(buildWorkspaceExportPackage(sampleWorkspace), undefined, {
+      hotkeyProfileId: 'hk-local',
+      skillProfileId: 'skill-local',
+      menuProfileId: 'menu-local',
+      colorSchemeId: 'color-local',
+    });
+    expect(created.hotkeyProfileId).toBe('hk-local');
+    expect(created.skillProfileId).toBe('skill-local');
+    expect(created.menuProfileId).toBe('menu-local');
+    expect(created.colorSchemeId).toBe('color-local');
+  });
+
+  it('remap 只覆盖给定字段，其余保持导入包原始 ID', () => {
+    const created = applyWorkspaceImport(buildWorkspaceExportPackage(sampleWorkspace), undefined, {
+      hotkeyProfileId: 'hk-local',
+    });
+    expect(created.hotkeyProfileId).toBe('hk-local');
+    expect(created.skillProfileId).toBe('skill-main');
+    expect(created.menuProfileId).toBe('menu-main');
+  });
+});
+
+describe('scoreNameSimilarity', () => {
+  it('完全一致得分最高', () => {
+    expect(scoreNameSimilarity('项目A', '项目A')).toBe(100);
+  });
+
+  it('互相包含次之', () => {
+    expect(scoreNameSimilarity('项目A 4DDR3', '项目A')).toBe(80);
+    expect(scoreNameSimilarity('项目A', '项目A 4DDR3')).toBe(80);
+  });
+
+  it('去掉空格与符号后一致得分高于包含', () => {
+    expect(scoreNameSimilarity('项目 A', '项目A')).toBe(90);
+    expect(scoreNameSimilarity('4DDR3 板', '4DDR3')).toBe(80);
+  });
+
+  it('无关名称得 0 分', () => {
+    expect(scoreNameSimilarity('项目A', '测试环境')).toBe(0);
+    expect(scoreNameSimilarity('', '项目A')).toBe(0);
+  });
+});
+
+describe('resolveWorkspaceImportBindings', () => {
+  const local = {
+    hotkeyProfiles: [
+      { id: 'hk-main', name: '主快捷键' },
+      { id: 'hk-extra', name: '扩展键位' },
+    ],
+    skillProfiles: [{ id: 'skill-main', name: '主 Skill 方案' }],
+    menuProfiles: [{ id: 'menu-main', name: '主菜单' }],
+    colorSchemes: [{ id: 'color-dark', name: '深色' }, { id: 'color-light', name: '浅色' }],
+  };
+
+  it('本机已存在的绑定标记 exists=true 且无候选', () => {
+    const resolutions = resolveWorkspaceImportBindings(
+      {
+        hotkeyProfileId: 'hk-main',
+        skillProfileId: 'skill-main',
+        menuProfileId: 'menu-main',
+        colorSchemeId: 'color-dark',
+      },
+      local,
+    );
+    for (const resolution of resolutions) {
+      expect(resolution.exists).toBe(true);
+      expect(resolution.candidates).toHaveLength(0);
+    }
+  });
+
+  it('缺失绑定按名称推荐最接近的本地方案', () => {
+    const resolutions = resolveWorkspaceImportBindings(
+      {
+        hotkeyProfileId: 'hk-original',
+        hotkeyProfileName: '主快捷键',
+        skillProfileId: 'skill-original',
+        skillProfileName: '主 Skill 方案',
+        menuProfileId: 'menu-original',
+        menuProfileName: '主菜单',
+        colorSchemeId: 'color-original',
+        colorSchemeName: '深色',
+      },
+      local,
+    );
+
+    const hotkey = resolutions.find((item) => item.scope === 'hotkey')!;
+    expect(hotkey.exists).toBe(false);
+    expect(hotkey.recommendedId).toBe('hk-main');
+    expect(hotkey.candidates[0]).toEqual({ id: 'hk-main', name: '主快捷键' });
+
+    const skill = resolutions.find((item) => item.scope === 'skill')!;
+    expect(skill.recommendedId).toBe('skill-main');
+  });
+
+  it('导入包带子方案名称时优先按名称匹配（换机场景）', () => {
+    const resolutions = resolveWorkspaceImportBindings(
+      {
+        hotkeyProfileId: 'hk_abc123',
+        hotkeyProfileName: '扩展键位',
+        skillProfileId: 'sk_abc123',
+        skillProfileName: '主 Skill 方案',
+        menuProfileId: 'mn_abc123',
+        colorSchemeId: undefined,
+      },
+      local,
+    );
+    const hotkey = resolutions.find((item) => item.scope === 'hotkey')!;
+    expect(hotkey.exists).toBe(false);
+    expect(hotkey.recommendedId).toBe('hk-extra');
+    const skill = resolutions.find((item) => item.scope === 'skill')!;
+    expect(skill.recommendedId).toBe('skill-main');
+  });
+
+  it('本机没有可匹配候选时返回空候选与推荐', () => {
+    const resolutions = resolveWorkspaceImportBindings(
+      {
+        hotkeyProfileId: 'hk-main',
+        skillProfileId: 'whatever',
+        menuProfileId: 'whatever',
+        colorSchemeId: 'whatever',
+      },
+      { ...local, skillProfiles: [], menuProfiles: [], colorSchemes: [] },
+    );
+    const skill = resolutions.find((item) => item.scope === 'skill')!;
+    expect(skill.exists).toBe(false);
+    expect(skill.candidates).toHaveLength(0);
+    expect(skill.recommendedId).toBeUndefined();
+  });
+
+  it('未绑定的子方案（空 ID）视为无需重绑', () => {
+    const resolutions = resolveWorkspaceImportBindings(
+      {
+        hotkeyProfileId: 'hk-main',
+        skillProfileId: 'skill-main',
+        menuProfileId: 'menu-main',
+        colorSchemeId: undefined,
+      },
+      local,
+    );
+    const color = resolutions.find((item) => item.scope === 'color')!;
+    expect(color.exists).toBe(true);
+    expect(color.candidates).toHaveLength(0);
   });
 });
 

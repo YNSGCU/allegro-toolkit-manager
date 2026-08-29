@@ -115,13 +115,21 @@ describe('UnifiedWorkspacePage', () => {
     const executor = vi.fn().mockResolvedValue({ success: true, data: {} });
     const skillPlan = vi.fn().mockResolvedValue({ success: true, data: { module: 'skill' } });
     mockAtm({
-      skillProfileLoadAll: () => Promise.resolve({ success: true, data: { profiles: [
-        { id: 'sk_default', name: '默认 Skill' },
-        { id: 'sk_1', name: '我的 Skill' },
-      ] } }),
+      skillProfileLoadAll: () => Promise.resolve({ success: true, data: {
+        store: { profiles: [
+          { id: 'sk_default', name: '默认 Skill' },
+          { id: 'sk_1', name: '我的 Skill' },
+        ] },
+        activeProfile: { id: 'sk_1' },
+        atmGeneratedPath: 'C:/pcbenv/atm_generated',
+      } }),
       skillProfileCreateApplyPlan: skillPlan,
       skillProfileExecuteApplyPlan: executor,
-      menuLoadProfiles: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'mn_default', name: '默认菜单' }] } }),
+      menuLoadProfiles: () => Promise.resolve({ success: true, data: {
+        store: { profiles: [{ id: 'mn_default', name: '默认菜单' }] },
+        activeProfile: { id: 'mn_default' },
+        atmGeneratedPath: 'C:/pcbenv/atm_generated',
+      } }),
       menuCreateApplyPlan: () => Promise.resolve({ success: true, data: { module: 'menu' } }),
       menuExecuteApplyPlan: executor,
       createApplyPlan: () => Promise.resolve({ success: true, data: { module: 'hotkey' } }),
@@ -146,7 +154,11 @@ describe('UnifiedWorkspacePage', () => {
 
   it('失败步骤不计入已完成数量', async () => {
     mockAtm({
-      skillProfileLoadAll: () => Promise.resolve({ success: true, data: { profiles: [{ id: 'sk_default' }] } }),
+      skillProfileLoadAll: () => Promise.resolve({ success: true, data: {
+        store: { profiles: [{ id: 'sk_default' }] },
+        activeProfile: { id: 'sk_default' },
+        atmGeneratedPath: 'C:/pcbenv/atm_generated',
+      } }),
       skillProfileCreateApplyPlan: () => Promise.resolve({ success: true, data: { module: 'skill' } }),
       skillProfileExecuteApplyPlan: () => Promise.resolve({ success: false, error: '写入失败' }),
     });
@@ -189,6 +201,43 @@ describe('UnifiedWorkspacePage', () => {
     expect(executor).not.toHaveBeenCalled();
   });
 
+  it('按真实 IPC 响应结构（store.profiles）执行 Skill 步骤，不误报方案不存在', async () => {
+    const executor = vi.fn().mockResolvedValue({ success: true, data: {} });
+    const skillPlan = vi.fn().mockResolvedValue({ success: true, data: { module: 'skill' } });
+    const menuPlan = vi.fn().mockResolvedValue({ success: true, data: { module: 'menu' } });
+    mockAtm({
+      // 与 electron/ipc/skill.profile.ipc.ts 的真实返回保持一致：方案列表在 data.store.profiles
+      skillProfileLoadAll: () => Promise.resolve({
+        success: true,
+        data: { store: { profiles: [{ id: 'sk_1', name: '我的 Skill' }] }, activeProfile: null, atmGeneratedPath: '' },
+      }),
+      skillProfileCreateApplyPlan: skillPlan,
+      skillProfileExecuteApplyPlan: executor,
+      // menu:load-profiles 同样返回 data.store
+      menuLoadProfiles: () => Promise.resolve({
+        success: true,
+        data: { store: { profiles: [{ id: 'mn_1', name: '我的菜单' }] }, activeProfile: null, atmGeneratedPath: '' },
+      }),
+      menuCreateApplyPlan: menuPlan,
+      menuExecuteApplyPlan: executor,
+      createApplyPlan: () => Promise.resolve({ success: true, data: { module: 'hotkey' } }),
+      applyPlan: executor,
+      colorApply: executor,
+    });
+    render(<UnifiedWorkspacePage />);
+
+    fireEvent.click((await screen.findAllByRole('button', { name: '应用此工作区' }))[1]);
+    fireEvent.click(await screen.findByRole('button', { name: '确认应用' }));
+
+    await waitFor(() => {
+      expect(skillPlan).toHaveBeenCalledWith(expect.stringContaining('"id":"sk_1"'));
+      expect(menuPlan).toHaveBeenCalled();
+      expect(screen.queryByText('Skill 方案不存在')).not.toBeInTheDocument();
+      expect(screen.queryByText('菜单方案不存在')).not.toBeInTheDocument();
+    });
+    expect(await screen.findByText('已完成 4/4 个步骤')).toBeInTheDocument();
+  });
+
   it('提供工作区绑定配置入口', async () => {
     mockAtm();
     render(<UnifiedWorkspacePage />);
@@ -208,5 +257,91 @@ describe('UnifiedWorkspacePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '创建' }));
 
     expect(await screen.findByRole('dialog', { name: '配置工作区' })).toBeInTheDocument();
+  });
+
+  it('引用校验展示跨模块命令告警', async () => {
+    const ok = (data: unknown) => ({ success: true, data });
+    mockAtm({
+      workspaceCheckRefs: () => Promise.resolve(ok({
+        issues: [
+          {
+            severity: 'warning',
+            scope: 'hotkey',
+            source: '快捷键 F4',
+            command: 'drc_run',
+            detail: '命令「drc_run」由 Skill「drc_helper.il」提供，但目标 Skill 方案未启用，应用后命令将失效',
+          },
+        ],
+        errors: [],
+        warnings: [
+          {
+            severity: 'warning',
+            scope: 'hotkey',
+            source: '快捷键 F4',
+            command: 'drc_run',
+            detail: '命令「drc_run」由 Skill「drc_helper.il」提供，但目标 Skill 方案未启用，应用后命令将失效',
+          },
+        ],
+        infos: [],
+        blocked: false,
+        summary: { checked: 1, resolved: 0, builtin: 0, disabledProvider: 1, unresolved: 0 },
+      })),
+    });
+    render(<UnifiedWorkspacePage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '引用校验 项目A' }));
+
+    expect(await screen.findByRole('dialog', { name: '引用一致性校验' })).toBeInTheDocument();
+    expect(screen.getByText('快捷键 F4')).toBeInTheDocument();
+    expect(screen.getByText(/drc_helper\.il/)).toBeInTheDocument();
+  });
+
+  it('导入时缺失子方案可重绑并随提交传回', async () => {
+    const ok = (data: unknown) => ({ success: true, data });
+    const importCommit = vi.fn().mockResolvedValue(ok({ workspace: { name: '项目A（导入）' }, fileName: 'ws.json' }));
+    mockAtm({
+      workspaceImportOpen: () => Promise.resolve(ok({
+        filePath: 'D:/share/ws.json',
+        fileName: 'ws.json',
+        name: '项目A',
+        hasHotkeyProfile: true,
+        hasSkillProfile: true,
+        hasMenuProfile: true,
+        hasColorScheme: false,
+        resolutions: [
+          { scope: 'hotkey', label: '快捷键方案', boundId: 'hk-old', exists: true, candidates: [] },
+          {
+            scope: 'skill',
+            label: 'Skill 方案',
+            boundId: 'sk-old',
+            exists: false,
+            candidates: [
+              { id: 'sk_1', name: '我的 Skill' },
+              { id: 'sk_default', name: '默认 Skill' },
+            ],
+            recommendedId: 'sk_1',
+            recommendedName: '我的 Skill',
+          },
+          { scope: 'menu', label: '菜单方案', boundId: 'mn-old', exists: true, candidates: [] },
+          { scope: 'color', label: '配色方案', boundId: '', exists: false, candidates: [] },
+        ],
+      })),
+      workspaceImportCommit: importCommit,
+    });
+    render(<UnifiedWorkspacePage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '导入方案' }));
+
+    const dialog = await screen.findByRole('dialog', { name: '导入工作区方案' });
+    expect(dialog).toBeInTheDocument();
+    const remapSelect = screen.getByLabelText('重绑 Skill 方案');
+    expect(remapSelect).toHaveValue('sk_1');
+
+    fireEvent.change(remapSelect, { target: { value: 'sk_default' } });
+    fireEvent.click(screen.getByRole('button', { name: '确认导入' }));
+
+    await waitFor(() => {
+      expect(importCommit).toHaveBeenCalledWith('D:/share/ws.json', '项目A', { skillProfileId: 'sk_default' });
+    });
   });
 });

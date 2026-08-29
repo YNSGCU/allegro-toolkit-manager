@@ -251,3 +251,109 @@
   background: rgba(13, 148, 136, 0.1);
   border: 1px solid rgba(13, 148, 136, 0.25);
 }
+
+/* 引用一致性校验弹窗 */
+.workspace-refcheck-body {
+  display: grid;
+  gap: 12px;
+}
+
+.workspace-refcheck-summary {
+  margin: 0;
+  color: var(--text-secondary, #5f5a52);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.workspace-refcheck-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.workspace-refcheck-issue {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 6px 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e8e1d8);
+  border-radius: 10px;
+  background: var(--bg-surface, #ffffff);
+}
+
+.workspace-refcheck-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.workspace-refcheck-badge.is-warning {
+  color: #8a5a0a;
+  background: rgba(217, 119, 6, 0.12);
+}
+
+.workspace-refcheck-badge.is-error {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.workspace-refcheck-badge.is-info {
+  color: var(--accent-blue, #0d9488);
+  background: rgba(13, 148, 136, 0.1);
+}
+
+.workspace-refcheck-source {
+  color: var(--text-primary, #171717);
+  font-size: 13px;
+}
+
+.workspace-refcheck-command {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  color: var(--accent-blue, #0d9488);
+}
+
+.workspace-refcheck-detail {
+  grid-column: 2 / -1;
+  color: var(--text-muted, #8d877f);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 导入重绑（换机迁移） */
+.workspace-import-rebind {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-color, #e8e1d8);
+  border-radius: 10px;
+  background: rgba(217, 119, 6, 0.05);
+}
+
+.workspace-import-rebind-title {
+  margin: 0;
+  color: #8a5a0a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.workspace-import-rebind-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary, #5f5a52);
+  font-size: 13px;
+}
+
+.workspace-import-rebind-row select {
+  width: 100%;
+}

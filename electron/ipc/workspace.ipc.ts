@@ -36,14 +36,19 @@ import {
   buildWorkspaceExportPackage,
   parseWorkspaceExportPackage,
   previewWorkspaceImport,
+  resolveWorkspaceImportBindings,
   serializeWorkspaceExportPackage,
 } from '../../core/workspace/workspaceImportExport';
+import { checkWorkspaceReferences } from '../../core/workspace/workspaceReferenceCheck';
+import { scanAllSkills } from '../../core/skill/scanSkill';
 import path from 'path';
 import type {
   WorkspaceBindingOptions,
+  WorkspaceImportRemap,
   WorkspaceProfile,
   WorkspaceProfileBindings,
 } from '../../src/types/workspaceProfile';
+import type { EnvironmentInfo } from '../../src/types/environment';
 
 function loadBindingOptions(environmentId?: string): WorkspaceBindingOptions {
   const registry = loadEnvironmentRegistry();
@@ -83,6 +88,18 @@ function assertBindingExists(
   if (value && !options.some((item) => item.id === value)) {
     throw new Error(`${label}不存在，请重新选择`);
   }
+}
+
+/** 附加公司 Skill 路径（CDS_SITE / SKILL_PATH）后的环境信息，供命令扫描使用 */
+function buildEnvInfoWithCompanyPaths(envInfo: EnvironmentInfo): EnvironmentInfo & { companySkillPaths: string[] } {
+  const companySkillPaths: string[] = [];
+  const cdsSite = process.env.CDS_SITE;
+  const skillPath = process.env.SKILL_PATH;
+  if (cdsSite) companySkillPaths.push(cdsSite);
+  if (skillPath) {
+    companySkillPaths.push(...skillPath.split(/[;,]/).map((part) => part.trim()).filter(Boolean));
+  }
+  return { ...envInfo, companySkillPaths };
 }
 
 export function registerWorkspaceIpc(): void {
@@ -194,7 +211,34 @@ export function registerWorkspaceIpc(): void {
         return { success: true, data: null, info: '取消导出' };
       }
 
-      const pkg = buildWorkspaceExportPackage(workspace);
+      // 解析子方案显示名，写入导出包（换机导入时按名称推荐重绑）
+      const registry = loadEnvironmentRegistry();
+      const environmentId = workspace.environmentId || getActiveEnvironment()?.id;
+      const environment = environmentId
+        ? registry.environments.find((item) => item.id === environmentId) ?? null
+        : null;
+      let pcbenvPath: string | null = null;
+      try {
+        pcbenvPath = locateEnvironment(environment?.pcbenvPath).pcbenvPath ?? null;
+      } catch {
+        // 环境不可用时仅导出组合关系，不附带名称
+      }
+      const atmDir = pcbenvPath ? path.join(pcbenvPath, 'atm_generated') : null;
+      const names = {
+        hotkeyProfileName: pcbenvPath && workspace.hotkeyProfileId
+          ? loadAllProfiles(pcbenvPath).find((item) => item.id === workspace.hotkeyProfileId)?.name
+          : undefined,
+        skillProfileName: atmDir && workspace.skillProfileId
+          ? loadSkillProfileStore(atmDir).profiles.find((item) => item.id === workspace.skillProfileId)?.name
+          : undefined,
+        menuProfileName: atmDir && workspace.menuProfileId
+          ? (loadMenuProfileStore(atmDir).profiles ?? []).find((item) => item.id === workspace.menuProfileId)?.name
+          : undefined,
+        colorSchemeName: workspace.colorSchemeId
+          ? loadColorSchemeStore().schemes.find((item) => item.id === workspace.colorSchemeId)?.name
+          : undefined,
+      };
+      const pkg = buildWorkspaceExportPackage(workspace, names);
       fs.writeFileSync(result.filePath, serializeWorkspaceExportPackage(pkg), 'utf-8');
       return {
         success: true,
@@ -229,6 +273,26 @@ export function registerWorkspaceIpc(): void {
       const text = fs.readFileSync(filePath, 'utf-8');
       const pkg = parseWorkspaceExportPackage(text);
       const preview = previewWorkspaceImport(pkg, filePath);
+
+      // 计算各子方案在本机的存在性，并为缺失项推荐重绑候选（换机迁移）
+      let importOptions: WorkspaceBindingOptions | null = null;
+      try {
+        importOptions = loadBindingOptions(pkg.workspace.environmentId);
+      } catch {
+        try {
+          importOptions = loadBindingOptions();
+        } catch {
+          importOptions = null;
+        }
+      }
+      if (importOptions) {
+        preview.resolutions = resolveWorkspaceImportBindings(pkg.workspace, {
+          hotkeyProfiles: importOptions.hotkeyProfiles,
+          skillProfiles: importOptions.skillProfiles,
+          menuProfiles: importOptions.menuProfiles,
+          colorSchemes: importOptions.colorSchemes,
+        });
+      }
       return { success: true, data: preview };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -236,11 +300,11 @@ export function registerWorkspaceIpc(): void {
   });
 
   // 确认导入：重新读取文件、校验 JSON 并创建新工作区（新 ID，重名自动加「（导入）」）
-  ipcMain.handle('workspace:import-commit', (_event, filePath: string, nameOverride?: string) => {
+  ipcMain.handle('workspace:import-commit', (_event, filePath: string, nameOverride?: string, remap?: WorkspaceImportRemap) => {
     try {
       const text = fs.readFileSync(filePath, 'utf-8');
       const pkg = parseWorkspaceExportPackage(text);
-      const workspace = applyWorkspaceImport(pkg, nameOverride);
+      const workspace = applyWorkspaceImport(pkg, nameOverride, remap);
       return { success: true, data: { workspace, fileName: path.basename(filePath) } };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -369,6 +433,65 @@ export function registerWorkspaceIpc(): void {
       };
     } catch (err) {
       return { success: false, error: `生成工作区应用计划失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 跨模块引用一致性校验：菜单/快捷键命令 ↔ 目标 Skill 方案
+  ipcMain.handle('workspace:check-refs', (_event, workspaceId: string) => {
+    try {
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) return { success: false, error: '工作区不存在' };
+
+      const registry = loadEnvironmentRegistry();
+      const environmentId = workspace.environmentId || getActiveEnvironment()?.id;
+      const environment = environmentId
+        ? registry.environments.find((item) => item.id === environmentId) ?? null
+        : null;
+      const envInfo = locateEnvironment(environment?.pcbenvPath);
+      const pcbenvPath = envInfo.pcbenvPath ?? null;
+      const atmDir = envInfo.atmGeneratedPath;
+
+      let hotkeyBindings: Array<{ key: string; command: string }> = [];
+      let menuItems: Array<{ path: string; label?: string; command?: string }> = [];
+      let enabledSkillIds: string[] = [];
+
+      if (pcbenvPath && workspace.hotkeyProfileId) {
+        const profile = loadAllProfiles(pcbenvPath).find((item) => item.id === workspace.hotkeyProfileId);
+        hotkeyBindings = (profile?.bindings ?? [])
+          .filter((binding) => binding.enabled !== false && binding.command?.trim())
+          .map((binding) => ({ key: binding.key, command: binding.command }));
+      }
+      if (atmDir && workspace.menuProfileId) {
+        const profile = (loadMenuProfileStore(atmDir).profiles ?? []).find((item) => item.id === workspace.menuProfileId);
+        menuItems = (profile?.items ?? []).map((item) => ({
+          path: Array.isArray(item.path) ? item.path.join(' > ') : item.label,
+          label: item.label,
+          command: item.command,
+        }));
+      }
+      if (atmDir && workspace.skillProfileId) {
+        const profile = loadSkillProfileStore(atmDir).profiles.find((item) => item.id === workspace.skillProfileId);
+        enabledSkillIds = (profile?.skillStates ?? [])
+          .filter((state) => state.enabled !== false)
+          .map((state) => state.skillId);
+      }
+
+      const scanResult = scanAllSkills(buildEnvInfoWithCompanyPaths(envInfo));
+      const scannedSkills = scanResult.all.map((skill) => ({
+        skillId: skill.id,
+        name: skill.name,
+        commands: (skill.functions ?? []).map((fn) => fn.name).filter((name): name is string => Boolean(name)),
+      }));
+
+      const result = checkWorkspaceReferences({
+        hotkeyBindings,
+        menuItems,
+        enabledSkillIds,
+        scannedSkills,
+      });
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: `工作区引用校验失败: ${err instanceof Error ? err.message : String(err)}` };
     }
   });
 }

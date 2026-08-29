@@ -8,16 +8,19 @@
  * 本页只负责顺序串联与结果汇总，不绕过任何既有写入链路。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Download, Plus, Settings2, Trash2, Upload } from 'lucide-react';
+import { Copy, Download, Plus, Settings2, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import type {
   WorkspaceApplyPlanView,
+  WorkspaceBindingResolution,
   WorkspaceBindingOptions,
+  WorkspaceImportRemap,
   WorkspaceImportPreview,
   WorkspaceProfile,
   WorkspaceProfileBindings,
   WorkspaceProfileStore,
 } from '../types/workspaceProfile';
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
+import type { WorkspaceReferenceCheckResult } from '../../core/workspace/workspaceReferenceCheck';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
@@ -58,6 +61,10 @@ const UnifiedWorkspacePage: React.FC = () => {
   const [importPreview, setImportPreview] = useState<WorkspaceImportPreview | null>(null);
   const [importName, setImportName] = useState('');
   const [importing, setImporting] = useState(false);
+  const [importRemap, setImportRemap] = useState<WorkspaceImportRemap | null>(null);
+  const [refCheckTarget, setRefCheckTarget] = useState<WorkspaceProfile | null>(null);
+  const [refCheckResult, setRefCheckResult] = useState<WorkspaceReferenceCheckResult | null>(null);
+  const [refChecking, setRefChecking] = useState(false);
 
   const activeWorkspace = useMemo<WorkspaceProfile | null>(() => {
     if (!store) return null;
@@ -214,11 +221,22 @@ const UnifiedWorkspacePage: React.FC = () => {
 
   const handleImportOpen = async () => {
     setImportPreview(null);
+    setImportRemap(null);
     try {
       const res = await window.atm.workspaceImportOpen();
       if (res.success && res.data) {
         setImportPreview(res.data);
         setImportName(res.data.name);
+        const remap: WorkspaceImportRemap = {};
+        for (const resolution of res.data.resolutions ?? []) {
+          if (!resolution.exists && resolution.recommendedId) {
+            if (resolution.scope === 'hotkey') remap.hotkeyProfileId = resolution.recommendedId;
+            if (resolution.scope === 'skill') remap.skillProfileId = resolution.recommendedId;
+            if (resolution.scope === 'menu') remap.menuProfileId = resolution.recommendedId;
+            if (resolution.scope === 'color') remap.colorSchemeId = resolution.recommendedId;
+          }
+        }
+        setImportRemap(Object.keys(remap).length > 0 ? remap : null);
       } else if (res.success && !res.data) {
         addToast('info', '已取消选择');
       } else {
@@ -236,11 +254,13 @@ const UnifiedWorkspacePage: React.FC = () => {
       const res = await window.atm.workspaceImportCommit(
         importPreview.filePath,
         importName.trim() || undefined,
+        importRemap ?? undefined,
       );
       if (res.success && res.data) {
         addToast('success', `已导入工作区「${res.data.workspace.name}」`);
         setImportPreview(null);
         setImportName('');
+        setImportRemap(null);
         await reload();
       } else {
         addToast('error', res.error || '导入工作区失败');
@@ -250,6 +270,27 @@ const UnifiedWorkspacePage: React.FC = () => {
     } finally {
       setImporting(false);
     }
+  };
+
+  const getRemapId = (scope: WorkspaceBindingResolution['scope']): string => {
+    if (!importRemap) return '';
+    switch (scope) {
+      case 'hotkey': return importRemap.hotkeyProfileId ?? '';
+      case 'skill': return importRemap.skillProfileId ?? '';
+      case 'menu': return importRemap.menuProfileId ?? '';
+      case 'color': return importRemap.colorSchemeId ?? '';
+    }
+  };
+
+  const updateImportRemap = (scope: WorkspaceBindingResolution['scope'], id: string) => {
+    setImportRemap((current) => {
+      const next: WorkspaceImportRemap = { ...(current ?? {}) };
+      if (scope === 'hotkey') next.hotkeyProfileId = id || undefined;
+      if (scope === 'skill') next.skillProfileId = id || undefined;
+      if (scope === 'menu') next.menuProfileId = id || undefined;
+      if (scope === 'color') next.colorSchemeId = id || undefined;
+      return next.hotkeyProfileId || next.skillProfileId || next.menuProfileId || next.colorSchemeId ? next : null;
+    });
   };
 
   const handlePreview = async (workspace: WorkspaceProfile) => {
@@ -279,6 +320,26 @@ const UnifiedWorkspacePage: React.FC = () => {
       }
     } catch (err) {
       addToast('error', formatUserError(err, '生成应用计划失败'));
+    }
+  };
+
+  const handleRefCheck = async (workspace: WorkspaceProfile) => {
+    setRefCheckTarget(workspace);
+    setRefCheckResult(null);
+    setRefChecking(true);
+    try {
+      const res = await window.atm.workspaceCheckRefs(workspace.id);
+      if (res.success && res.data) {
+        setRefCheckResult(res.data);
+      } else {
+        addToast('error', res.error || '引用校验失败');
+        setRefCheckTarget(null);
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '引用校验失败'));
+      setRefCheckTarget(null);
+    } finally {
+      setRefChecking(false);
     }
   };
 
@@ -322,7 +383,7 @@ const UnifiedWorkspacePage: React.FC = () => {
         switch (step.module) {
           case 'skill': {
             const loaded = await window.atm.skillProfileLoadAll();
-            const profile = loaded.data?.profiles?.find((p: { id: string }) => p.id === workspace.skillProfileId);
+            const profile = loaded.data?.store?.profiles?.find((p: { id: string }) => p.id === workspace.skillProfileId);
             if (!profile) throw new Error('Skill 方案不存在');
             const planRes = await window.atm.skillProfileCreateApplyPlan(JSON.stringify(profile));
             if (!planRes.success || !planRes.data) throw new Error(planRes.error || '生成 Skill 计划失败');
@@ -333,7 +394,7 @@ const UnifiedWorkspacePage: React.FC = () => {
           }
           case 'menu': {
             const loaded = await window.atm.menuLoadProfiles();
-            const profile = loaded.data?.profiles?.find((p: { id: string }) => p.id === workspace.menuProfileId);
+            const profile = loaded.data?.store?.profiles?.find((p: { id: string }) => p.id === workspace.menuProfileId);
             if (!profile) throw new Error('菜单方案不存在');
             const planRes = await window.atm.menuCreateApplyPlan(JSON.stringify(profile));
             if (!planRes.success || !planRes.data) throw new Error(planRes.error || '生成菜单计划失败');
@@ -450,6 +511,19 @@ const UnifiedWorkspacePage: React.FC = () => {
                       }}
                     >
                       预览
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      aria-label={`引用校验 ${workspace.name}`}
+                      title="校验菜单/快捷键引用的命令是否由目标 Skill 方案提供"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleRefCheck(workspace);
+                      }}
+                    >
+                      <ShieldCheck aria-hidden="true" />
+                      引用校验
                     </button>
                     <button
                       type="button"
@@ -583,6 +657,55 @@ const UnifiedWorkspacePage: React.FC = () => {
             ))}
             <p className="workspace-preview-total">共 {preview.totalItems} 个已绑定方案</p>
           </div>
+        )}
+      </BusinessDialog>
+
+      {/* 引用一致性校验 */}
+      <BusinessDialog
+        open={Boolean(refCheckTarget)}
+        title="引用一致性校验"
+        description={refCheckTarget ? `「${refCheckTarget.name}」的菜单/快捷键命令与 Skill 方案一致性` : ''}
+        onClose={() => setRefCheckTarget(null)}
+        footer={
+          <button type="button" className="btn" onClick={() => setRefCheckTarget(null)}>
+            关闭
+          </button>
+        }
+      >
+        {refChecking ? (
+          <p className="workspace-binding-loading">正在扫描 Skill 命令并比对…</p>
+        ) : refCheckResult ? (
+          <div className="workspace-refcheck-body">
+            <p className="workspace-refcheck-summary">
+              共校验 {refCheckResult.summary.checked} 条命令引用：已满足{' '}
+              {refCheckResult.summary.resolved} · 内置命令 {refCheckResult.summary.builtin} ·
+              未启用 Skill 提供 {refCheckResult.summary.disabledProvider} ·
+              未找到提供者 {refCheckResult.summary.unresolved}
+            </p>
+            {refCheckResult.issues.length === 0 ? (
+              <p className="workspace-apply-warning">
+                未发现问题：所有非内置命令均由目标 Skill 方案中已启用的 Skill 提供。
+              </p>
+            ) : (
+              <ul className="workspace-refcheck-list">
+                {refCheckResult.issues.map((issue, index) => (
+                  <li
+                    key={`${issue.scope}-${issue.source}-${index}`}
+                    className="workspace-refcheck-issue"
+                  >
+                    <span className={`workspace-refcheck-badge is-${issue.severity}`}>
+                      {issue.severity === 'error' ? '错误' : issue.severity === 'warning' ? '警告' : '提示'}
+                    </span>
+                    <span className="workspace-refcheck-source">{issue.source}</span>
+                    <code className="workspace-refcheck-command">{issue.command}</code>
+                    <span className="workspace-refcheck-detail">{issue.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p className="workspace-binding-loading">校验失败或已取消。</p>
         )}
       </BusinessDialog>
 
@@ -763,6 +886,7 @@ const UnifiedWorkspacePage: React.FC = () => {
           if (!importing) {
             setImportPreview(null);
             setImportName('');
+            setImportRemap(null);
           }
         }}
         footer={
@@ -773,6 +897,7 @@ const UnifiedWorkspacePage: React.FC = () => {
               onClick={() => {
                 setImportPreview(null);
                 setImportName('');
+                setImportRemap(null);
               }}
               disabled={importing}
             >
@@ -825,6 +950,33 @@ const UnifiedWorkspacePage: React.FC = () => {
                 <p className="ui-dialog-note">该方案未绑定任何子方案（仅环境绑定或空方案）。</p>
               ) : null}
             </div>
+            {importPreview.resolutions?.some((resolution) => !resolution.exists) ? (
+              <div className="workspace-import-rebind">
+                <p className="workspace-import-rebind-title">
+                  以下子方案在本机不存在，已按名称匹配推荐候选，可重新绑定：
+                </p>
+                {importPreview.resolutions
+                  .filter((resolution) => !resolution.exists)
+                  .map((resolution) => (
+                    <label key={resolution.scope} className="workspace-import-rebind-row">
+                      <span>{resolution.label}</span>
+                      <select
+                        aria-label={`重绑 ${resolution.label}`}
+                        value={getRemapId(resolution.scope)}
+                        onChange={(event) => updateImportRemap(resolution.scope, event.target.value)}
+                      >
+                        <option value="">不绑定（导入后手动配置）</option>
+                        {resolution.candidates.map((candidate) => (
+                          <option key={candidate.id} value={candidate.id}>
+                            {candidate.name}
+                            {candidate.id === resolution.recommendedId ? '（推荐）' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+              </div>
+            ) : null}
             <p className="ui-dialog-note">
               导入会创建为新的工作区；若名称重复将自动追加「（导入）」，不会覆盖现有方案。
             </p>
