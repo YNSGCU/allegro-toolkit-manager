@@ -19,6 +19,11 @@ import { checkEnvironmentPair } from '../../core/sync/environmentPairCheck';
 import { planCrossVersionSync } from '../../core/sync/planCrossVersionSync';
 import { mergeSyncProfiles } from '../../core/sync/mergeSyncProfiles';
 import {
+  buildEnvironmentSnapshotProfiles,
+  isEmptyHotkeyProfile,
+  isEmptySkillProfile,
+} from '../../core/sync/snapshotProfiles';
+import {
   loadSyncRuleStore,
   saveSyncRuleStore,
   setRule,
@@ -91,6 +96,44 @@ function loadProfilesForEnv(
     ? (menuStore?.profiles ?? []).find((profile) => profile.id === profileIds.menuProfileId) ?? null
     : (menuStore?.profiles ?? [])[0] ?? null;
   return { envInfo, pcbenvPath, atmDir, hotkey, skill, menu };
+}
+
+/** 加载源方案；方案为空时自动用当前环境实时快照（不落盘），并记录说明 */
+function loadSourceProfilesWithSnapshot(
+  environmentId: string,
+  profileIds: { hotkeyProfileId?: string; skillProfileId?: string; menuProfileId?: string },
+  label: string,
+) {
+  const profiles = loadProfilesForEnv(environmentId, profileIds);
+  const notes: string[] = [];
+  if (!profiles.envInfo.pcbenvPath) return { ...profiles, notes };
+
+  const scanned = scanAllSkills(withCompanySkillPaths(profiles.envInfo)).all
+    .filter((skill) => !/^(generated_|bootstrap)/i.test(skill.name));
+  const snapshot = buildEnvironmentSnapshotProfiles({
+    pcbenvPath: profiles.envInfo.pcbenvPath,
+    envFilePath: profiles.envInfo.envFilePath ?? undefined,
+    scannedSkills: scanned.map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      path: skill.filePath,
+      enabled: true,
+      loadStatus: skill.status ?? 'loaded',
+    })),
+    label,
+  });
+
+  let hotkey = profiles.hotkey;
+  if (isEmptyHotkeyProfile(hotkey) && snapshot.hotkey) {
+    hotkey = snapshot.hotkey;
+    notes.push(`${label}快捷键：使用当前 env 实时快照（未保存为方案）`);
+  }
+  let skill = profiles.skill;
+  if (isEmptySkillProfile(skill) && snapshot.skill) {
+    skill = snapshot.skill;
+    notes.push(`${label}Skill：使用当前环境扫描实时快照（未保存为方案）`);
+  }
+  return { ...profiles, hotkey, skill, notes };
 }
 
 /** 将用户勾选覆盖应用到计划条目 */
@@ -192,11 +235,11 @@ export function registerSyncIpc(): void {
       const targetCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(targetEnvInfo)));
       const sourceCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(sourceEnvInfo)));
 
-      const sourceProfiles = loadProfilesForEnv(options.sourceEnvironmentId, {
+      const sourceProfiles = loadSourceProfilesWithSnapshot(options.sourceEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
         skillProfileId: options.skillProfileId,
         menuProfileId: options.menuProfileId,
-      });
+      }, `${sourceRef.version}（源）`);
       const targetProfiles = loadProfilesForEnv(options.targetEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
         skillProfileId: options.skillProfileId,
@@ -215,6 +258,7 @@ export function registerSyncIpc(): void {
         sourceMenu: sourceProfiles.menu,
         targetMenu: targetProfiles.menu,
         rules: loadSyncRuleStore(),
+        notes: sourceProfiles.notes,
       });
       return { success: true, data: filterPlanKinds(plan, options.kinds ?? []) };
     } catch (err) {
@@ -262,11 +306,11 @@ export function registerSyncIpc(): void {
       const targetEnvInfo = locateEnvironment(targetRef.pcbenvPath);
       const targetCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(targetEnvInfo)));
       const sourceCommands = buildCommandAvailability(collectSkillCommands(withCompanySkillPaths(sourceEnvInfo)));
-      const sourceProfiles = loadProfilesForEnv(options.sourceEnvironmentId, {
+      const sourceProfiles = loadSourceProfilesWithSnapshot(options.sourceEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
         skillProfileId: options.skillProfileId,
         menuProfileId: options.menuProfileId,
-      });
+      }, `${sourceRef.version}（源）`);
       const targetProfiles = loadProfilesForEnv(options.targetEnvironmentId, {
         hotkeyProfileId: options.hotkeyProfileId,
         skillProfileId: options.skillProfileId,
@@ -286,6 +330,7 @@ export function registerSyncIpc(): void {
             sourceMenu: sourceProfiles.menu,
             targetMenu: targetProfiles.menu,
             rules: loadSyncRuleStore(),
+            notes: sourceProfiles.notes,
           }),
           options.kinds ?? [],
         ),

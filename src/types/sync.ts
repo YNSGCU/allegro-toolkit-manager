@@ -51,6 +51,8 @@ export interface CrossVersionSyncPlan {
   stats: CrossVersionSyncStats;
   blocked: boolean;
   blockedReason?: string;
+  /** 生成计划的说明（例如：源方案为空，已自动使用当前环境实时快照） */
+  notes?: string[];
 }
 
 /** 用户勾选覆盖（UI → sync:apply） */

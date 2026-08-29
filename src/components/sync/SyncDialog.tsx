@@ -279,6 +279,13 @@ export const SyncDialog: React.FC<SyncDialogProps> = ({ open, onClose }) => {
               待同步 {plan.stats.sync + plan.stats.user_force} 项 · 版本特有跳过 {plan.stats.skip_ver} 项 ·
               未知 {plan.stats.skip_unknown} 项 · 目标独有保留 {plan.stats.keep_target} 项
             </p>
+            {plan.notes && plan.notes.length > 0 && (
+              <div className="sync-plan-notes">
+                {plan.notes.map((note) => (
+                  <p key={note}>{note}</p>
+                ))}
+              </div>
+            )}
             <ul className="sync-plan-list">
               {groupedItems.map((item, index) => {
                 const effective = overrides.get(`${item.kind}:${item.ref}`) ?? item.decision;

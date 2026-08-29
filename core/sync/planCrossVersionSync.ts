@@ -35,6 +35,8 @@ export interface CrossVersionSyncInput {
   sourceMenu?: MenuProfile | null;
   targetMenu?: MenuProfile | null;
   rules: SyncRuleStore;
+  /** 生成说明（源实时快照等），原样透传到计划 */
+  notes?: string[];
 }
 
 const EMPTY_STATS: CrossVersionSyncStats = {
@@ -317,6 +319,7 @@ export function planCrossVersionSync(input: CrossVersionSyncInput): CrossVersion
     items,
     stats,
     blocked: !hasSource || !hasContent,
+    notes: input.notes ?? [],
     blockedReason: !hasSource
       ? '源环境没有可同步的方案内容，请先选择方案'
       : !hasContent
