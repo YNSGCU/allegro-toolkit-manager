@@ -90,3 +90,36 @@ export interface WorkspaceApplyPlanView {
   applyOrder: WorkspaceApplyStepView[];
   applyVisibility: boolean;
 }
+
+/** 工作区方案导入/导出包（只导出组合关系，不包含子方案内容） */
+export interface WorkspaceExportPackage {
+  app: 'atm';
+  type: 'workspace-profile';
+  version: '1.0';
+  exportedAt: string;
+  workspace: {
+    name: string;
+    description?: string;
+    environmentId?: string;
+    hotkeyProfileId: string;
+    skillProfileId: string;
+    menuProfileId: string;
+    colorSchemeId?: string;
+  };
+}
+
+/** 导入文件解析后的预览摘要（供 UI 确认） */
+export interface WorkspaceImportPreview {
+  filePath: string;
+  fileName: string;
+  name: string;
+  description?: string;
+  environmentId?: string;
+  hasHotkeyProfile: boolean;
+  hasSkillProfile: boolean;
+  hasMenuProfile: boolean;
+  hasColorScheme: boolean;
+}
+
+/** 工作区导出文件扩展名 */
+export const WORKSPACE_EXPORT_EXTENSION = 'atm-workspace.json';

@@ -9,7 +9,8 @@
  *  - workspace:delete        删除（默认工作区保护）
  *  - workspace:set-active    设置激活
  */
-import { ipcMain } from 'electron';
+import { dialog, ipcMain } from 'electron';
+import fs from 'fs';
 import {
   copyWorkspace,
   createWorkspace,
@@ -29,6 +30,14 @@ import { loadColorSchemeStore } from '../../core/color/colorSchemeManager';
 import { loadEnvironmentRegistry, getActiveEnvironment } from '../../core/environment/environmentRegistry';
 import { locateEnvironment } from '../../core/environment/locateEnvironment';
 import { planWorkspaceApplySequence, WORKSPACE_APPLY_ORDER } from '../../core/workspace/planWorkspaceApply';
+import {
+  applyWorkspaceImport,
+  buildWorkspaceExportFileName,
+  buildWorkspaceExportPackage,
+  parseWorkspaceExportPackage,
+  previewWorkspaceImport,
+  serializeWorkspaceExportPackage,
+} from '../../core/workspace/workspaceImportExport';
 import path from 'path';
 import type {
   WorkspaceBindingOptions,
@@ -163,6 +172,78 @@ export function registerWorkspaceIpc(): void {
       return { success: true, data: workspace };
     } catch (err) {
       return { success: false, error: `设置激活工作区失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 导出工作区方案为 JSON 文件（只含组合关系）
+  ipcMain.handle('workspace:export', async (_event, workspaceId: string) => {
+    try {
+      const workspace = getWorkspace(workspaceId);
+      if (!workspace) return { success: false, error: '工作区不存在' };
+
+      const defaultPath = buildWorkspaceExportFileName(workspace.name);
+      const result = await dialog.showSaveDialog({
+        title: '导出工作区方案',
+        defaultPath,
+        filters: [
+          { name: 'ATM 工作区方案', extensions: ['json'] },
+          { name: 'JSON 文件', extensions: ['json'] },
+        ],
+      });
+      if (result.canceled || !result.filePath) {
+        return { success: true, data: null, info: '取消导出' };
+      }
+
+      const pkg = buildWorkspaceExportPackage(workspace);
+      fs.writeFileSync(result.filePath, serializeWorkspaceExportPackage(pkg), 'utf-8');
+      return {
+        success: true,
+        data: {
+          filePath: result.filePath,
+          fileName: path.basename(result.filePath),
+          name: workspace.name,
+        },
+      };
+    } catch (err) {
+      return { success: false, error: `导出工作区方案失败: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  });
+
+  // 选择并解析工作区方案文件，仅返回预览，不写入存储
+  ipcMain.handle('workspace:import-open', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: '导入工作区方案',
+        properties: ['openFile'],
+        filters: [
+          { name: 'ATM 工作区方案', extensions: ['json'] },
+          { name: 'JSON 文件', extensions: ['json'] },
+          { name: '所有文件', extensions: ['*'] },
+        ],
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null, info: '取消选择' };
+      }
+
+      const filePath = result.filePaths[0];
+      const text = fs.readFileSync(filePath, 'utf-8');
+      const pkg = parseWorkspaceExportPackage(text);
+      const preview = previewWorkspaceImport(pkg, filePath);
+      return { success: true, data: preview };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 确认导入：重新读取文件、校验 JSON 并创建新工作区（新 ID，重名自动加「（导入）」）
+  ipcMain.handle('workspace:import-commit', (_event, filePath: string, nameOverride?: string) => {
+    try {
+      const text = fs.readFileSync(filePath, 'utf-8');
+      const pkg = parseWorkspaceExportPackage(text);
+      const workspace = applyWorkspaceImport(pkg, nameOverride);
+      return { success: true, data: { workspace, fileName: path.basename(filePath) } };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   });
 

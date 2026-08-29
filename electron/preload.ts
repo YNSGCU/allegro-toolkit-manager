@@ -663,6 +663,14 @@ contextBridge.exposeInMainWorld('atm', {
   /** 生成工作区应用计划（环境锁 + 执行序列） */
   workspaceApplyPlan: (workspaceId: string, options?: { applyVisibility?: boolean }) =>
     ipcRenderer.invoke('workspace:apply-plan', workspaceId, options),
+  /** 导出工作区方案到 JSON 文件（保存对话框） */
+  workspaceExport: (workspaceId: string) =>
+    ipcRenderer.invoke('workspace:export', workspaceId),
+  /** 选择并解析工作区方案文件（打开对话框，仅返回预览） */
+  workspaceImportOpen: () => ipcRenderer.invoke('workspace:import-open'),
+  /** 确认导入工作区方案文件（重新读取校验并创建新工作区） */
+  workspaceImportCommit: (filePath: string, nameOverride?: string) =>
+    ipcRenderer.invoke('workspace:import-commit', filePath, nameOverride),
 
   // ===== DRC 设计问题报告（V0.4） =====
   /** 打开 DRC 报告文件选择对话框 */

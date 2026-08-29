@@ -8,10 +8,11 @@
  * 本页只负责顺序串联与结果汇总，不绕过任何既有写入链路。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Plus, Settings2, Trash2 } from 'lucide-react';
+import { Copy, Download, Plus, Settings2, Trash2, Upload } from 'lucide-react';
 import type {
   WorkspaceApplyPlanView,
   WorkspaceBindingOptions,
+  WorkspaceImportPreview,
   WorkspaceProfile,
   WorkspaceProfileBindings,
   WorkspaceProfileStore,
@@ -54,6 +55,9 @@ const UnifiedWorkspacePage: React.FC = () => {
   const [bindingOptions, setBindingOptions] = useState<WorkspaceBindingOptions | null>(null);
   const [bindingDraft, setBindingDraft] = useState<WorkspaceProfileBindings>(EMPTY_BINDINGS);
   const [bindingLoading, setBindingLoading] = useState(false);
+  const [importPreview, setImportPreview] = useState<WorkspaceImportPreview | null>(null);
+  const [importName, setImportName] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const activeWorkspace = useMemo<WorkspaceProfile | null>(() => {
     if (!store) return null;
@@ -193,6 +197,61 @@ const UnifiedWorkspacePage: React.FC = () => {
     }
   };
 
+  const handleExport = async (workspace: WorkspaceProfile) => {
+    try {
+      const res = await window.atm.workspaceExport(workspace.id);
+      if (res.success && res.data) {
+        addToast('success', `已导出工作区「${workspace.name}」到 ${res.data.fileName}`);
+      } else if (res.success && !res.data) {
+        addToast('info', '已取消导出');
+      } else {
+        addToast('error', res.error || '导出工作区失败');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '导出工作区失败'));
+    }
+  };
+
+  const handleImportOpen = async () => {
+    setImportPreview(null);
+    try {
+      const res = await window.atm.workspaceImportOpen();
+      if (res.success && res.data) {
+        setImportPreview(res.data);
+        setImportName(res.data.name);
+      } else if (res.success && !res.data) {
+        addToast('info', '已取消选择');
+      } else {
+        addToast('error', res.error || '读取工作区方案失败');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '读取工作区方案失败'));
+    }
+  };
+
+  const handleImportCommit = async () => {
+    if (!importPreview) return;
+    setImporting(true);
+    try {
+      const res = await window.atm.workspaceImportCommit(
+        importPreview.filePath,
+        importName.trim() || undefined,
+      );
+      if (res.success && res.data) {
+        addToast('success', `已导入工作区「${res.data.workspace.name}」`);
+        setImportPreview(null);
+        setImportName('');
+        await reload();
+      } else {
+        addToast('error', res.error || '导入工作区失败');
+      }
+    } catch (err) {
+      addToast('error', formatUserError(err, '导入工作区失败'));
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handlePreview = async (workspace: WorkspaceProfile) => {
     setPreview(null);
     try {
@@ -325,17 +384,27 @@ const UnifiedWorkspacePage: React.FC = () => {
         title="工作区方案"
         description="绑定 Allegro 环境与快捷键 / Skill / 菜单 / 配色方案，一次选择、统一应用"
         actions={
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              setNewName('');
-              setCreateOpen(true);
-            }}
-          >
-            <Plus aria-hidden="true" />
-            新建工作区
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void handleImportOpen()}
+            >
+              <Upload aria-hidden="true" />
+              导入方案
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                setNewName('');
+                setCreateOpen(true);
+              }}
+            >
+              <Plus aria-hidden="true" />
+              新建工作区
+            </button>
+          </>
         }
       />
 
@@ -402,6 +471,17 @@ const UnifiedWorkspacePage: React.FC = () => {
                       }}
                     >
                       重命名
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      aria-label={`导出 ${workspace.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleExport(workspace);
+                      }}
+                    >
+                      <Download aria-hidden="true" />
                     </button>
                     <button
                       type="button"
@@ -672,6 +752,84 @@ const UnifiedWorkspacePage: React.FC = () => {
             if (event.key === 'Enter' && newName.trim()) void handleCreate();
           }}
         />
+      </BusinessDialog>
+
+      {/* 导入确认 */}
+      <BusinessDialog
+        open={Boolean(importPreview)}
+        title="导入工作区方案"
+        description={importPreview ? `来自 ${importPreview.fileName}` : ''}
+        onClose={() => {
+          if (!importing) {
+            setImportPreview(null);
+            setImportName('');
+          }
+        }}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setImportPreview(null);
+                setImportName('');
+              }}
+              disabled={importing}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => void handleImportCommit()}
+              disabled={importing || !importName.trim()}
+            >
+              {importing ? '正在导入…' : '确认导入'}
+            </button>
+          </>
+        }
+      >
+        {importPreview && (
+          <div className="workspace-import-body">
+            <div className="ui-dialog-field">
+              <label className="ui-dialog-field-label">方案名称</label>
+              <input
+                type="text"
+                className="atm-input"
+                value={importName}
+                onChange={(event) => setImportName(event.target.value)}
+                data-dialog-initial-focus
+              />
+            </div>
+            {importPreview.description ? (
+              <p className="ui-dialog-note">{importPreview.description}</p>
+            ) : null}
+            <div className="workspace-import-bindings">
+              <span className="workspace-import-binding-label">包含绑定</span>
+              <div className="workspace-import-binding-tags">
+                {[
+                  importPreview.hasHotkeyProfile && '快捷键方案',
+                  importPreview.hasSkillProfile && 'Skill 方案',
+                  importPreview.hasMenuProfile && '菜单方案',
+                  importPreview.hasColorScheme && '配色方案',
+                ].filter((label): label is string => Boolean(label)).map((label) => (
+                  <span key={label} className="workspace-binding-tag">
+                    {label}
+                  </span>
+                ))}
+              </div>
+              {!importPreview.hasHotkeyProfile
+                && !importPreview.hasSkillProfile
+                && !importPreview.hasMenuProfile
+                && !importPreview.hasColorScheme ? (
+                <p className="ui-dialog-note">该方案未绑定任何子方案（仅环境绑定或空方案）。</p>
+              ) : null}
+            </div>
+            <p className="ui-dialog-note">
+              导入会创建为新的工作区；若名称重复将自动追加「（导入）」，不会覆盖现有方案。
+            </p>
+          </div>
+        )}
       </BusinessDialog>
 
       <ConfirmDialog
