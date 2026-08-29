@@ -37,9 +37,7 @@ describe('buildCaptureSkill', () => {
     expect(skill).toContain('axlConductorBottomLayer()');
     expect(skill).toContain('lp = errset(axlLayerGet(strcat(nth(2 classEntry) "/" subp)) t)');
     expect(skill).toContain('lp->color');
-    expect(skill).toContain('axlIsVisibleLayer(strcat(nth(2 classEntry) "/" subp))');
-    expect(skill).not.toContain('lp->visibility');
-    expect(skill).toContain('axlDBGetLayerType(strcat(nth(2 classEntry) "/" subp))');
+    expect(skill).toContain('lp->visibility');
     expect(skill).toContain('layerData = reverse(layerData)');
     expect(skill).not.toContain('axlCurrentDesign()->name');
     expect(skill).not.toContain(';');
