@@ -165,13 +165,23 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
       );
       if (cancelledRef.current) return;
       if (res.success && res.data) {
-        onPlanReady(res.data as SkillApplyPlan);
+        try {
+          onPlanReady(res.data as SkillApplyPlan);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error('[SymphonyDialog] onPlanReady 失败:', err);
+          setError(`计划已生成但确认窗口打开失败：${message}`);
+        }
       } else {
-        setError(res.error || '生成登记计划失败');
+        const message = res.error || '生成登记计划失败';
+        console.error('[SymphonyDialog] 生成登记计划失败:', message);
+        setError(message);
       }
     } catch (err) {
       if (!cancelledRef.current) {
-        setError(err instanceof Error ? err.message : String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        console.error('[SymphonyDialog] 生成登记计划异常:', err);
+        setError(message);
       }
     } finally {
       if (!cancelledRef.current) setGenerating(false);
@@ -198,26 +208,33 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
       dismissDisabled={false}
       footer={(
         <>
-          <button type="button" className="btn" onClick={handleClose}>
-            关闭
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={runCheck}
-            disabled={loading || generating}
-          >
-            <RefreshCw size={14} aria-hidden="true" /> 重新检查
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleGenerate}
-            disabled={loading || generating || !result}
-          >
-            <FileCog size={14} aria-hidden="true" />
-            {generating ? '正在生成计划…' : '生成登记计划'}
-          </button>
+          {error ? (
+            <div className="ui-dialog-alert ui-dialog-alert--danger" role="alert" style={{ marginBottom: 10 }}>
+              {error}
+            </div>
+          ) : null}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn" onClick={handleClose}>
+              关闭
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={runCheck}
+              disabled={loading || generating}
+            >
+              <RefreshCw size={14} aria-hidden="true" /> 重新检查
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleGenerate}
+              disabled={loading || generating || !result}
+            >
+              <FileCog size={14} aria-hidden="true" />
+              {generating ? '正在生成计划…' : '生成登记计划'}
+            </button>
+          </div>
         </>
       )}
     >
