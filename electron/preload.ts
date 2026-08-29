@@ -543,6 +543,8 @@ contextBridge.exposeInMainWorld('atm', {
     ipcRenderer.invoke('skill:symphony-apply', planJson),
   /** 查询 AXL 命令登记表信息 */
   symphonyTableInfo: () => ipcRenderer.invoke('skill:symphony-table-info'),
+  /** 渲染端 Symphony 调试日志（与主进程同写 symphony.log） */
+  symphonyUiLog: (payload: string) => ipcRenderer.invoke('skill:symphony-ui-log', payload),
 
   // ===== V5.4 运行时版本自检 =====
   /** 获取运行时版本信息（三层一致性检测用） */

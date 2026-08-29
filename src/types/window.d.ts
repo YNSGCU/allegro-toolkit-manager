@@ -287,6 +287,8 @@ declare global {
       symphonyApplyPlan: (planJson: string) => Promise<{ success: boolean; appliedSteps?: number; totalSteps?: number; error?: string }>;
       /** 查询 AXL 命令登记表信息 */
       symphonyTableInfo: () => Promise<{ success: boolean; data?: any; error?: string }>;
+      /** 渲染端 Symphony 调试日志（与主进程同写 symphony.log） */
+      symphonyUiLog: (payload: string) => Promise<{ success: boolean; error?: string }>;
 
       // ===== V5.4 运行时版本自检 =====
       /** 获取运行时版本信息（三层一致性检测用） */

@@ -54,6 +54,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
+/** 渲染端调试日志（随主进程写入 symphony.log），失败时静默忽略 */
+function uiLog(message: string): void {
+  try {
+    void window.atm.symphonyUiLog(message).catch(() => {});
+  } catch {
+    // 忽略：调试日志不应影响登记流程
+  }
+}
+
 const severityLabels: Record<string, string> = {
   error: '错误',
   warning: '警告',
@@ -83,17 +92,20 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
     cancelledRef.current = false;
     setLoading(true);
     setError(null);
+    uiLog('runCheck 开始');
     try {
       const checkRes = await withTimeout(
         window.atm.symphonyCheck(),
         IPC_TIMEOUT_MS,
         'Symphony 兼容体检',
       );
+      uiLog(`runCheck symphonyCheck 返回 success=${checkRes.success} error=${checkRes.error || ''}`);
       if (cancelledRef.current) return;
       if (!checkRes.success) {
         setError(checkRes.error || 'Symphony 兼容体检失败');
         return;
       }
+      uiLog(`runCheck 体检完成 totalCommands=${(checkRes.data?.commandStatuses || []).length}`);
       const checked = checkRes.data as SymphonyCompatibilityResult;
       setResult(checked);
       // 默认 rw 勾选：当前已登记为 rw 的命令
@@ -118,10 +130,12 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
         }
       }
     } catch (err) {
+      uiLog(`runCheck 异常: ${err instanceof Error ? err.message : String(err)}`);
       if (!cancelledRef.current) {
         setError(err instanceof Error ? err.message : String(err));
       }
     } finally {
+      uiLog('runCheck 结束');
       if (!cancelledRef.current) setLoading(false);
     }
   }, []);
@@ -134,6 +148,7 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
   }, [open, runCheck]);
 
   const handleClose = useCallback(() => {
+    uiLog('用户点击关闭');
     cancelledRef.current = true;
     onClose();
   }, [onClose]);
@@ -152,6 +167,7 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
     cancelledRef.current = false;
     setGenerating(true);
     setError(null);
+    uiLog('handleGenerate 开始');
     try {
       const res = await withTimeout(
         window.atm.symphonyGeneratePlan(
@@ -163,8 +179,10 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
         20000,
         '生成登记计划',
       );
+      uiLog(`handleGenerate IPC 返回 success=${res.success} hasData=${!!res.data} error=${res.error || ''}`);
       if (cancelledRef.current) return;
       if (res.success && res.data) {
+        uiLog('handleGenerate 调用 onPlanReady');
         try {
           onPlanReady(res.data as SkillApplyPlan);
         } catch (err) {
