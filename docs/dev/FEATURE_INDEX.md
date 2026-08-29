@@ -17,6 +17,7 @@
 | workspace-reference-check | complete | `docs/user/features/workspace-unified-profile.md` | `docs/dev/features/workspace-unified-profile.md` | 2026-08-29 |
 | design-diagnostic | partial | N/A | N/A | 2026-08-29 |
 | schematic-power-tree | partial（演示数据；OrCAD COM 抽取与 PDF 导入为待办） | N/A | N/A | 2026-08-29 |
+| cross-version-sync | complete（M0-M4 已实现；M5 真机验证待办） | N/A | `docs/dev/features/cross-version-sync.md` | 2026-08-29 |
 | menu-recovery-and-encoding | complete | `docs/user/features/menu-recovery-and-encoding.md` | `docs/dev/features/menu-recovery-and-encoding.md` | 2026-08-10 |
 | menu-profile-transfer | complete | `docs/user/features/menu-profile-transfer.md` | `docs/dev/features/menu-profile-transfer.md` | 2026-08-12 |
 | drc-report-visualization | complete（M1-M7） | `docs/user/features/drc-report-visualization.md` | `docs/dev/features/drc-report-visualization.md` | 2026-08-12 |

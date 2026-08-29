@@ -675,6 +675,20 @@ contextBridge.exposeInMainWorld('atm', {
   workspaceImportCommit: (filePath: string, nameOverride?: string, remap?: any) =>
     ipcRenderer.invoke('workspace:import-commit', filePath, nameOverride, remap),
 
+  // ===== 跨版本方案同步（V6.4） =====
+  /** 环境列表（源/目标选择） */
+  syncEnvironments: () => ipcRenderer.invoke('sync:environments'),
+  /** 环境对前置校验 */
+  syncCheckEnvPair: (sourceEnvironmentId: string, targetEnvironmentId: string) =>
+    ipcRenderer.invoke('sync:check-env-pair', sourceEnvironmentId, targetEnvironmentId),
+  /** 生成跨版本同步计划 */
+  syncBuildPlan: (options: any) => ipcRenderer.invoke('sync:build-plan', options),
+  /** 记忆同步规则 */
+  syncUpdateRule: (command: string, targetVersion: string, decision: any, note?: string) =>
+    ipcRenderer.invoke('sync:update-rule', command, targetVersion, decision, note),
+  /** 合并并保存为目标环境新方案 */
+  syncApply: (options: any) => ipcRenderer.invoke('sync:apply', options),
+
   // ===== DRC 设计问题报告（V0.4） =====
   /** 打开 DRC 报告文件选择对话框 */
   drcOpenDialog: () => ipcRenderer.invoke('drc:open-dialog'),

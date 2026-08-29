@@ -21,6 +21,7 @@ import { registerColorIpc } from './color.ipc';
 import { registerUpdateIpc } from './update.ipc';
 import { registerBackupIpc } from './backup.ipc';
 import { registerWorkspaceIpc } from './workspace.ipc';
+import { registerSyncIpc } from './sync.ipc';
 import { registerDrcIpc } from './drc.ipc';
 import { registerEnvEditorIpc } from './envEditor.ipc';
 import { registerSessionIpc } from './session.ipc';
@@ -50,6 +51,7 @@ export function registerIpcHandlers(updateService?: UpdateService): void {
   registerColorIpc();
   registerBackupIpc();
   registerWorkspaceIpc();
+  registerSyncIpc();
   registerDrcIpc();
   registerEnvEditorIpc();
   registerSessionIpc();

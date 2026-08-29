@@ -8,7 +8,7 @@
  * 本页只负责顺序串联与结果汇总，不绕过任何既有写入链路。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Download, Plus, Settings2, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ArrowLeftRight, Copy, Download, Plus, Settings2, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import type {
   WorkspaceApplyPlanView,
   WorkspaceBindingResolution,
@@ -22,6 +22,7 @@ import type {
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 import type { WorkspaceReferenceCheckResult } from '../../core/workspace/workspaceReferenceCheck';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import SyncDialog from '../components/sync/SyncDialog';
 import BusinessDialog from '../shared/ui/overlays/BusinessDialog';
 import ToastContainer, { useToast } from '../components/common/Toast';
 import { formatUserError, WorkspaceHeader, WorkspacePage } from '../shared/ui';
@@ -62,6 +63,7 @@ const UnifiedWorkspacePage: React.FC = () => {
   const [importName, setImportName] = useState('');
   const [importing, setImporting] = useState(false);
   const [importRemap, setImportRemap] = useState<WorkspaceImportRemap | null>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [refCheckTarget, setRefCheckTarget] = useState<WorkspaceProfile | null>(null);
   const [refCheckResult, setRefCheckResult] = useState<WorkspaceReferenceCheckResult | null>(null);
   const [refChecking, setRefChecking] = useState(false);
@@ -446,6 +448,14 @@ const UnifiedWorkspacePage: React.FC = () => {
         description="绑定 Allegro 环境与快捷键 / Skill / 菜单 / 配色方案，一次选择、统一应用"
         actions={
           <>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setSyncOpen(true)}
+            >
+              <ArrowLeftRight aria-hidden="true" />
+              跨版本同步
+            </button>
             <button
               type="button"
               className="btn"
@@ -994,6 +1004,8 @@ const UnifiedWorkspacePage: React.FC = () => {
         onConfirm={() => void handleDelete()}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <SyncDialog open={syncOpen} onClose={() => setSyncOpen(false)} />
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </WorkspacePage>

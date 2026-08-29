@@ -24,6 +24,13 @@ import type {
 import type { WorkspacePreview } from '../../core/workspace/buildWorkspacePreview';
 import type { WorkspaceReferenceCheckResult } from '../../core/workspace/workspaceReferenceCheck';
 import type {
+  CrossVersionSyncPlan,
+  EnvironmentPairCheckResult,
+  SyncDecisionsInput,
+  SyncItemKind,
+  SyncRuleDecision,
+} from './sync';
+import type {
   DrcImportInput,
   DrcImportFileInput,
   DrcImportResult,
@@ -343,6 +350,13 @@ declare global {
       workspaceExport: (workspaceId: string) => Promise<{ success: boolean; data?: { filePath: string; fileName: string; name: string } | null; error?: string }>;
       workspaceImportOpen: () => Promise<{ success: boolean; data?: WorkspaceImportPreview | null; error?: string }>;
       workspaceImportCommit: (filePath: string, nameOverride?: string, remap?: WorkspaceImportRemap) => Promise<{ success: boolean; data?: { workspace: WorkspaceProfile; fileName: string }; error?: string }>;
+
+      // ===== 跨版本方案同步（V6.4） =====
+      syncEnvironments: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; version: string; pcbenvPath?: string; homePath?: string }>; error?: string }>;
+      syncCheckEnvPair: (sourceEnvironmentId: string, targetEnvironmentId: string) => Promise<{ success: boolean; data?: EnvironmentPairCheckResult; error?: string }>;
+      syncBuildPlan: (options: { sourceEnvironmentId: string; targetEnvironmentId: string; hotkeyProfileId?: string; skillProfileId?: string; menuProfileId?: string; kinds?: SyncItemKind[] }) => Promise<{ success: boolean; data?: CrossVersionSyncPlan; error?: string }>;
+      syncUpdateRule: (command: string, targetVersion: string, decision: SyncRuleDecision, note?: string) => Promise<{ success: boolean; data?: { store: unknown }; error?: string }>;
+      syncApply: (options: { sourceEnvironmentId: string; targetEnvironmentId: string; hotkeyProfileId?: string; skillProfileId?: string; menuProfileId?: string; kinds?: SyncItemKind[]; decisions?: SyncDecisionsInput[]; nameSuffix?: string }) => Promise<{ success: boolean; data?: { plan: CrossVersionSyncPlan; saved: Array<{ kind: string; name: string }>; targetEnvironment: CrossVersionSyncPlan['target'] }; error?: string }>;
 
       // DRC 设计问题报告（V0.4）
       drcOpenDialog: () => Promise<{ success: boolean; data?: string | null; error?: string }>;
