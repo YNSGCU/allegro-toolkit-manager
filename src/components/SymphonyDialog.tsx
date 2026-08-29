@@ -217,8 +217,13 @@ const SymphonyDialog: React.FC<SymphonyDialogProps> = ({ open, onClose, onPlanRe
   const issuesBySeverity = (severity: string) =>
     result?.issues.filter((i) => i.severity === severity) || [];
 
+  // 关键：本组件由 SkillPage 无条件挂载，open 必须真正控制渲染。
+  // 否则弹窗一旦显示就永远无法关闭，生成的确认窗口也被遮挡。
+  if (!open) return null;
+
   return (
     <BusinessDialog
+      open={open}
       title="Symphony 协同模式兼容检查"
       description="Symphony（Team Design）下 SKILL 命令默认全部禁用，需登记到 symphony_skill.txt 才能运行。检查命令登记、未支持函数与菜单恢复能力。"
       size="lg"
